@@ -15,7 +15,8 @@ services:
 
   backend:
     build: ./backend
-    # environment:
+    env_file:
+      - .env
     volumes:
       - backend:/opt/backend/
     depends_on:
