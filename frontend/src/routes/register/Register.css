@@ -1,0 +1,19 @@
+div {
+	display: flex;
+	flex-direction: column;
+}
+
+form {
+	height: 500px;
+	display: flex;
+	flex-direction: column;
+}
+
+input[aria-invalid="true"]{
+	border-color: red;
+}
+
+.formGroup {
+	display: flex;
+	flex-direction: row;
+}
