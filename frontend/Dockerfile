@@ -2,11 +2,12 @@ FROM node:20
 
 RUN npm install -g http-server
 
-WORKDIR /app
+WORKDIR /opt/frontend
 
-RUN npm install
+COPY package.json .
 
-RUN npm run dev
+EXPOSE 5173
 
-EXPOSE 8080
+CMD /opt/frontend/launch.sh
+
 # CMD [ "http-server", "dist" ]
