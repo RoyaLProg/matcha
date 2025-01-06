@@ -1,14 +1,11 @@
 FROM node:20
 
-WORKDIR /usr/src/app
+WORKDIR /opt/backend
 
-COPY package*.json ./
-
-RUN npm install
-
-RUN npm run dev
+COPY package.json package-lock.json .
 
 EXPOSE 3000
 
+CMD /opt/backend/launch.sh
 
-# CMD ["node", "dist/main"]
+#CMD ["node", "dist/main"]
