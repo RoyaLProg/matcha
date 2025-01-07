@@ -4,6 +4,9 @@ import { SocketsService } from './sockets.service';
 import { AppGateway } from './app.gateway';
 import UserController from './user/user.controller';
 import UserService from './user/user.service';
+import AuthController from './auth/auth.controller';
+import AuthService from './auth/auth.service';
+import Users from './entitys/users.entity';
 
 @Module({
 	imports: [TypeOrmModule.forRoot({
@@ -13,12 +16,16 @@ import UserService from './user/user.service';
 		username: process.env.POSTGRES_USER,
 		password: process.env.POSTGRES_PASSWORD,
 		database: process.env.POSTGRES_DB,
-		entities: [__dirname + '/**/*.entity{.ts,.js}'],
+		entities: [Users],
 		synchronize: true,
-	})],
-  controllers: [UserController],
+	}),
+	TypeOrmModule.forFeature([Users])
+	],
+  controllers: [UserController, AuthController],
   providers: [SocketsService,
 			  UserService,
-			  AppGateway],
+			  AppGateway,
+			  AppService,
+			  AuthService]
 })
 export class AppModule {}
