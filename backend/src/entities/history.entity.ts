@@ -1,5 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Users } from "./users.entity";
+import Users from "./users.entity";
 
 @Entity()
 class History {
