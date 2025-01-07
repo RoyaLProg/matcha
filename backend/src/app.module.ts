@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SocketsService } from './sockets.service';
+import { AppGateway } from './app.gateway';
+import UserController from './user/user.controller';
+import UserService from './user/user.service';
 
 @Module({
 	imports: [TypeOrmModule.forRoot({
@@ -14,7 +16,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 		entities: [__dirname + '/**/*.entity{.ts,.js}'],
 		synchronize: true,
 	})],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [UserController],
+  providers: [SocketsService,
+			  UserService,
+			  AppGateway],
 })
 export class AppModule {}

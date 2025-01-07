@@ -1,15 +1,20 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-export enum UserGender {
+enum UserGender {
 	Man = 'man',
 	Women = 'woman',
 	Other = 'other'
 }
 
-export enum UserSexualOrientation {
+enum UserSexualOrientation {
 	Heterosexual = 'heterosexual',
 	bisexual = 'bisexual',
 	homosexual = 'homosexual'
+}
+
+enum UserStatus {
+	Online = 'online',
+	Offline = 'offline'
 }
 
 @Entity()
@@ -34,6 +39,9 @@ class Users {
 
 	@Column({ type: 'varchar', length: 500 })
 	password: string;
+
+	@Column({ type: 'enum', enum: UserStatus, default: UserStatus.Offline })
+	status: UserStatus;
 
 	@Column({ type: 'varchar' })
 	biography: string;
@@ -60,4 +68,4 @@ class Users {
 	isValidated: boolean;
 }
 
-export default Users;
+export { Users, UserGender, UserSexualOrientation, UserStatus };

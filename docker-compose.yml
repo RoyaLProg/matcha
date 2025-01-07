@@ -38,6 +38,16 @@ services:
     networks:
       - matcha
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    env_file:
+      - .env
+    networks:
+      - matcha
 
 volumes:
   frontend:
