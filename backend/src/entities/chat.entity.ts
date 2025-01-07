@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Users } from "./users.entity";
+import Users from "./users.entity";
 
 @Entity()
 class chat {

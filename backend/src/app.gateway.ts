@@ -9,7 +9,7 @@ import { Server, Socket } from 'socket.io';
 import { DataSource } from 'typeorm';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { SocketsService } from './sockets.service';
-import { Users, UserStatus } from './entities/users.entity';
+import Users, { UserStatus } from './entities/users.entity';
 
 @WebSocketGateway()
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {

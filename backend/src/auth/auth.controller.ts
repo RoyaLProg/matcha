@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common';
-import Users from 'src/entitys/users.entity';
+import Users from 'src/entities/users.entity';
 import AuthService from './auth.service';
-import { UserGender, UserSexualOrientation } from 'src/entitys/users.entity';
+import { UserGender, UserSexualOrientation } from 'src/entities/users.entity';
 import { sha256 } from 'js-sha256';
 
 @Controller("auth")

@@ -6,7 +6,7 @@ import UserController from './user/user.controller';
 import UserService from './user/user.service';
 import AuthController from './auth/auth.controller';
 import AuthService from './auth/auth.service';
-import Users from './entitys/users.entity';
+import Users from './entities/users.entity';
 
 @Module({
 	imports: [TypeOrmModule.forRoot({
@@ -25,7 +25,6 @@ import Users from './entitys/users.entity';
   providers: [SocketsService,
 			  UserService,
 			  AppGateway,
-			  AppService,
 			  AuthService]
 })
 export class AppModule {}

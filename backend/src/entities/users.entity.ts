@@ -15,8 +15,8 @@ export enum UserSexualOrientation {
 }
 
 export enum UserStatus {
-	Offline: "offline",
-	Online: "online"
+	Offline = "offline",
+	Online = "online"
 }
 
 @Entity()
