@@ -1,26 +1,28 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-enum UserGender {
+export enum UserGender {
 	Man = 'man',
 	Women = 'woman',
-	Other = 'other'
+	Other = 'other',
+	Undefined = 'undefined'
 }
 
-enum UserSexualOrientation {
+export enum UserSexualOrientation {
 	Heterosexual = 'heterosexual',
-	bisexual = 'bisexual',
-	homosexual = 'homosexual'
+	Bisexual = 'bisexual',
+	Homosexual = 'homosexual',
+	Undefined = 'undefined'
 }
 
-enum UserStatus {
-	Online = 'online',
-	Offline = 'offline'
+export enum UserStatus {
+	Offline: "offline",
+	Online: "online"
 }
 
 @Entity()
 class Users {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id?: number;
 
 	@Column({ type: 'varchar', length: 255 })
 	fistName: string;
@@ -28,29 +30,29 @@ class Users {
 	@Column({ type: 'varchar', length: 255 })
 	lastName: string;
 
-	@Column({ type: 'varchar', length: 255 })
+	@Column({ type: 'varchar', length: 255, unique: true})
 	email: string;
 
 	@Column({ type: 'date' })
 	birthDate: Date;
 
-	@Column({ type: 'varchar', length: 255 })
+	@Column({ type: 'varchar', length: 255, unique: true })
 	username: string;
 
 	@Column({ type: 'varchar', length: 500 })
 	password: string;
-
+	
 	@Column({ type: 'enum', enum: UserStatus, default: UserStatus.Offline })
-	status: UserStatus;
+	status?: UserStatus;
+	
+	@Column({ type: 'varchar', default: "" })
+	biography?: string;
 
-	@Column({ type: 'varchar' })
-	biography: string;
+	@Column("text", { array: true, default: [] })
+	pictures?: string[];
 
-	@Column("text", { array: true })
-	pictures: string[];
-
-	@Column("text", { array: true })
-	tags: string[];
+	@Column("text", { array: true, default: [] })
+	tags?: string[];
 
 	@Column({ type: 'enum', enum: UserGender })
 	gender: UserGender;
@@ -58,14 +60,14 @@ class Users {
 	@Column({ type: 'enum', enum: UserSexualOrientation })
 	sexualOrientation: UserSexualOrientation;
 
-	@Column({ type: 'varchar', length: 255 })
-	city: string;
+	@Column({ type: 'varchar', length: 255, default: "" })
+	city?: string;
 
-	@Column({ type: 'varchar', length: 255 })
-	country: string;
+	@Column({ type: 'varchar', length: 255, default: "" })
+	country?: string;
 
 	@Column({ type: 'boolean', default: false })
 	isValidated: boolean;
 }
 
-export { Users, UserGender, UserSexualOrientation, UserStatus };
+export default Users;

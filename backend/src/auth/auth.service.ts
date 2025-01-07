@@ -1,10 +1,19 @@
 import { Injectable } from '@nestjs/common';
+import Users from 'src/entitys/users.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 class AuthService {
-  getHello(): string {
-	return 'Hello World!';
-  }
+
+	constructor(
+		@InjectRepository(Users)
+		private readonly UsersRepository: Repository<Users>,
+	) {}
+
+	async addUser(user: Users): Promise<Users> {
+		return await this.UsersRepository.save(user);
+	}
 }
 
 export default AuthService;
