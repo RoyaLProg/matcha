@@ -19,7 +19,7 @@ class AuthService {
 	async addUser(user: Users): Promise<Users> {
 		return await this.usersRepository.save(user);
 	}
-	
+
 	private async addToken(token: Auth) {
 		return await this.authRepository.save(token);
 	}
@@ -30,7 +30,7 @@ class AuthService {
 			type: type,
 			user: user
 		}
-		
+
 		return await this.addToken(token);
 	}
 
