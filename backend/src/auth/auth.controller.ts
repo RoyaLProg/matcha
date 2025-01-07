@@ -54,7 +54,7 @@ export class AuthController {
 			throw new BadRequestException('password is too weak');
 		const hash = sha256.create();
 		user.password = hash.update(user.password).hex();
-		let result: Users;	
+		let result: Users;
 
 		try {
 			result =  await this.authService.addUser(user);
@@ -64,7 +64,7 @@ export class AuthController {
 		try {
 			const token = await this.authService.create_token(user);
 			const message = `Welcome to Matcha the latte
-	
+
 							Can you please click this <a href="http://localhost:5173/verify/${token.token}">link</a> to confirm your email`;
 			await this.mailService.sendMail({
 				to: user.email,
@@ -78,12 +78,12 @@ export class AuthController {
 
 		return result;
 	}
-	
+
 	@Delete('verify/:token')
 	async verify(@Param('token') token: string) {
 		if (! token.length)
 			throw new BadRequestException('token is empty');
-		
+
 		const Authtoken = await this.authService.getToken(token);
 		if (Authtoken === null)
 			throw new BadRequestException('token is invalid');
@@ -107,7 +107,7 @@ export class AuthController {
 			const hash = sha256.create();
 			const password = hash.update(body.password).hex();
 			const user: Users | null = await this.authService.getLogin(body.username, password);
-			if (user === null) 
+			if (user === null)
 				throw new UnauthorizedException('username or password incorrect');
 			if (!user.isValidated)
 				throw new UnauthorizedException('you need to verify your email first');
@@ -118,7 +118,7 @@ export class AuthController {
 
 	@Post('forgot')
 	async forgot(@Body() body) {
-		
+
 		if (!body.username)
 			throw new BadRequestException('no username was provided');
 
@@ -149,7 +149,7 @@ export class AuthController {
 	async changePassword(@Param('token') token: string, @Body() body) {
 		if (! token.length)
 			throw new BadRequestException('token is empty');
-		
+
 		const Authtoken = await this.authService.getToken(token);
 		if (Authtoken === null)
 			throw new BadRequestException('token is invalid');
