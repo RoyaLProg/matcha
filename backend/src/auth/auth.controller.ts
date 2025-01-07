@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import Users from 'src/entities/users.entity';
 import AuthService from './auth.service';
 import { UserGender, UserSexualOrientation } from 'src/entities/users.entity';
@@ -6,7 +6,7 @@ import { sha256 } from 'js-sha256';
 
 @Controller("auth")
 export class AuthController {
-	
+
 	constructor(
 		private readonly authService: AuthService,
 	) {}
@@ -19,8 +19,8 @@ export class AuthController {
 	checkPassword(value: string) {
 		const i1 = new RegExp(/[_\-\*@!]/).test(value);
 		const i2 = new RegExp(/[0-9]/).test(value);
-		const i3 = new RegExp(/[a-z]/).test(value);	
-		const i4 = new RegExp(/[A-Z]/).test(value);	
+		const i3 = new RegExp(/[a-z]/).test(value);
+		const i4 = new RegExp(/[A-Z]/).test(value);
 
 		return (i1 && i2 && i3 && i4);
 	}
@@ -51,8 +51,27 @@ export class AuthController {
 		} catch (e) {
 			throw new BadRequestException('email or user already exist');
 		}
-
 		return result;
+	}
+
+	@Post('login')
+	async login(@Body() body) : Promise<Omit<Users, 'password'> | undefined> {
+		try {
+			const hash = sha256.create();
+			return await this.authService.getLogin(body.username, hash.update(body.password).hex());
+		} catch (error) {
+			if (error.message === 'user not found') {
+				throw new NotFoundException('User not found');
+			} else if (error.message === 'password not correct') {
+				throw new UnauthorizedException('Password not correct');
+			} else if (error.message === 'user not validated') {
+				throw new ForbiddenException('User not validated');
+			}
+			throw new HttpException(
+				'Failed to retrieve user',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
 	}
 }
 
