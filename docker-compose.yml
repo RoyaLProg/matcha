@@ -30,7 +30,8 @@ services:
     build: ./frontend
     volumes:
       - frontend:/opt/frontend/
-    # environment:
+    environment:
+      - VITE_API_URL=${API_URL}
     depends_on:
       - backend
     ports:
