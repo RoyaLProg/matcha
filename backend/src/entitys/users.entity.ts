@@ -38,10 +38,10 @@ class Users {
 	@Column({ type: 'varchar' })
 	biography: string;
 
-	@Column()
+	@Column("text", { array: true })
 	pictures: string[];
 
-	@Column()
+	@Column("text", { array: true })
 	tags: string[];
 
 	@Column({ type: 'enum', enum: UserGender })
