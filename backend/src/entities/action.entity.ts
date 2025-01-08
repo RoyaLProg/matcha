@@ -3,7 +3,7 @@ import Users from "./users.entity";
 
 enum ActionStatus {
 	Like = 'like',
-	Unlike = 'unlike',
+	Dislike = 'dislike',
 }
 
 @Entity()

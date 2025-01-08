@@ -5,15 +5,12 @@ interface User {
 	token: string;
 }
 
-const UserContext = createContext<{ user: User | null }>({ user: null });
+const UserContext = createContext< User | undefined >(undefined);
 
 function UserProvider({ children } : { children: ReactNode }) {
-	const [user, setUser] = useState<User | null>({
-		id: '123',
-		token: 'your-jwt-token',
-	});
+	const [user, setUser] = useState<User | undefined>(undefined);
 	return (
-		<UserContext.Provider value={{ user }}>
+		<UserContext.Provider value={ user }>
 			{children}
 		</UserContext.Provider>
 	);

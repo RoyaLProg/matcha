@@ -1,8 +1,10 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import Users from "./users.entity";
+import message from "./message.entity";
+import Message from "./message.entity";
 
 @Entity()
-class chat {
+class Chat {
 
 	@PrimaryGeneratedColumn()
 	id: number;
@@ -15,11 +17,11 @@ class chat {
 	@JoinColumn({ name: 'targetUserId' })
 	targetUser: Users;
 
-	@Column({ type: 'text' })
-	message: string;
+	@OneToMany(() => Message, (message) => message.chat, { cascade: true })
+	messages: Message[];
 
 	@Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
 	createdAt: Date;
 }
 
-export default chat;
+export default Chat;
