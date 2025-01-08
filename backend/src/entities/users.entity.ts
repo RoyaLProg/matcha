@@ -41,10 +41,10 @@ class Users {
 
 	@Column({ type: 'varchar', length: 500 })
 	password: string;
-	
+
 	@Column({ type: 'enum', enum: UserStatus, default: UserStatus.Offline })
 	status?: UserStatus;
-	
+
 	@Column({ type: 'varchar', default: "" })
 	biography?: string;
 

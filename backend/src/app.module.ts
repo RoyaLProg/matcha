@@ -7,6 +7,11 @@ import UserService from './user/user.service';
 import AuthController from './auth/auth.controller';
 import AuthService from './auth/auth.service';
 import Users from './entities/users.entity';
+import Chat from './entities/chat.entity';
+import Message from './entities/message.entity';
+import Auth from './entities/auth.entity';
+import History from './entities/history.entity';
+import { Action } from './entities/action.entity';
 
 @Module({
 	imports: [TypeOrmModule.forRoot({
@@ -16,10 +21,10 @@ import Users from './entities/users.entity';
 		username: process.env.POSTGRES_USER,
 		password: process.env.POSTGRES_PASSWORD,
 		database: process.env.POSTGRES_DB,
-		entities: [Users],
+		entities: [Users, Chat, Message, Auth, History, Action],
 		synchronize: true,
 	}),
-	TypeOrmModule.forFeature([Users])
+	TypeOrmModule.forFeature([Users]),
 	],
   controllers: [UserController, AuthController],
   providers: [SocketsService,

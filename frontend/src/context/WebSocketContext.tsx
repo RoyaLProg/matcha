@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { toast, ToastContainer } from "react-toastify";
 import { io, Socket } from "socket.io-client";
 import { UserContext } from './UserContext';
@@ -18,13 +18,13 @@ interface Notification {
 	message: string;
 }
 
-function WebSocketProvider({ children }: { children: React.ReactNode }) {
-	const { user } = useContext(UserContext);
+function WebSocketProvider({ children }: { children: ReactNode }) {
+	const user = useContext(UserContext);
 	const [socket, setSocket] = useState<Socket | undefined>(undefined);
 
 	useEffect(() => {
 		if (user && user.token) {
-			const socketIOClient = io('http://localhost:3000', {
+			const socketIOClient = io(`${import.meta.env.VITE_API_URL}`, {
 				extraHeaders: {
 					Authorization: `Bearer ${user.token}`,
 				},
