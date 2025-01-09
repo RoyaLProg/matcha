@@ -55,6 +55,207 @@
 	transform: scale3d(1.1, 1.1, 1.1);
 }
 
+.chat .content {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.chat .content .yourProfileInfo {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	padding: 10px;
+	background-color: transparent;
+	border-radius: 10px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.chat .content .yourProfileInfo .chatListPicture {
+	display: flex;
+	align-items: center;
+	margin-right: 15px;
+}
+
+.chat .content .yourProfileInfo img {
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.chat .content .yourProfileInfo img:hover {
+	transform: scale(1.1);
+}
+
+.chat .content .yourProfileInfo .chatListProfile {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.chat .content .yourProfileInfo .chatListProfile .name {
+	font-size: 1rem;
+	font-weight: bold;
+	color: white;
+}
+
+.chat .content .yourProfileInfo .chatListProfile .username {
+	font-size: 0.9rem;
+	color: #007bff;
+	font-style: italic;
+}
+
+.chat .content .yourProfileInfo .chatListProfile .lastMessage {
+	margin-top: 5px;
+	font-size: 0.9rem;
+	color: white;
+}
+
+.chat .content .yourProfileInfo .chatButton {
+	display: flex;
+	align-items: center;
+}
+
+.chat .content .yourProfileInfo .chatButton button {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 40px;
+	height: 40px;
+	border: none;
+	border-radius: 50%;
+	background-color: #4488ff;
+	color: white;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.chat .content .yourProfileInfo .chatButton button:hover {
+	background-color: #3366cc;
+	transform: scale(1.1);
+}
+
+.chat {
+	display: flex;
+	flex-direction: column;
+	padding: 8px;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 25px;
+	height: 100%;
+	width: 90%;
+}
+
+.chat .chatListLogo {
+	display: flex;
+	width: 15%;
+}
+
+.chat .menu {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 100%;
+	height: 50px;
+}
+
+.chat .menu .logoMenu {
+	display: flex;
+	width: 50px;
+}
+
+.chat .menu .myProfile {
+	display: flex;
+	width: 50px;
+}
+
+.chat .menu .myProfile button {
+	width: 100%;
+	height: 100%;
+	border: none;
+	border-radius: 50%;
+	background-color: #444;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	backdrop-filter: blur(10px);
+	transform: scale3d(1, 1, 1);
+}
+
+.chat .menu .myProfile button img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+.chat .menu .myProfile button:hover {
+	background-color: #666;
+	transform: scale3d(1.1, 1.1, 1.1);
+}
+
+.chat .content {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+.chatList {
+	display: flex;
+	flex-direction: column;
+	padding: 8px;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 25px;
+	height: 100%;
+	width: 90%;
+}
+
+.chatList .chatListLogo {
+	display: flex;
+	width: 15%;
+}
+
+.chatList .menu {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 100%;
+	height: 50px;
+}
+
+.chatList .menu .logoMenu {
+	display: flex;
+	width: 50px;
+}
+
+.chatList .menu .myProfile {
+	display: flex;
+	width: 50px;
+}
+
+.chatList .menu .myProfile button {
+	width: 100%;
+	height: 100%;
+	border: none;
+	border-radius: 50%;
+	background-color: #444;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	backdrop-filter: blur(10px);
+	transform: scale3d(1, 1, 1);
+}
+
+.chatList .menu .myProfile button img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+.chatList .menu .myProfile button:hover {
+	background-color: #666;
+	transform: scale3d(1.1, 1.1, 1.1);
+}
 
 .chatList .content {
 	display: flex;
