@@ -1,5 +1,192 @@
-button {
-	margin: 30px;
+.home {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 25px;
+	height: 100%;
+	width: 90%;
 }
 
+.alignement {
+	padding: 8px;
+	justify-content: flex-start;
+}
 
+.home .homeLogoDefault {
+	display: flex;
+	width: 15%;
+}
+
+.home .homeButtons {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.homeButtons button {
+	width: 100%;
+	padding: 10px;
+	border: none;
+	border-radius: 5px;
+	background-color: #444;
+	color: white;
+	font-size: 1.2em;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	backdrop-filter: blur(10px);
+	box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+.homeButtons button:hover {
+	background-color: #666;
+	transform: translateY(-2px);
+}
+
+.home .menu {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 100%;
+	height: 50px;
+}
+
+.home .menu .logoMenu {
+	display: flex;
+	width: 50px;
+}
+
+.home .menu .myProfile {
+	display: flex;
+	width: 50px;
+}
+
+.home .menu .myProfile button {
+	width: 100%;
+	height: 100%;
+	border: none;
+	border-radius: 50%;
+	background-color: #444;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	backdrop-filter: blur(10px);
+	transform: scale3d(1, 1, 1);
+}
+
+.home .menu .myProfile button img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+.home .menu .myProfile button:hover {
+	background-color: #666;
+	transform: scale3d(1.1, 1.1, 1.1);
+}
+
+.home .content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 25px;
+	width: 100%;
+}
+
+.home .content .yourListPicture {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	max-width: 500px;
+	max-height: 500px;
+	width: 100%;
+}
+
+.home .content .yourListPicture img {
+	width: 100%;
+	height: auto;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.home .content .yourListPicture .material-symbols-outlined {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 2rem;
+	color: white;
+	background-color: rgba(0, 0, 0, 0.3);
+	border-radius: 50%;
+	padding: 10px;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.home .content .yourListPicture .material-symbols-outlined:hover {
+	background-color: rgba(0, 0, 0, 0.5);
+	transform: translateY(-50%) scale(1.2);
+}
+
+.home .content .yourListPicture .material-symbols-outlined:first-child {
+	left: 10px;
+}
+
+.home .content .yourListPicture .material-symbols-outlined:last-child {
+	right: 10px;
+}
+
+.home .content .yourListPicture img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	aspect-ratio: 1 / 1;
+	border-radius: 10px;
+}
+
+.home .content .Button {
+	display: flex;
+	max-width: 400px;
+	width: 100%;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.home .content .Button button {
+	width: 50px;
+	height: 50px;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.home .content .Button .dislikeButton {
+	background-color: #ff4444;
+}
+
+.home .content .Button .dislikeButton:hover {
+	background-color: #cc0000;
+	transform: scale(1.1);
+}
+
+.home .content .Button .likeButton {
+	background-color: #44cc44;
+}
+
+.home .content .Button .likeButton:hover {
+	background-color: #339933;
+	transform: scale(1.1);
+}
+
+.home .content .Button .chatButton {
+	background-color: #4488ff;
+}
+
+.home .content .Button .chatButton:hover {
+	background-color: #3366cc;
+	transform: scale(1.1);
+}
