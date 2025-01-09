@@ -55,6 +55,7 @@
 	transform: scale3d(1.1, 1.1, 1.1);
 }
 
+
 .chatList .content {
 	display: flex;
 	flex-direction: column;
@@ -73,11 +74,13 @@
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+
 .chatList .content .yourProfileInfo .chatListPicture {
 	display: flex;
 	align-items: center;
 	margin-right: 15px;
 }
+
 
 .chatList .content .yourProfileInfo img {
 	width: 50px;
@@ -85,6 +88,7 @@
 	border-radius: 50%;
 	object-fit: cover;
 }
+
 
 .chatList .content .yourProfileInfo img:hover {
 	transform: scale(1.1);
@@ -95,6 +99,7 @@
 	flex-direction: column;
 	justify-content: center;
 }
+
 
 .chatList .content .yourProfileInfo .chatListProfile .name {
 	font-size: 1rem;
@@ -107,6 +112,7 @@
 	color: #007bff;
 	font-style: italic;
 }
+
 
 .chatList .content .yourProfileInfo .chatListProfile .lastMessage {
 	margin-top: 5px;
@@ -137,14 +143,6 @@
 	background-color: #3366cc;
 	transform: scale(1.1);
 }
-
-
-
-
-
-
-
-
 
 .chat {
 	display: flex;
