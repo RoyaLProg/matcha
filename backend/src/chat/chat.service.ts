@@ -15,7 +15,8 @@ class ChatService {
 			[
 				{ user: { id: userId }, targetUser: { id: targetUserId } },
 				{ user: { id: targetUserId }, targetUser: { id: userId } },
-			]
+			],
+			relations: ['user', 'targetUser'],
 		})
 		if (existingChat)
 			return existingChat;

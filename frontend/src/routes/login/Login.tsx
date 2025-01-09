@@ -1,6 +1,7 @@
 import "./Login.css";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 
 interface IForm {
 	username: string
@@ -35,20 +36,30 @@ function Login() {
 	}
 
 	return (
-	<div>
-		<h1>MATCHA LOGO HERE</h1>
+	<div className="login">
+		<div className="loginLogo">
+			<span className="logo"></span>
+		</div>
 			{ error ?? <p id="error">{error}</p> }
+		<div className="loginForm">
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<label id="username">
 					Username :
-					<input {...register("username", {required: true, maxLength: 255, pattern: /^[A-Za-z0-9_-]+$/i})} aria-invalid={errors.username ? true : false}/>
+					<input type='text' {...register("username", {required: true, maxLength: 255, pattern: /^[A-Za-z0-9_-]+$/i})} aria-invalid={errors.username ? true : false}/>
 				</label>
 				<label id="password">
 					Password :
 					<input type="password" defaultValue={password} {...register("password", {required: true, maxLength: 256, minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => checkPassword(value)})} aria-invalid={errors.password ? true : false}/>
 				</label>
-				<input type="submit" />
+				<input type="submit" value={'login'}/>
 			</form>
+			<div className="loginButtons">
+				<Link to={"/register"}><button> Register </button></Link>
+				<Link to={"/forgot"}><button> Forgot Password </button></Link>
+			</div>
+		</div>
+
+
 	</div>);
 }
 
