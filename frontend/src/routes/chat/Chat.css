@@ -55,13 +55,13 @@
 	transform: scale3d(1.1, 1.1, 1.1);
 }
 
-.chat .content {
+.chatList .content {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 }
 
-.chat .content .yourProfileInfo {
+.chatList .content .yourProfileInfo {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -73,53 +73,53 @@
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.chat .content .yourProfileInfo .chatListPicture {
+.chatList .content .yourProfileInfo .chatListPicture {
 	display: flex;
 	align-items: center;
 	margin-right: 15px;
 }
 
-.chat .content .yourProfileInfo img {
+.chatList .content .yourProfileInfo img {
 	width: 50px;
 	height: 50px;
 	border-radius: 50%;
 	object-fit: cover;
 }
 
-.chat .content .yourProfileInfo img:hover {
+.chatList .content .yourProfileInfo img:hover {
 	transform: scale(1.1);
 }
 
-.chat .content .yourProfileInfo .chatListProfile {
+.chatList .content .yourProfileInfo .chatListProfile {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 }
 
-.chat .content .yourProfileInfo .chatListProfile .name {
+.chatList .content .yourProfileInfo .chatListProfile .name {
 	font-size: 1rem;
 	font-weight: bold;
 	color: white;
 }
 
-.chat .content .yourProfileInfo .chatListProfile .username {
+.chatList .content .yourProfileInfo .chatListProfile .username {
 	font-size: 0.9rem;
 	color: #007bff;
 	font-style: italic;
 }
 
-.chat .content .yourProfileInfo .chatListProfile .lastMessage {
+.chatList .content .yourProfileInfo .chatListProfile .lastMessage {
 	margin-top: 5px;
 	font-size: 0.9rem;
 	color: white;
 }
 
-.chat .content .yourProfileInfo .chatButton {
+.chatList .content .yourProfileInfo .chatButton {
 	display: flex;
 	align-items: center;
 }
 
-.chat .content .yourProfileInfo .chatButton button {
+.chatList .content .yourProfileInfo .chatButton button {
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -133,10 +133,18 @@
 	transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.chat .content .yourProfileInfo .chatButton button:hover {
+.chatList .content .yourProfileInfo .chatButton button:hover {
 	background-color: #3366cc;
 	transform: scale(1.1);
 }
+
+
+
+
+
+
+
+
 
 .chat {
 	display: flex;
@@ -198,5 +206,128 @@
 .chat .content {
 	display: flex;
 	flex-direction: column;
+	gap: 20px;
 	width: 100%;
+	height: 100%;
+}
+
+.chat .content .chatHeader {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px;
+	background-color: transparent;
+	border-bottom: 1px solid #444;
+}
+
+.chat .chatHeader .chatPicture img {
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.chat .chatHeader .chatProfile .name {
+	font-size: 1rem;
+	font-weight: bold;
+	color: white;
+}
+
+.chat .chatHeader .chatProfile .username {
+	font-size: 0.9rem;
+	color: #007bff;
+	font-style: italic;
+}
+
+.chat .content .chatContent {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	/* align-items: center; */
+	gap: 10px;
+	width: 100%;
+	height: 100%;
+	overflow-y: auto;
+}
+
+.chat .content .chatContent .chatMessage {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.chat .content .chatContent .chatMessage .message {
+	max-width: 70%;
+	padding: 10px;
+	border-radius: 10px;
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.chat .content .chatContent .chatMessage .yourMessage {
+	align-self: flex-start;
+	background-color: #f0f0f0;
+	color: #333;
+}
+
+.chat .content .chatContent .chatMessage  .myMessage {
+	align-self: flex-end;
+	background-color: #007bff;
+	color: white;
+}
+
+.chat .content .chatInput {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px;
+	border-top: 1px solid #444;
+	background-color: transparent;
+}
+
+.chat .content .chatInput button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+}
+.chat .content .chatInput .microButton {
+	background-color: #ff4444;
+	color: white;
+}
+
+.chat .content .chatInput .microButton:hover {
+	background-color: #cc0000;
+}
+
+.chat .content .chatInput .videoButton {
+	background-color: #44cc44;
+	color: white;
+}
+
+.chat .content .chatInput .videoButton:hover {
+	background-color: #339933;
+}
+
+.chat .content .chatInput .sendButton {
+	background-color: #007bff;
+	color: white;
+}
+
+.chat .content .chatInput .sendButton:hover {
+	background-color: #0056b3;
+}
+
+.chat .content .chatInput input {
+	flex-grow: 1;
+	padding: 10px;
+	border: 1px solid #ddd;
+	border-radius: 20px;
+	outline: none;
 }

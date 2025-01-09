@@ -18,6 +18,7 @@ input[aria-invalid="true"]{
 	flex-direction: row;
 } */
 
+
 .register {
 	display: flex;
 	flex-direction: column;
@@ -96,6 +97,10 @@ input[aria-invalid="true"]{
 .register .registerForm form input[type='email']:focus,
 .register .registerForm form input[type='date'] {
 	outline: none;
+}
+
+.register .registerForm form input[aria-invalid="true"]{
+	border-color: red;
 }
 
 .register .registerForm .registerButtons {
