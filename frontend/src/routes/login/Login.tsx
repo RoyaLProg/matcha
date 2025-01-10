@@ -14,14 +14,22 @@ function Login() {
 	const [ error, setError ] = useState<string | null>(null);
 
 	function onSubmit(values: IForm) {
+		setError('');
 		const data = { username: values.username, password: password }
 		fetch(import.meta.env.VITE_API_URL + "/api/auth/login",
 			  {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(data)
+				body: JSON.stringify(data),
+				credentials: 'same-origin'
 			  }
-		).then((rv) => {if (!rv.ok) rv.json().then(value => setError(value['message']))})
+		).then((rv) => {
+			if (!rv.ok) 
+				rv.json().then(value => setError(value['message']))
+			else {
+				console.log(rv.headers.getSetCookie());
+			}
+		})
 		.catch((e) => console.log(e));
 	}
 

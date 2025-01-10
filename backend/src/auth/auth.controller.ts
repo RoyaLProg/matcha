@@ -113,7 +113,9 @@ export class AuthController {
 				throw new UnauthorizedException('you need to verify your email first');
 			const payload: Omit<Users, 'password'> = user;
 			const jwt: string = this.jwtService.sign(JSON.stringify(payload), {secret: process.env.JWT_SECRET});
-			res.cookie("Auth", jwt);
+			let eat = new Date();
+			eat.setMonth(eat.getMonth() + 2);
+			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, expires: eat, path: '/'});
 	}
 
 	@Post('forgot')

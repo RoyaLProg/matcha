@@ -14,24 +14,12 @@ interface IUser {
 	tags: string
 }
 
-const UserContext = createContext< User | undefined >(undefined);
+const UserContext = createContext< UserContextProp | undefined >(undefined);
 
 function UserProvider({ children } : { children: ReactNode }) {
-	const [user, setUser] = useState<IUser | undefined>(undefined);
-// check si le cookie n'existe pas deja
-	useEffect(() => {
-		const auth = document.cookie.split('; ').find(row => row.startsWith('Auth='));
-		if (auth) {
-			const { decodedToken, isExpired } = useJwt(auth);
-			if (isExpired) {
-				document.cookie = 'Auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-				return;
-			}
-			setUser(decodedToken as IUser);
-		}
-	}, []);
+	const [user, setUser] = useState<Object | undefined>(undefined);
 	return (
-		<UserContext.Provider value={{ user, setUser }}>
+		<UserContext.Provider value={ {user: user, setUser: setUser} }>
 			{children}
 		</UserContext.Provider>
 	);
