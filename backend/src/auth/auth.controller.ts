@@ -1,4 +1,3 @@
-import { Controller, Get, Post, Body, BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import Users from 'src/entities/users.entity';
 import AuthService from './auth.service';
@@ -6,6 +5,7 @@ import { UserGender, UserSexualOrientation } from 'src/entities/users.entity';
 import { sha256 } from 'js-sha256';
 import { MailerService } from '@nestjs-modules/mailer';
 import UserService from 'src/user/user.service';
+import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { tokenType } from 'src/entities/auth.entity';
 
@@ -98,17 +98,18 @@ export class AuthController {
 		return Authtoken; 
 	}
 	@Post('login')
-	async login(@Body() body) : Promise<Omit<Users, 'password'> | undefined> {
-		try {
+	async login(@Body() body, @Res({passthrough: true}) res: Response) {
 			const hash = sha256.create();
-			return await this.authService.getLogin(body.username, hash.update(body.password).hex());
-		} catch (error) {
-			if (error.message === 'user not found') {
-				throw new NotFoundException('User not found');
-			} else if (error.message === 'password not correct') {
-				throw new UnauthorizedException('Password not correct');
-			} else if (error.message === 'user not validated') {
-				throw new ForbiddenException('User not validated');
+			const password = hash.update(body.password).hex();
+			const user: Users | null = await this.authService.getLogin(body.username, password);
+			if (user === null) 
+				throw new UnauthorizedException('username or password incorrect');
+			if (!user.isValidated)
+				throw new UnauthorizedException('you need to verify your email first');
+			const payload: Omit<Users, 'password'> = user;
+			const jwt: string = this.jwtService.sign(JSON.stringify(payload), {secret: process.env.JWT_SECRET});
+			res.cookie("Auth", jwt);
+	}
 			}
 			throw new HttpException(
 				'Failed to retrieve user',
