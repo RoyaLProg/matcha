@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom"
 import "./Home.css"
 
-function Home() {
 
+function Home() {
 
 	return (
 		<div className="home alignement">
@@ -11,7 +11,7 @@ function Home() {
 					<span className="logo"></span>
 				</div>
 				<div className="myProfile">
-					<Link to={"/profile"}><button> <img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" /></button></Link>
+					<img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" />
 				</div>
 			</div>
 			<div className="content">

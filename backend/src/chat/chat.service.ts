@@ -51,7 +51,8 @@ class ChatService {
 		const createMessage = this.dataSources.getRepository(Message).create({
 			chat,
 			sender: { id: userId },
-			message
+			content: message,
+			
 		});
 		return await this.dataSources.getRepository(Message).save(createMessage);
 	}
