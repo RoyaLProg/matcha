@@ -6,6 +6,8 @@ import { UserGender, UserSexualOrientation } from 'src/entities/users.entity';
 import { sha256 } from 'js-sha256';
 import { MailerService } from '@nestjs-modules/mailer';
 import UserService from 'src/user/user.service';
+import { Response } from 'express';
+import { tokenType } from 'src/entities/auth.entity';
 
 @Controller("auth")
 export class AuthController {
@@ -13,6 +15,8 @@ export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly mailService: MailerService,
+		private readonly userService: UserService,
+		private readonly jwtService: JwtService
 	) {}
 
 	@Get('')
@@ -71,7 +75,28 @@ export class AuthController {
 		}
 		return result;
 	}
+	@Delete('verify/:token')
+	async verify(@Param('token') token: string) {
+		if (! token.length)
+			throw new BadRequestException('token is empty');
+		
+		const Authtoken = await this.authService.getToken(token);
+		if (Authtoken === null)
+			throw new BadRequestException('token is invalid');
+		let user = await this.userService.findOne(Authtoken.user.id);
+		if (user.isValidated === true)
+			throw new BadRequestException('user is already validated');
 
+		if (Authtoken.type === "create") {
+
+			user.isValidated = true;
+			this.authService.updateUser(user);
+
+			await this.authService.deleteToken(token);
+			return 'email has been updated';
+		}
+		return Authtoken; 
+	}
 	@Post('login')
 	async login(@Body() body) : Promise<Omit<Users, 'password'> | undefined> {
 		try {

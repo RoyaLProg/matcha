@@ -1,19 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import Users from 'src/entities/users.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 class UserService {
 	constructor(
-		private dataSources: DataSource
+		@InjectRepository(Users)
+		private userRepository: Repository<Users>
 	) { }
 
 	async findAll() : Promise<Users[]> {
-		return await this.dataSources.getRepository(Users).find();
+		return await this.userRepository.find();
 	}
 
 	async findOne(id: number) : Promise<Users> {
-		const user = await this.dataSources.getRepository(Users).findOne({ where: { id } });
+		const user = await this.userRepository.findOne({ where: { id } });
 		if (!user) {
 			throw new Error('User not found');
 		}
@@ -21,20 +23,20 @@ class UserService {
 	}
 
 	async update(id: number, data: Partial<Users>) : Promise<Users> {
-		const user = await this.dataSources.getRepository(Users).findOne({ where: { id } });
+		const user = await this.userRepository.findOne({ where: { id } });
 		if (!user) {
 			throw new Error('User not found');
 		}
 		Object.assign(user, data);
-		return await this.dataSources.getRepository(Users).save(user);
+		return await this.userRepository.save(user);
 	}
 
 	async remove(id: number) : Promise<void> {
-		const user = await this.dataSources.getRepository(Users).findOne({ where: { id } });
+		const user = await this.userRepository.findOne({ where: { id } });
 		if (!user) {
 			throw new Error('User not found');
 		}
-		await this.dataSources.getRepository(Users).remove(user);
+		await this.userRepository.remove(user);
 	}
 }
 

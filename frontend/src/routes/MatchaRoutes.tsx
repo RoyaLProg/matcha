@@ -4,25 +4,27 @@ import Register from "./register/Register";
 import Chat from "./chat/Chat";
 import Login from "./login/Login";
 import ChatsList from "./chat/ChatsList";
+import Verify from "./verify/Verify";
 
-function MatchaRoutes() {
+export function MatchaRoutes() {
 	return (
 		<Routes>
 			<Route path="/" element={<Home />} />
 			<Route path="/chatlist" element={<ChatsList />} />
 			<Route path="/chat" element={<Chat />} />
+			<Route path="/verify/:token" element={<Verify />} />
 		</Routes>
 	)
 }
 
-function MatchaRoutesDefault() {
+export function MatchaRoutesDefault() {
 	return (
 	<Routes>
 		<Route path="/" element={<HomeDefault />} />
 		<Route path="/register" element={<Register />} />
 		<Route path="/login" element={<Login />} />
+		<Route path="/verify/:token" element={<Verify />} />
 	</Routes>
 	);
 }
 
-export { MatchaRoutes, MatchaRoutesDefault };

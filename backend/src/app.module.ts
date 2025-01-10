@@ -13,6 +13,7 @@ import Chat from './entities/chat.entity';
 import Message from './entities/message.entity';
 import History from './entities/history.entity';
 import { Action } from './entities/action.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
 	imports: [
@@ -32,6 +33,7 @@ import { Action } from './entities/action.entity';
 			defaults: {
 				from: '"matcha noreply" <matcha.noreply@matcha.com>',
 			},
+		JwtModule
 	],
   controllers: [UserController, AuthController],
   providers: [SocketsService,

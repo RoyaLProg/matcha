@@ -2,14 +2,18 @@ import { Injectable } from '@nestjs/common';
 import Users from 'src/entities/users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 class AuthService {
 
 	constructor(
 		@InjectRepository(Users)
-		private readonly UsersRepository: Repository<Users>,
-		private dataSources: DataSource
+		private readonly usersRepository: Repository<Users>,
+		private dataSources: DataSource,
+		@InjectRepository(Auth)
+		private readonly authRepository: Repository<Auth>
 	) {}
 
 	async addUser(user: Users): Promise<Users> {
@@ -27,6 +31,15 @@ class AuthService {
 		}
 		
 		return await this.addToken(token);
+	}
+	async getToken(token: string): Promise<Auth | null>{
+		return await this.authRepository.findOne({where: {token: token}, relations: ["user"]});
+	}
+	async deleteToken(token: string) {
+		return await this.authRepository.delete({token: token});
+	}
+	async updateUser(user: Users) {
+		return await this.usersRepository.save(user);
 	}
 }
 
