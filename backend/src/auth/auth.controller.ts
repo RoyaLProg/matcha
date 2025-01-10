@@ -1,14 +1,18 @@
 import { Controller, Get, Post, Body, BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import Users from 'src/entities/users.entity';
 import AuthService from './auth.service';
 import { UserGender, UserSexualOrientation } from 'src/entities/users.entity';
 import { sha256 } from 'js-sha256';
+import { MailerService } from '@nestjs-modules/mailer';
+import UserService from 'src/user/user.service';
 
 @Controller("auth")
 export class AuthController {
 
 	constructor(
 		private readonly authService: AuthService,
+		private readonly mailService: MailerService,
 	) {}
 
 	@Get('')
@@ -45,11 +49,25 @@ export class AuthController {
 			throw new BadRequestException('password is too weak');
 		const hash = sha256.create();
 		user.password = hash.update(user.password).hex();
-		let result: Users;
+		let result: Users;	
 		try {
 			result =  await this.authService.addUser(user);
 		} catch (e) {
 			throw new BadRequestException('email or user already exist');
+		}
+		try {
+			const token = await this.authService.create_token(user);
+			const message = `Welcome to Matcha the latte
+	
+							Can you please click this <a href="http://localhost:5173/verify/${token.token}">link</a> to confirm your email`;
+			await this.mailService.sendMail({
+				to: user.email,
+				text: message,
+				subject: "Matcha The Latte - Email Verification"
+			});
+		} catch (e) {
+			console.log(e);
+			throw new BadRequestException('could not send email');
 		}
 		return result;
 	}

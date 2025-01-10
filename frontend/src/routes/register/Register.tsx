@@ -13,13 +13,13 @@ interface IForm {
 	confirmPassword: string
 }
 
-
 export default function Register() {
 	const { handleSubmit, register, formState: {errors} } = useForm<IForm>();
 	const [ password, setPassword ] = useState<string>("");
 	const [ error, setError ] = useState<string | null>(null);
 
 	function onSubmit(values: IForm) {
+		setError(null);
 		const data = { firstName: values.firstName, lastName: values.lastName, username: values.username, email: values.email, birthDate: values.birthDate, password: password }
 		fetch(import.meta.env.VITE_API_URL + "/api/auth/register",
 			  {
