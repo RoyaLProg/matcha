@@ -38,6 +38,10 @@ class UserService {
 		}
 		await this.userRepository.remove(user);
 	}
+
+	async findOneByUsername(username: string) : Promise<Users> {
+		return await this.userRepository.findOne({ where: { username: username } });
+	}
 }
 
 export default UserService;

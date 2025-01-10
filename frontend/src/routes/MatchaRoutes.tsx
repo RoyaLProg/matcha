@@ -5,6 +5,7 @@ import Chat from "./chat/Chat";
 import Login from "./login/Login";
 import ChatsList from "./chat/ChatsList";
 import Verify from "./verify/Verify";
+import Forgot from "./forgot/forgot";
 
 export function MatchaRoutes() {
 	return (
@@ -24,6 +25,7 @@ export function MatchaRoutesDefault() {
 		<Route path="/register" element={<Register />} />
 		<Route path="/login" element={<Login />} />
 		<Route path="/verify/:token" element={<Verify />} />
+		<Route path="/forgot" element={<Forgot />}/>
 	</Routes>
 	);
 }

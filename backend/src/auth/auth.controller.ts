@@ -54,6 +54,7 @@ export class AuthController {
 		const hash = sha256.create();
 		user.password = hash.update(user.password).hex();
 		let result: Users;	
+
 		try {
 			result =  await this.authService.addUser(user);
 		} catch (e) {
@@ -73,8 +74,10 @@ export class AuthController {
 			console.log(e);
 			throw new BadRequestException('could not send email');
 		}
+
 		return result;
 	}
+	
 	@Delete('verify/:token')
 	async verify(@Param('token') token: string) {
 		if (! token.length)
@@ -97,6 +100,7 @@ export class AuthController {
 		}
 		return Authtoken; 
 	}
+
 	@Post('login')
 	async login(@Body() body, @Res({passthrough: true}) res: Response) {
 			const hash = sha256.create();
@@ -110,12 +114,36 @@ export class AuthController {
 			const jwt: string = this.jwtService.sign(JSON.stringify(payload), {secret: process.env.JWT_SECRET});
 			res.cookie("Auth", jwt);
 	}
+
+	@Post('forgot')
+	async forgot(@Body() body) {
+		
+		if (!body.username)
+			throw new BadRequestException('no username was provided');
+
+		const user = await this.userService.findOneByUsername(body.username);
+
+		if (user !== null) {
+			try {
+				const token = await this.authService.create_token(user, tokenType.PASS_RESET);
+				const message = `
+								<html>
+									Ho no !
+									You forgot your password ? do not worry !
+									Here is a one time <a href="http://localhost:5173/forgot/${token.token}">link</a> to reset your password !
+								</html>
+								`;
+				await this.mailService.sendMail({
+					to: user.email,
+					text: message,
+					subject: "Matcha The Latte - Password Reset"
+				});
+			} catch (e) {
+				console.log(e);
 			}
-			throw new HttpException(
-				'Failed to retrieve user',
-				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
 		}
+
+		return 'If user exist, recovery email has been sent';
 	}
 }
 
