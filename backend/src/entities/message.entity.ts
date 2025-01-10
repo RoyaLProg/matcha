@@ -2,10 +2,16 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "t
 import Users from "./users.entity";
 import Chat from "./chat.entity";
 
+export enum MessageType {
+	Text = 'text',
+	Audio = 'audio',
+	Video = 'video',
+}
+
 @Entity()
 class Message {
 	@PrimaryGeneratedColumn()
-	id: number;
+	id?: number;
 
 	@ManyToOne(() => Chat, (chat) => chat.messages, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'chatId' })
@@ -15,11 +21,17 @@ class Message {
 	@JoinColumn({ name: 'userId' })
 	sender: Users;
 
-	@Column({ type: 'text' })
-	message: string;
+	@Column({ type: 'enum', enum: MessageType, default: MessageType.Text })
+	type?: MessageType;
+
+	@Column({ type: 'text', nullable: true})
+	content: string | null;
+
+	@Column({ type: 'varchar', length: 255, nullable: true })
+	fileUrl: string | null;
 
 	@Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-	createdAt: Date;
+	createdAt?: Date;
 }
 
 export default Message;

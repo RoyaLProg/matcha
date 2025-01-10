@@ -19,6 +19,7 @@ services:
       - .env
     volumes:
       - backend:/opt/backend/
+      - backend/uploads:/opt/backend/uploads
     depends_on:
       - database
     ports:

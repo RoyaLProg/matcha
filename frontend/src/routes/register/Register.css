@@ -9,7 +9,7 @@ form {
 	flex-direction: column;
 }
 
-input[aria-invalid="true"]{
+[aria-invalid="true"]{
 	border-color: red;
 }
 
@@ -99,8 +99,9 @@ input[aria-invalid="true"]{
 .register .registerForm form input[type='date'] {
 	outline: none;
 }
-.register .registerForm form input[aria-invalid="true"]{
-	border-color: red;
+
+[aria-invalid="true"] {
+	border: 2px solid red;
 }
 
 .register .registerForm .registerButtons {

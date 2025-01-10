@@ -14,6 +14,8 @@ import Message from './entities/message.entity';
 import History from './entities/history.entity';
 import { Action } from './entities/action.entity';
 import { JwtModule } from '@nestjs/jwt';
+import TagsEntity from './entities/tags.entity';
+import Picture from './entities/picture.entity';
 
 @Module({
 	imports: [
@@ -24,15 +26,15 @@ import { JwtModule } from '@nestjs/jwt';
 			username: process.env.POSTGRES_USER,
 			password: process.env.POSTGRES_PASSWORD,
 			database: process.env.POSTGRES_DB,
-			entities: [Users, Chat, Message, Auth, History, Action],
+			entities: [Users, Chat, Message, Auth, History, Action, TagsEntity, Picture],
 			synchronize: true,
 		}),
-		TypeOrmModule.forFeature([Users, Chat, Message, Auth, History, Action]),
+		TypeOrmModule.forFeature([Users, Chat, Message, Auth, History, Action, TagsEntity, Picture]),
 		MailerModule.forRoot({
 			transport: `smtps://${process.env.EMAIL_USER}:${process.env.EMAIL_PASSWORD}@smtp.gmail.com`,
 			defaults: {
 				from: '"matcha noreply" <matcha.noreply@matcha.com>',
-			}
+			},
 		}),
 		JwtModule
 	],

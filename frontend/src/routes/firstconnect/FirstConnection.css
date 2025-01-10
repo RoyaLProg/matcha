@@ -1,0 +1,200 @@
+.firstConnection {
+	display: flex;
+	flex-direction: column;
+	padding: 8px;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 25px;
+	height: 100%;
+	width: 90%;
+}
+
+.firstConnection .menu {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 100%;
+	height: 50px;
+}
+
+.firstConnection .menu .logoMenu {
+	display: flex;
+	width: 50px;
+}
+
+.firstConnection .menu .myProfile {
+	display: flex;
+	width: 50px;
+}
+
+.firstConnection .menu .myProfile button {
+	width: 100%;
+	height: 100%;
+	border: none;
+	border-radius: 50%;
+	background-color: #444;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	backdrop-filter: blur(10px);
+	transform: scale3d(1, 1, 1);
+}
+
+.firstConnection .menu .myProfile button img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+.firstConnection .menu .myProfile button:hover {
+	background-color: #666;
+	transform: scale3d(1.1, 1.1, 1.1);
+}
+
+.firstConnection .content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+	max-width: 600px;
+	background-color: transparent;
+	padding: 20px;
+	border-radius: 10px;
+	box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.8);
+	gap: 15px;
+}
+
+h2 {
+	font-size: 1.8rem;
+	color: white;
+	margin-bottom: 10px;
+}
+.form-group {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	margin-bottom: 15px;
+}
+
+label {
+	font-size: 1rem;
+	font-weight: bold;
+	color: white;
+	margin-bottom: 5px;
+}
+
+input,
+select,
+textarea {
+	width: 100%;
+	padding: 10px;
+	font-size: 1rem;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	background-color: #f7f7f7;
+	box-sizing: border-box;
+	transition: border-color 0.3s ease, background-color 0.3s ease;
+	color: black;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+	border-color: #007bff;
+	background-color: #fff;
+	outline: none;
+}
+
+textarea {
+	resize: none;
+	height: 80px;
+}
+
+h4 {
+	font-size: 1.2rem;
+	color: white;
+	margin-bottom: 5px;
+}
+
+.tags-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.tag {
+	padding: 5px 10px;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	background-color: #f0f0f0;
+	color: black;
+	transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.tag:hover {
+	background-color: transparent;
+	box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+	color: white;
+}
+
+.tag.selected {
+	background: linear-gradient(180deg, rgba(255, 87, 87, 1) 0%, rgba(0, 102, 204, 1) 100%);;
+	color: white;
+	border: none;
+}
+
+button {
+	padding: 10px;
+	font-size: 1rem;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+}
+
+ button:hover {
+	background-color: #0056b3;
+	color: white;
+}
+
+.submit-button {
+	width: 100%;
+	background-color: #28a745;
+	color: white;
+	font-size: 1.2rem;
+	font-weight: bold;
+}
+
+.submit-button:hover {
+	background-color: #218838;
+}
+
+.uploaded-image {
+	width: 80px;
+	height: 80px;
+	border-radius: 5px;
+	object-fit: cover;
+	cursor: pointer;
+}
+
+.uploaded-image.selected {
+	border: 2px solid #007bff;
+}
+
+.set-profile-button {
+	margin-top: 5px;
+	padding: 5px 10px;
+	background-color: #28a745;
+	color: white;
+	border: none;
+	cursor: pointer;
+}
+
+.set-profile-button:hover {
+	background-color: #218838;
+}
+
+[aria-invalid="true"] {
+	border: 2px solid red;
+	background-color: #ffe6e6;
+}

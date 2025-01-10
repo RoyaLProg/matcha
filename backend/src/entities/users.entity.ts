@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import TagsEntity from "./tags.entity";
+import Picture from "./picture.entity";
 
 export enum UserGender {
 	Man = 'man',
@@ -48,11 +50,12 @@ class Users {
 	@Column({ type: 'varchar', default: "" })
 	biography?: string;
 
-	@Column("text", { array: true, default: [] })
-	pictures?: string[];
+	@OneToMany(() => Picture, (picture) => picture.user, { cascade: true })
+	pictures?: Picture[];
 
-	@Column("text", { array: true, default: [] })
-	tags?: string[];
+	@ManyToMany(() => TagsEntity)
+	@JoinTable()
+	tags?: TagsEntity[];
 
 	@Column({ type: 'enum', enum: UserGender })
 	gender: UserGender;
@@ -68,6 +71,7 @@ class Users {
 
 	@Column({ type: 'boolean', default: false })
 	isValidated: boolean;
+
 }
 
 export default Users;
