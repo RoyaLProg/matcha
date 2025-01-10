@@ -8,6 +8,7 @@ import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { tokenType } from 'src/entities/auth.entity';
+import { hash } from 'crypto';
 
 @Controller("auth")
 export class AuthController {
@@ -67,7 +68,7 @@ export class AuthController {
 							Can you please click this <a href="http://localhost:5173/verify/${token.token}">link</a> to confirm your email`;
 			await this.mailService.sendMail({
 				to: user.email,
-				text: message,
+				html: message,
 				subject: "Matcha The Latte - Email Verification"
 			});
 		} catch (e) {
@@ -86,19 +87,19 @@ export class AuthController {
 		const Authtoken = await this.authService.getToken(token);
 		if (Authtoken === null)
 			throw new BadRequestException('token is invalid');
-		let user = await this.userService.findOne(Authtoken.user.id);
+		if (Authtoken.type !== tokenType.CREATE)
+			throw new BadRequestException('token is invalid');
+		let user = Authtoken.user;
 		if (user.isValidated === true)
 			throw new BadRequestException('user is already validated');
 
-		if (Authtoken.type === "create") {
 
-			user.isValidated = true;
-			this.authService.updateUser(user);
+		user.isValidated = true;
+		this.authService.updateUser(user);
 
-			await this.authService.deleteToken(token);
-			return 'email has been updated';
-		}
-		return Authtoken; 
+		await this.authService.deleteToken(token);
+
+		return 'email has been verified';
 	}
 
 	@Post('login')
@@ -127,15 +128,13 @@ export class AuthController {
 			try {
 				const token = await this.authService.create_token(user, tokenType.PASS_RESET);
 				const message = `
-								<html>
 									Ho no !
 									You forgot your password ? do not worry !
 									Here is a one time <a href="http://localhost:5173/forgot/${token.token}">link</a> to reset your password !
-								</html>
 								`;
 				await this.mailService.sendMail({
 					to: user.email,
-					text: message,
+					html: message,
 					subject: "Matcha The Latte - Password Reset"
 				});
 			} catch (e) {
@@ -144,6 +143,29 @@ export class AuthController {
 		}
 
 		return 'If user exist, recovery email has been sent';
+	}
+
+	@Patch('forgot/:token')
+	async changePassword(@Param('token') token: string, @Body() body) {
+		if (! token.length)
+			throw new BadRequestException('token is empty');
+		
+		const Authtoken = await this.authService.getToken(token);
+		if (Authtoken === null)
+			throw new BadRequestException('token is invalid');
+		if (Authtoken.type !== tokenType.PASS_RESET)
+			throw new BadRequestException('token is invalid');
+		if (!this.checkPassword(body.password))
+			throw new BadRequestException('password does not comply with requirements');
+
+		let user = Authtoken.user;
+
+		const hash = sha256.create();
+		user.password = hash.update(body.password).hex();
+		this.authService.updateUser(user);
+
+		await this.authService.deleteToken(token);
+		return 'password has been updated';
 	}
 }
 

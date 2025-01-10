@@ -25,7 +25,8 @@ export function MatchaRoutesDefault() {
 		<Route path="/register" element={<Register />} />
 		<Route path="/login" element={<Login />} />
 		<Route path="/verify/:token" element={<Verify />} />
-		<Route path="/forgot" element={<Forgot />}/>
+		<Route path="/forgot" element={<Forgot />} />
+		<Route path="/forgot/:token" element={<Forgot />} />
 	</Routes>
 	);
 }

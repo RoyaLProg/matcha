@@ -32,7 +32,8 @@ import { JwtModule } from '@nestjs/jwt';
 			transport: `smtps://${process.env.EMAIL_USER}:${process.env.EMAIL_PASSWORD}@smtp.gmail.com`,
 			defaults: {
 				from: '"matcha noreply" <matcha.noreply@matcha.com>',
-			},
+			}
+		}),
 		JwtModule
 	],
   controllers: [UserController, AuthController],

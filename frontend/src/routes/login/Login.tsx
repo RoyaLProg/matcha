@@ -21,7 +21,7 @@ function Login() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(data)
 			  }
-		).then((rv) => rv.json().then(value => setError(value['message'])))
+		).then((rv) => {if (!rv.ok) rv.json().then(value => setError(value['message']))})
 		.catch((e) => console.log(e));
 	}
 
