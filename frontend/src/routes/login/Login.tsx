@@ -1,7 +1,9 @@
 import "./Login.css";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { UserContext } from "../../context/UserContext";
+import { notificationFunctions, NotificationType } from "../../context/WebSocketContext";
 
 interface IForm {
 	username: string
@@ -11,27 +13,32 @@ interface IForm {
 function Login() {
 	const { handleSubmit, register, formState: {errors} } = useForm<IForm>();
 	const [password, setPassword] = useState<string>("");
-	const [ error, setError ] = useState<string | null>(null);
+	const userConext = useContext(UserContext);
+	const navigate = useNavigate();
 
-	function onSubmit(values: IForm) {
-		setError('');
-		const data = { username: values.username, password: password }
-		fetch(import.meta.env.VITE_API_URL + "/api/auth/login",
-			  {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(data),
-				credentials: 'same-origin'
-			  }
-		).then((rv) => {
-			if (!rv.ok) 
-				rv.json().then(value => setError(value['message']))
-			else {
-				console.log(rv.headers.getSetCookie());
-			}
+	async function onSubmit(values: IForm) {
+		const data = { username: values.username, password: values.password };
+	
+		await fetch(import.meta.env.VITE_API_URL + '/api/auth/login', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
 		})
-		.catch((e) => console.log(e));
+			.then((rv) => {
+				if (!rv.ok) {
+					rv.json().then((value) => notificationFunctions[NotificationType.Error](value['message']));
+				} else {
+					if (userConext && userConext.user === undefined) {
+						userConext.updateUserFromCookie();
+						notificationFunctions[NotificationType.Success]('Login successful');
+						navigate('/');
+					}
+				}
+			})
+			.catch((e) => console.error('Fetch error:', e));
 	}
+	
 
 	function checkPassword(value: string) {
 		const i1 = new RegExp(/[_\-\*@!]/).test(value);
@@ -48,7 +55,6 @@ function Login() {
 		<div className="loginLogo">
 			<span className="logo"></span>
 		</div>
-			{ error ?? <p id="error">{error}</p> }
 		<div className="loginForm">
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<label id="username">

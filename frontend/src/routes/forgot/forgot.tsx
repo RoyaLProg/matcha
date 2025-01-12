@@ -1,23 +1,31 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { notificationFunctions, NotificationType } from "../../context/WebSocketContext";
 
 export default function Forgot() {
 	
 	const { token } = useParams();
 	const [message, setMessage] = useState<string | undefined>();	
 	const [username, setUsername] = useState<string>('');
-	
+	const navigate = useNavigate();
 	async function onSubmit() {
 		setMessage('');
-		const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot`, {
+		await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot`, {
 			method: "POST",
 			headers: {"Content-Type": "application/json"},	
 			body: JSON.stringify({username: username})}
-		);
-		if (response.ok)
-			setMessage((await response.text()));
-		else
-			setMessage((await response.json())['message']);
+		).then((rv) => {
+			if (!rv.ok) {
+				rv.json().then((value) => notificationFunctions[NotificationType.Error](value['message']));
+			} else {
+				rv.json().then((value) => { 
+					notificationFunctions[NotificationType.Success](value.message);
+					navigate('/login');
+				});
+			}
+
+		})
+		.catch((e) => console.error('Fetch error:', e));
 	}
 
 	if (token)
@@ -43,11 +51,11 @@ export default function Forgot() {
 }
 
 export function ForgotWithToken({ token }: {token: string}) {
-	
 	const [password, setPassword] = useState<string>('');
 	const [confirm, setConfirm] = useState<string>('');
 	const [message, setMessage] = useState<string | undefined>();
-
+	const navigate = useNavigate();
+	
 	function checkPassword(value: string) {
 		const i1 = new RegExp(/[_\-\*@!]/).test(value);
 		const i2 = new RegExp(/[0-9]/).test(value);
@@ -77,17 +85,20 @@ export function ForgotWithToken({ token }: {token: string}) {
 		if (!validate())
 			return ;	
 
-		let response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot/${token}`, {
+		await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot/${token}`, {
 			method: "PATCH",
 			body: JSON.stringify({password: password}),
 			headers: {"Content-Type": "application/json"}
-		});
-
-		if (response.ok)
-			setMessage('ok');
-		else
-			setMessage((await response.json()).message);
-
+		}).then((rv) => {
+			if (!rv.ok) {
+				rv.json().then((value) => notificationFunctions[NotificationType.Error](value['message']));
+			} else {
+				rv.json().then((value) => {
+					notificationFunctions[NotificationType.Success](value.message);
+					navigate('/login');
+				});
+			}
+		})
 
 	}
 

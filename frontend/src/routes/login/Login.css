@@ -44,6 +44,11 @@
 	width: 100%;
 }
 
+.login .loginForm form input[type="text"][aria-invalid="true"],
+.login .loginForm form input[type="password"][aria-invalid="true"] {
+  border: 2px solid red;
+}
+
 .login .loginForm form input[type='submit'] {
 	padding: 10px;
 	border: none;

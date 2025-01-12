@@ -18,6 +18,13 @@ interface Notification {
 	message: string;
 }
 
+const notificationFunctions = {
+	[NotificationType.Info]: toast.info,
+	[NotificationType.Success]: toast.success,
+	[NotificationType.Warning]: toast.warning,
+	[NotificationType.Error]: toast.error,
+};
+
 function WebSocketProvider({ children }: { children: ReactNode }) {
 	const user = useContext(UserContext);
 	const [socket, setSocket] = useState<Socket | undefined>(undefined);
@@ -31,12 +38,6 @@ function WebSocketProvider({ children }: { children: ReactNode }) {
 			});
 			setSocket(socketIOClient);
 			socketIOClient.on("notification", (notification: Notification) => {
-				const notificationFunctions = {
-					[NotificationType.Info]: toast.info,
-					[NotificationType.Success]: toast.success,
-					[NotificationType.Warning]: toast.warning,
-					[NotificationType.Error]: toast.error,
-				};
 				notificationFunctions[notification.type](notification.message);
 			});
 			return () => {
@@ -55,4 +56,4 @@ function WebSocketProvider({ children }: { children: ReactNode }) {
 
 }
 
-export { WebSocketProvider, WebSocketContext, NotificationType, Notification };
+export { WebSocketProvider, WebSocketContext, NotificationType, Notification, notificationFunctions };

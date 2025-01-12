@@ -35,7 +35,7 @@ export class AuthController {
 	}
 
 	@Post('register')
-	async register(@Body() body) : Promise<Users> {
+	async register(@Body() body,@Res() res: Response) {
 		const user: Users = {
 			fistName: body.firstName,
 			lastName: body.lastName,
@@ -76,11 +76,11 @@ export class AuthController {
 			throw new BadRequestException('could not send email');
 		}
 
-		return result;
+		return res.status(201).send({ message: 'Acound created, please verify your email' });
 	}
 
 	@Delete('verify/:token')
-	async verify(@Param('token') token: string) {
+	async verify(@Param('token') token: string, @Res() res: Response) {
 		if (! token.length)
 			throw new BadRequestException('token is empty');
 
@@ -96,10 +96,8 @@ export class AuthController {
 
 		user.isValidated = true;
 		this.authService.updateUser(user);
-
 		await this.authService.deleteToken(token);
-
-		return 'email has been verified';
+		return res.status(200).send({ message: 'email has been verified' });
 	}
 
 	@Post('login')
@@ -115,17 +113,17 @@ export class AuthController {
 			const jwt: string = this.jwtService.sign(JSON.stringify(payload), {secret: process.env.JWT_SECRET});
 			let eat = new Date();
 			eat.setMonth(eat.getMonth() + 2);
-			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, expires: eat, path: '/'});
+			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: false, expires: eat, path: '/'});
+			return res.status(200).send({ message: 'Login successful!' });
 	}
 
 	@Post('forgot')
-	async forgot(@Body() body) {
-
+	async forgot(@Body() body, @Res() res: Response) {
 		if (!body.username)
 			throw new BadRequestException('no username was provided');
-
 		const user = await this.userService.findOneByUsername(body.username);
-
+		if (!user)
+			throw new NotFoundException('user not found');
 		if (user !== null) {
 			try {
 				const token = await this.authService.create_token(user, tokenType.PASS_RESET);
@@ -143,12 +141,11 @@ export class AuthController {
 				console.log(e);
 			}
 		}
-
-		return 'If user exist, recovery email has been sent';
+		return res.status(200).send({ message: 'if the user exists, an email has been sent' });
 	}
 
 	@Patch('forgot/:token')
-	async changePassword(@Param('token') token: string, @Body() body) {
+	async changePassword(@Param('token') token: string, @Body() body, @Res() res: Response) {
 		if (! token.length)
 			throw new BadRequestException('token is empty');
 
@@ -167,7 +164,7 @@ export class AuthController {
 		this.authService.updateUser(user);
 
 		await this.authService.deleteToken(token);
-		return 'password has been updated';
+		return res.status(200).send({ message: 'password has been updated' });
 	}
 }
 

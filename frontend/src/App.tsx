@@ -7,11 +7,11 @@ import { useContext } from 'react';
 function App() {
 	const context = useContext(UserContext);
 	if (!context?.user)
-	return (
-	 	<Router>
-	 		<MatchaRoutesDefault />
-	 	</Router>
-	)
+		return (
+		 	<Router>
+		 		<MatchaRoutesDefault />
+		 	</Router>
+		)
 	return (
 		<Router>
 			<MatchaRoutes />
