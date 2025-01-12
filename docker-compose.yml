@@ -18,8 +18,8 @@ services:
     env_file:
       - .env
     volumes:
-      - backend:/opt/backend/
-      - backend/uploads:/opt/backend/uploads
+      - ./backend:/opt/backend/
+      # - backend/uploads:/opt/backend/uploads
     depends_on:
       - database
     ports:
@@ -30,7 +30,7 @@ services:
   frontend:
     build: ./frontend
     volumes:
-      - frontend:/opt/frontend/
+      - ./frontend:/opt/frontend/
     environment:
       - VITE_API_URL=${API_URL}
     depends_on:
