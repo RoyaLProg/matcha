@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import ChatService from 'src/chat/chat.service';
-import { Action, ActionStatus } from 'src/entities/action.entity';
+import Action, { ActionStatus } from 'src/entities/action.entity';
 import Chat from 'src/entities/chat.entity';
 import { DataSource } from 'typeorm';
 

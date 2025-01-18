@@ -1,24 +1,9 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import TagsEntity from "./tags.entity";
-import Picture from "./picture.entity";
-
-export enum UserGender {
-	Man = 'man',
-	Women = 'woman',
-	Other = 'other',
-	Undefined = 'undefined'
-}
-
-export enum UserSexualOrientation {
-	Heterosexual = 'heterosexual',
-	Bisexual = 'bisexual',
-	Homosexual = 'homosexual',
-	Undefined = 'undefined'
-}
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import Settings from "./settings.entity";
 
 export enum UserStatus {
-	Offline = "offline",
-	Online = "online"
+	Offline = 'offline',
+	Online = 'online'
 }
 
 @Entity()
@@ -47,31 +32,11 @@ class Users {
 	@Column({ type: 'enum', enum: UserStatus, default: UserStatus.Offline })
 	status?: UserStatus;
 
-	@Column({ type: 'varchar', default: "" })
-	biography?: string;
-
-	@OneToMany(() => Picture, (picture) => picture.user, { cascade: true })
-	pictures?: Picture[];
-
-	@ManyToMany(() => TagsEntity)
-	@JoinTable()
-	tags?: TagsEntity[];
-
-	@Column({ type: 'enum', enum: UserGender })
-	gender: UserGender;
-
-	@Column({ type: 'enum', enum: UserSexualOrientation })
-	sexualOrientation: UserSexualOrientation;
-
-	@Column({ type: 'varchar', length: 255, default: "" })
-	city?: string;
-
-	@Column({ type: 'varchar', length: 255, default: "" })
-	country?: string;
-
 	@Column({ type: 'boolean', default: false })
 	isValidated: boolean;
 
+	@OneToOne(() => Settings, (settings) => settings.user, { cascade: true })
+	settings?: Settings;
 }
 
 export default Users;

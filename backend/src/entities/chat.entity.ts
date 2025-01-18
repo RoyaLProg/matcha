@@ -1,11 +1,9 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import Users from "./users.entity";
-import message from "./message.entity";
 import Message from "./message.entity";
 
 @Entity()
 class Chat {
-
 	@PrimaryGeneratedColumn()
 	id: number;
 

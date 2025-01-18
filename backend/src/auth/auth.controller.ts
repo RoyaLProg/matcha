@@ -1,13 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import Users from 'src/entities/users.entity';
 import AuthService from './auth.service';
-import { UserGender, UserSexualOrientation } from 'src/entities/users.entity';
 import { sha256 } from 'js-sha256';
 import { MailerService } from '@nestjs-modules/mailer';
 import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
-import { tokenType } from 'src/entities/auth.entity';
+import { TokenType } from 'src/entities/auth.entity';
 import { hash } from 'crypto';
 
 @Controller("auth")
@@ -43,8 +42,8 @@ export class AuthController {
 			password: body.password,
 			birthDate: body.birthDate,
 			email: body.email,
-			sexualOrientation: UserSexualOrientation.Undefined,
-			gender: UserGender.Undefined,
+			// sexualOrientation: UserSexualOrientation.Undefined,
+			// gender: UserGender.Undefined,
 			isValidated: false,
 		}
 
@@ -87,7 +86,7 @@ export class AuthController {
 		const Authtoken = await this.authService.getToken(token);
 		if (Authtoken === null)
 			throw new BadRequestException('token is invalid');
-		if (Authtoken.type !== tokenType.CREATE)
+		if (Authtoken.type !== TokenType.CREATE)
 			throw new BadRequestException('token is invalid');
 		let user = Authtoken.user;
 		if (user.isValidated === true)
@@ -126,7 +125,7 @@ export class AuthController {
 			throw new NotFoundException('user not found');
 		if (user !== null) {
 			try {
-				const token = await this.authService.create_token(user, tokenType.PASS_RESET);
+				const token = await this.authService.create_token(user, TokenType.PASS_RESET);
 				const message = `
 									Ho no !
 									You forgot your password ? do not worry !
@@ -152,7 +151,7 @@ export class AuthController {
 		const Authtoken = await this.authService.getToken(token);
 		if (Authtoken === null)
 			throw new BadRequestException('token is invalid');
-		if (Authtoken.type !== tokenType.PASS_RESET)
+		if (Authtoken.type !== TokenType.PASS_RESET)
 			throw new BadRequestException('token is invalid');
 		if (!this.checkPassword(body.password))
 			throw new BadRequestException('password does not comply with requirements');

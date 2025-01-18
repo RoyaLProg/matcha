@@ -11,7 +11,7 @@ export enum MessageType {
 @Entity()
 class Message {
 	@PrimaryGeneratedColumn()
-	id?: number;
+	id: number;
 
 	@ManyToOne(() => Chat, (chat) => chat.messages, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'chatId' })
@@ -24,7 +24,7 @@ class Message {
 	@Column({ type: 'enum', enum: MessageType, default: MessageType.Text })
 	type?: MessageType;
 
-	@Column({ type: 'text', nullable: true})
+	@Column({ type: 'text', nullable: true })
 	content: string | null;
 
 	@Column({ type: 'varchar', length: 255, nullable: true })

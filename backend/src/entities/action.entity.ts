@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
 import Users from "./users.entity";
 
-enum ActionStatus {
+export enum ActionStatus {
 	Like = 'like',
 	Dislike = 'dislike',
 }
@@ -23,4 +23,4 @@ class Action {
 	status: ActionStatus;
 }
 
-export { Action, ActionStatus };
+export default Action;
