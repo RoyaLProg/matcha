@@ -43,7 +43,7 @@ function HomeDefault() {
 			<div className="homeLogoDefault">
 				<span className="logo"></span>
 			</div>
-			<p>welcome to 42love</p>
+			<p>Welcome to Matcha The Latte !</p>
 			<div className="homeButtons">
 				<Link to={"/login"}><button className="loginButton"> Login </button></Link>
 				<Link to={"/register"}><button className="registerButton"> Register </button></Link>
