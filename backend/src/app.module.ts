@@ -12,10 +12,11 @@ import Auth from './entities/auth.entity';
 import Chat from './entities/chat.entity';
 import Message from './entities/message.entity';
 import History from './entities/history.entity';
-import { Action } from './entities/action.entity';
+import Action from './entities/action.entity';
 import { JwtModule } from '@nestjs/jwt';
 import TagsEntity from './entities/tags.entity';
 import Picture from './entities/picture.entity';
+import Settings from './entities/settings.entity';
 
 @Module({
 	imports: [
@@ -26,10 +27,10 @@ import Picture from './entities/picture.entity';
 			username: process.env.POSTGRES_USER,
 			password: process.env.POSTGRES_PASSWORD,
 			database: process.env.POSTGRES_DB,
-			entities: [Users, Chat, Message, Auth, History, Action, TagsEntity, Picture],
+			entities: [],
 			synchronize: true,
 		}),
-		TypeOrmModule.forFeature([Users, Chat, Message, Auth, History, Action, TagsEntity, Picture]),
+		TypeOrmModule.forFeature([Users, Chat, Message, Auth, History, Action, TagsEntity, Picture, Settings]),
 		MailerModule.forRoot({
 			transport: `smtps://${process.env.EMAIL_USER}:${process.env.EMAIL_PASSWORD}@smtp.gmail.com`,
 			defaults: {

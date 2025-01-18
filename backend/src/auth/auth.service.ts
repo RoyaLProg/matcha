@@ -3,7 +3,7 @@ import Users from 'src/entities/users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { randomUUID } from 'crypto';
-import Auth, { tokenType } from 'src/entities/auth.entity';
+import Auth, { TokenType } from 'src/entities/auth.entity';
 
 @Injectable()
 class AuthService {
@@ -24,7 +24,7 @@ class AuthService {
 		return await this.authRepository.save(token);
 	}
 
-	async create_token(user: Users, type?: tokenType): Promise<Auth>{
+	async create_token(user: Users, type?: TokenType): Promise<Auth>{
 		const token: Auth = {
 			token: randomUUID(),
 			type: type,

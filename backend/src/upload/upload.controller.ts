@@ -2,10 +2,11 @@ import { Controller, Param, Post, Request, UploadedFiles, UseInterceptors } from
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { DataSource } from "typeorm";
 import { UploadService } from "./upload.service";
-import Picture from "src/entities/picture.entity";
 import Users from "src/entities/users.entity";
+import Picture from "src/entities/picture.entity";
 import Chat from "src/entities/chat.entity";
 import Message, { MessageType } from "src/entities/message.entity";
+
 
 @Controller("upload")
 class UploadController {
@@ -24,7 +25,7 @@ class UploadController {
 		for (const file of files) {
 			const picture = this.dataSource.getRepository(Picture).create({
 				url: `/uploads/pictures/${file.filename}`,
-				user: user,
+				settings: user.settings
 			});
 			savedPictures.push(await this.dataSource.getRepository(Picture).save(picture));
 		}

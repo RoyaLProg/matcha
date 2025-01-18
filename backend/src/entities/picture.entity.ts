@@ -1,5 +1,5 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import Users from "./users.entity";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import Settings from './settings.entity';
 
 @Entity()
 class Picture {
@@ -9,11 +9,11 @@ class Picture {
 	@Column({ type: 'varchar', length: 255 })
 	url: string;
 
-	@ManyToOne(() => Users, (user) => user.pictures, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'userId' })
-	user: Users;
+	@ManyToOne(() => Settings, (settings) => settings.pictures, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'settingsId' })
+	settings: Settings;
 
-	@Column({type: 'boolean', default: false})
+	@Column({ type: 'boolean', default: false })
 	isProfile?: boolean;
 }
 

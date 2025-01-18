@@ -4,7 +4,7 @@ services:
     image: postgres:latest
     container_name: database_container
     volumes:
-      - database:/database
+      - ./database/create_matcha.sql:/docker-entrypoint-initdb.d/create_matcha.sql:ro
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}

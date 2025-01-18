@@ -1,9 +1,9 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import Users from "./users.entity";
 
-export enum tokenType {
-	PASS_RESET="password",
-	CREATE="create"
+export enum TokenType {
+	PASS_RESET = 'password',
+	CREATE = 'create',
 }
 
 @Entity()
@@ -18,9 +18,9 @@ class Auth {
 	@Column({ type: 'text' })
 	token: string;
 
-	@Column({type: 'text', enum: tokenType, default: "create"})
-	type: string;
-	
+	@Column({ type: 'enum', enum: TokenType, default: TokenType.CREATE })
+	type: TokenType;
+
 	@Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
 	createdAt?: Date;
 }

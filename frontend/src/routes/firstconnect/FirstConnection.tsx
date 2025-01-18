@@ -1,6 +1,6 @@
 import "./FirstConnection.css";
 import getTags from "../../assets/tags";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface IForm {
@@ -9,15 +9,39 @@ interface IForm {
 	biography: string;
 	tags: string[];
 	pictures: File[];
+	country : string;
+	city: string;
+	GeoLocalisation: boolean;
 }
 
 function FirstConnection() {
-	const { handleSubmit, register, formState: {errors} } = useForm<IForm>();
+	const { handleSubmit, register, setValue, formState: {errors} } = useForm<IForm>();
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
 	const [profilePicture, setProfilePicture] = useState<string>("");
 	const [uploadedPictures, setUploadedPictures] = useState<File[]>([]);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const tags = getTags();
+
+
+	useEffect(() => {
+        // Obtenir les coordonnées GPS
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const response = await fetch(
+                        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+                    );
+                    const data = await response.json();
+                    if (data) {
+                        setValue("country", data.countryName || "");
+                        setValue("city", data.city || "");
+                    }
+                },
+                (error) => console.error("Error getting location:", error)
+            );
+        }
+    }, [setValue]);
 
 	function handleTagClick(tag: string) {
 		if (selectedTags.includes(tag)) {
@@ -48,6 +72,7 @@ function FirstConnection() {
 		}
 	}
 
+	
 
 	function onSubmit(values: IForm) {
 		if (selectedTags.length < 7) {
@@ -58,14 +83,15 @@ function FirstConnection() {
 			console.log("Please upload at least one picture");
 			return
 		}
+		// fetch en tout premier les picture au backend est ensuite  fetch  les data avec les url des picture modifier
 		const data = {
 			...values,
 			tags: selectedTags,
-			profilePicture: profilePicture
+			profilePicture: uploadedPictures
 		}
 		console.log(data);
 	}
-
+// add range age est un range localisation 
 	return (
 		<div className="firstConnection">
 			<div className="menu">
@@ -100,6 +126,26 @@ function FirstConnection() {
 					<div className="form-group">
 						<label htmlFor="biography">Biography</label>
 						<textarea  placeholder="Tell us aboutn yourself..." {...register("biography", {required: true})} aria-invalid={errors.biography ? true : false}/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="country">country</label>
+						<input type="text" placeholder="country" {...register("country", {required: true})} aria-invalid={errors.country ? true : false}/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="city">city</label>
+						<input type="text" placeholder="city" {...register("city", {required: true})} aria-invalid={errors.city ? true : false}/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="GeoLocalisation">GeoLocalisation</label>
+						<input type="checkbox" placeholder="GeoLocalisation" {...register("GeoLocalisation")} aria-invalid={errors.GeoLocalisation ? true : false}/>
+					</div>
+					<div className="form-group">
+						<label htmlFor="rangeAge">range age</label>
+
+					</div>
+					<div className="form-group">
+						<label htmlFor="rangelocalisation">range localisation</label>
+
 					</div>
 					<div className="form-group">
 						<label>Interests (Select up to minimun 7)</label>
