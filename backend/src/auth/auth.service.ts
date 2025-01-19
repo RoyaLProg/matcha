@@ -49,8 +49,9 @@ class AuthService {
 	async getLogin(username: string, password: string): Promise<Users | null> {
 		return await this.usersRepository.findOne({ where: { username: username, password: password }});
 	}
+
 	async test(){
-		return this.database.getFirstRow('Users', ['id', 'username', 'email'], {id: 1, username: 'royal'});
+		return this.database.getFirstRow('auth', [], {}, {Users: {userId: 'id'}});
 	}
 }
 
