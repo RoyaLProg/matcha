@@ -17,6 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
 import TagsEntity from './entities/tags.entity';
 import Picture from './entities/picture.entity';
 import Settings from './entities/settings.entity';
+import { Database } from './database/Database';
 
 @Module({
 	imports: [
@@ -43,6 +44,7 @@ import Settings from './entities/settings.entity';
   providers: [SocketsService,
 			  UserService,
 			  AppGateway,
-			  AuthService]
+			  AuthService,
+			  Database]
 })
 export class AppModule {}
