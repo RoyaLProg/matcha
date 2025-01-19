@@ -165,6 +165,11 @@ export class AuthController {
 		await this.authService.deleteToken(token);
 		return res.status(200).send({ message: 'password has been updated' });
 	}
+
+	@Get('test')
+	async test2() {
+		return await this.authService.test();
+	}
 }
 
 export default AuthController;
