@@ -1,10 +1,24 @@
-import { Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import UserService from './user.service';
+import Settings from 'src/interface/settings.interface';
+import SettingsService from './settings.service';
 
 @Controller('Users')
 class UserController {
-	constructor(private readonly userService: UserService) { }
+	constructor(private readonly userService: UserService, private readonly settingsService: SettingsService) { }
+
+	@Post('/settings/create')
+	createSettings(@Body() data: Settings) : Promise<Settings> {
+		try {
+			return this.settingsService.createSettings(data);
+		} catch (error) {
+			throw new HttpException(
+				'Failed to create settings',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
 
 	@Get()
 	getAllUsers() : Promise<Users[]>{
@@ -47,6 +61,7 @@ class UserController {
 			);
 		}
 	}
+
 
 	@Delete(':id')
 	deleteUser(@Param('id') id: number) : Promise<void> {

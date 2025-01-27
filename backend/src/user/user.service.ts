@@ -3,7 +3,7 @@ import { Database } from 'src/database/Database';
 import Users from 'src/interface/users.interface';
 
 @Injectable()
-class UserService {
+export default class UserService {
 	constructor(
 		private database: Database
 	) { }
@@ -42,5 +42,3 @@ class UserService {
 		return user as Users;
 	}
 }
-
-export default UserService;
