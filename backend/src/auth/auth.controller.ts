@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import AuthService from './auth.service';
 import { sha256 } from 'js-sha256';
@@ -7,7 +7,7 @@ import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { TokenType } from 'src/interface/auth.interface';
-import { hash } from 'crypto';
+import AuthGuard from './auth.guard';
 
 type MyOmit<T, K extends PropertyKey> =
     { [P in keyof T as Exclude<P, K>]: T[P] }
@@ -172,8 +172,9 @@ export class AuthController {
 	}
 
 	@Get('test')
+	@UseGuards(AuthGuard)
 	async test2() {
-		return await this.authService.test();
+		return 'i am guarded';
 	}
 }
 

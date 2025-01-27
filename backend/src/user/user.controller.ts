@@ -1,6 +1,8 @@
-import { Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import UserService from './user.service';
+import AuthGuard from 'src/auth/auth.guard';
+import UserGuard from './user.guard';
 
 @Controller('Users')
 class UserController {
@@ -19,9 +21,13 @@ class UserController {
 	}
 
 	@Get(':id')
-	getUser(@Param('id') id: number) : Promise<Users> {
+	async getUser(@Param('id') id: number) : Promise<Users> {
 		try {
-			return this.userService.findOne(id);
+			const user = await this.userService.findOne(id);
+			delete user.settings
+			delete user.password
+			delete user.email
+			return user;
 		} catch (error) {
 			if (error.message === 'User not found') {
 				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
@@ -34,6 +40,7 @@ class UserController {
 	}
 
 	@Patch(':id')
+	@UseGuards(AuthGuard, UserGuard)
 	updateUser(@Param('id') id: number, @Body() data: Partial<Users>) : Promise<Users> {
 		try {
 			return this.userService.update(id, data);
@@ -49,6 +56,7 @@ class UserController {
 	}
 
 	@Delete(':id')
+	@UseGuards(AuthGuard, UserGuard)
 	deleteUser(@Param('id') id: number) : Promise<void> {
 		try {
 			return this.userService.remove(id);
