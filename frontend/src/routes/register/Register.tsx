@@ -1,6 +1,5 @@
 import "./Register.css"
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { notificationFunctions, NotificationType } from "../../context/WebSocketContext";
 
@@ -16,11 +15,17 @@ interface IForm {
 
 export default function Register() {
 	const { handleSubmit, register, formState: {errors} } = useForm<IForm>();
-	const [ password, setPassword ] = useState<string>("");
 	const navigate = useNavigate();
 
 	async function onSubmit(values: IForm) {
-		const data = { firstName: values.firstName, lastName: values.lastName, username: values.username, email: values.email, birthDate: values.birthDate, password: password }
+		const data = { firstName: values.firstName, lastName: values.lastName, username: values.username, email: values.email, birthDate: values.birthDate, password: values.password }
+
+		if (!checkPassword(values.password))
+			return ; 
+
+		if (values.password != values.confirmPassword)
+			return ;
+
 		await fetch(import.meta.env.VITE_API_URL + "/api/auth/register",
 			  {
 				method: "POST",
@@ -45,7 +50,6 @@ export default function Register() {
 		const i2 = new RegExp(/[0-9]/).test(value);
 		const i3 = new RegExp(/[a-z]/).test(value);
 		const i4 = new RegExp(/[A-Z]/).test(value);
-		setPassword(value);
 
 		return (i1 && i2 && i3 && i4);
 	}
@@ -82,11 +86,11 @@ export default function Register() {
 					</label>
 					<label id="password">
 						Password :
-						<input type="password" defaultValue={password} {...register("password", {required: true, maxLength: 256, minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => checkPassword(value)})} aria-invalid={errors.password ? true : false}/>
+						<input type="password" {...register("password", {required: true, maxLength: 256, minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i })} aria-invalid={errors.password ? true : false}/>
 					</label>
 					<label id="confirm-password">
 						Confirm Password :
-						<input type="password" {...register("confirmPassword", {required: true, maxLength: 256,minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => {return (value == password)}})} aria-invalid={errors.confirmPassword ? true : false}/>
+						<input type="password" {...register("confirmPassword", {required: true, maxLength: 256,minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, })} aria-invalid={errors.confirmPassword ? true : false}/>
 					</label>
 					<input type="submit" />
 				</form>
