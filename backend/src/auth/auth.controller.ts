@@ -40,7 +40,7 @@ export class AuthController {
 			lastName: body.lastName,
 			username: body.username,
 			password: body.password,
-			birthDate: body.birthDate,
+			birthDate: new Date(body.birthDate).toISOString().slice(0,10),
 			email: body.email,
 			// sexualOrientation: UserSexualOrientation.Undefined,
 			// gender: UserGender.Undefined,
@@ -61,7 +61,8 @@ export class AuthController {
 			throw new BadRequestException('email or user already exist');
 		}
 		try {
-			const token = await this.authService.create_token(user);
+			const myUser = await this.userService.findOneByUsername(user.username);
+			const token = await this.authService.create_token(myUser);
 			const message = `Welcome to Matcha the latte
 
 							Can you please click this <a href="http://localhost:5173/verify/${token.token}">link</a> to confirm your email`;
@@ -83,16 +84,16 @@ export class AuthController {
 		if (! token.length)
 			throw new BadRequestException('token is empty');
 
-		const Authtoken = await this.authService.getToken(token);
+		const Authtoken = await this.authService.getToken(token) as Object;
 		if (Authtoken === null)
 			throw new BadRequestException('token is invalid');
-		if (Authtoken.type !== TokenType.CREATE)
+		if (Authtoken['type'] !== TokenType.CREATE)
 			throw new BadRequestException('token is invalid');
-		let user = Authtoken.user;
+		let user = Authtoken['users'];
 		if (user.isValidated === true)
 			throw new BadRequestException('user is already validated');
 
-
+		user.birthDate = new Date(user.birthDate).toISOString().slice(0,10);
 		user.isValidated = true;
 		this.authService.updateUser(user);
 		await this.authService.deleteToken(token);
@@ -156,7 +157,7 @@ export class AuthController {
 		if (!this.checkPassword(body.password))
 			throw new BadRequestException('password does not comply with requirements');
 
-		let user = Authtoken.user;
+		let user = Authtoken['users'];
 
 		const hash = sha256.create();
 		user.password = hash.update(body.password).hex();

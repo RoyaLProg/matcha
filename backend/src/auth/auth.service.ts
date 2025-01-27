@@ -22,15 +22,15 @@ class AuthService {
 	async create_token(user: Users, type?: TokenType): Promise<Auth>{
 		const token: Auth = {
 			token: randomUUID(),
-			type: type,
-			user: user
+			type: type ?? TokenType.CREATE,
+			userId: user.id.toString()
 		}
 
 		return await this.addToken(token);
 	}
 
 	async getToken(token: string): Promise<Auth | null>{
-		const result = (await this.database.getFirstRow('auth', [], { token: token }, { Users: { userId: 'id' } })) as Auth | null;
+		const result = (await this.database.getFirstRow('auth', [], { token: token }, { users: { userId: 'id' } })) as Auth | null;
 		return result;
 	}
 
@@ -49,7 +49,7 @@ class AuthService {
 	}
 
 	async test(){
-		return await this.database.getFirstRow('auth', [], {}, { Users: { userId: 'id' } });
+		return await this.database.getFirstRow('auth', [], {}, { users: { userId: 'id' } });
 	}
 }
 

@@ -12,15 +12,19 @@ export class Database {
 		});
 
 	public async addOne(table: string, columns: Object): Promise<Object> {
-		let query = `INSERT INTO ${table} (${Object.keys(columns)}) VALUES (${Object.values(columns)});`;
-		let rv = await Database._pool.query(query);
-		return rv.rows[0];
+		let query = `INSERT INTO ${table} (${Object.keys(columns).map((v) => {return `"${v}"`})}) VALUES (${Object.values(columns).map((v) => {return `'${v}'`})});`;
+		try {
+			await Database._pool.query(query);
+			return columns;
+		} catch (e) {
+			throw (e);
+		}
 	}
 
 	public async getRows(table: string, columns?: Array<string>, where?: Object): Promise<Object> {
 		let whereString: undefined | string = this.createWhere(where);
 
-		let query = `SELECT ${columns ? columns : '*'} FROM ${table} ${whereString ?? ''}`;
+		let query = `SELECT ${columns ? columns.map((v) => {return `"${v}"`}) : '*'} FROM ${table} ${whereString ?? ''}`;
 		let result = await Database._pool.query(query);
 
 		return result.rows;
@@ -94,7 +98,7 @@ export class Database {
 
 		for (let i = 0; i < keys.length; i++)
 		{
-			rv += `${keys[i]}='${values[i]}'`;
+			rv += `"${keys[i]}"='${values[i]}'`;
 			if ( i != keys.length - 1 )
 				rv += ', ';
 		}
@@ -106,7 +110,7 @@ export class Database {
 
 		let whereString: undefined | string = this.createWhere(where);
 
-		let query = `SELECT ${columns && columns.length ? columns : '*'} FROM ${table} ${whereString ?? ''};`;
+		let query = `SELECT ${columns && columns.length ? columns.map((v) => {return `"${v}"`}) : '*'} FROM ${table} ${whereString ?? ''};`;
 		let result = await Database._pool.query(query);
 
 		if (relations && result.rows.length > 0)
