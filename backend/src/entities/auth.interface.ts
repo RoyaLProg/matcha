@@ -1,5 +1,3 @@
-import Users from "./users.interface";
-
 export enum TokenType {
 	PASS_RESET = "password",
 	CREATE = "create",
@@ -7,7 +5,7 @@ export enum TokenType {
 
 interface Auth {
 	id?: number;
-	user?: Users;
+	userId?: string;
 	token: string;
 	type: TokenType;
 	createdAt?: Date;
