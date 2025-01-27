@@ -1,5 +1,5 @@
 import { Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus } from '@nestjs/common';
-import Users from 'src/entities/users.interface';
+import Users from 'src/interface/users.interface';
 import UserService from './user.service';
 
 @Controller('Users')

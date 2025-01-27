@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Database } from 'src/database/Database';
-import Chat from 'src/entities/chat.interface';
-import Message from 'src/entities/message.interface';
+import Chat from 'src/interface/chat.interface';
+import Message from 'src/interface/message.interface';
 
 @Injectable()
 class ChatService {

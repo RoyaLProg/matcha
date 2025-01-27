@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import Users from 'src/entities/users.interface';
+import Users from 'src/interface/users.interface';
 import AuthService from './auth.service';
 import { sha256 } from 'js-sha256';
 import { MailerService } from '@nestjs-modules/mailer';
 import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
-import { TokenType } from 'src/entities/auth.interface';
+import { TokenType } from 'src/interface/auth.interface';
 import { hash } from 'crypto';
 
 @Controller("auth")

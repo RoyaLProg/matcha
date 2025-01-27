@@ -8,7 +8,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { SocketsService } from './sockets.service';
-import Users, { UserStatus } from './entities/users.interface';
+import Users, { UserStatus } from './interface/users.interface';
 import { Database } from './database/Database';
 
 @WebSocketGateway()

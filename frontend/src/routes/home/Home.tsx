@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 import "./Home.css"
 
 
-function Home() {
+export function Home() {
 
 	return (
 		<div className="home alignement">
@@ -37,7 +37,7 @@ function Home() {
 	);
 }
 
-function HomeDefault() {
+export default function HomeDefault() {
 	return (
 		<div className="home">
 			<div className="homeLogoDefault">
@@ -51,5 +51,3 @@ function HomeDefault() {
 		</div>
 	);
 }
-
-export { Home, HomeDefault };
