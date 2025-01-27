@@ -9,6 +9,9 @@ import { Response } from 'express';
 import { TokenType } from 'src/interface/auth.interface';
 import { hash } from 'crypto';
 
+type MyOmit<T, K extends PropertyKey> =
+    { [P in keyof T as Exclude<P, K>]: T[P] }
+
 @Controller("auth")
 export class AuthController {
 
@@ -109,8 +112,8 @@ export class AuthController {
 				throw new UnauthorizedException('username or password incorrect');
 			if (!user.isValidated)
 				throw new UnauthorizedException('you need to verify your email first');
-			const payload: Omit<Users, 'password'> = user;
-			const jwt: string = this.jwtService.sign(JSON.stringify(payload), {secret: process.env.JWT_SECRET});
+			delete user.password;
+			const jwt: string = this.jwtService.sign(JSON.stringify(user), {secret: process.env.JWT_SECRET});
 			let eat = new Date();
 			eat.setMonth(eat.getMonth() + 2);
 			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: false, expires: eat, path: '/'});
@@ -158,6 +161,7 @@ export class AuthController {
 			throw new BadRequestException('password does not comply with requirements');
 
 		let user = Authtoken['users'];
+		user.birthDate = new Date(user.birthDate).toISOString().slice(0,10);
 
 		const hash = sha256.create();
 		user.password = hash.update(body.password).hex();
