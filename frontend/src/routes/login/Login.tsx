@@ -1,5 +1,5 @@
 import "./Login.css";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { UserContext } from "../../context/UserContext";
@@ -12,13 +12,15 @@ interface IForm {
 
 function Login() {
 	const { handleSubmit, register, formState: {errors} } = useForm<IForm>();
-	const [password, setPassword] = useState<string>("");
 	const userConext = useContext(UserContext);
 	const navigate = useNavigate();
 
 	async function onSubmit(values: IForm) {
 		const data = { username: values.username, password: values.password };
-	
+		
+		if (!checkPassword(values.password))
+			return ;
+
 		await fetch(import.meta.env.VITE_API_URL + '/api/auth/login', {
 			method: 'POST',
 			credentials: 'include',
@@ -45,7 +47,6 @@ function Login() {
 		const i2 = new RegExp(/[0-9]/).test(value);
 		const i3 = new RegExp(/[a-z]/).test(value);
 		const i4 = new RegExp(/[A-Z]/).test(value);
-		setPassword(value);
 
 		return (i1 && i2 && i3 && i4);
 	}
@@ -63,7 +64,7 @@ function Login() {
 				</label>
 				<label id="password">
 					Password :
-					<input type="password" defaultValue={password} {...register("password", {required: true, maxLength: 256, minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => checkPassword(value)})} aria-invalid={errors.password ? true : false}/>
+					<input type="password" {...register("password", {required: true, maxLength: 256, minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => checkPassword(value)})} aria-invalid={errors.password ? true : false}/>
 				</label>
 				<input type="submit" value={'login'}/>
 			</form>
