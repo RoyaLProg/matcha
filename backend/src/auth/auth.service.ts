@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import Auth, { TokenType } from 'src/entities/auth.interface';
+import Auth, { TokenType } from 'src/interface/auth.interface';
 import { Database } from '../database/Database';
-import Users from 'src/entities/users.interface';
+import Users from 'src/interface/users.interface';
 
 @Injectable()
 class AuthService {

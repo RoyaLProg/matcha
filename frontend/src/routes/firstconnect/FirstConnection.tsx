@@ -12,6 +12,8 @@ interface IForm {
 	country : string;
 	city: string;
 	GeoLocalisation: boolean;
+	rangeAge: number;
+	rangelocalisation: number;
 }
 
 function FirstConnection() {
@@ -24,24 +26,24 @@ function FirstConnection() {
 
 
 	useEffect(() => {
-        // Obtenir les coordonnées GPS
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const { latitude, longitude } = position.coords;
-                    const response = await fetch(
-                        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-                    );
-                    const data = await response.json();
-                    if (data) {
-                        setValue("country", data.countryName || "");
-                        setValue("city", data.city || "");
-                    }
-                },
-                (error) => console.error("Error getting location:", error)
-            );
-        }
-    }, [setValue]);
+		// Obtenir les coordonnées GPS
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(
+				async (position) => {
+					const { latitude, longitude } = position.coords;
+					const response = await fetch(
+						`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+					);
+					const data = await response.json();
+					if (data) {
+						setValue("country", data.countryName || "");
+						setValue("city", data.city || "");
+					}
+				},
+				(error) => console.error("Error getting location:", error)
+			);
+		}
+	}, [setValue]);
 
 	function handleTagClick(tag: string) {
 		if (selectedTags.includes(tag)) {
@@ -72,7 +74,7 @@ function FirstConnection() {
 		}
 	}
 
-	
+
 
 	function onSubmit(values: IForm) {
 		if (selectedTags.length < 7) {
@@ -91,7 +93,7 @@ function FirstConnection() {
 		}
 		console.log(data);
 	}
-// add range age est un range localisation 
+// add range age est un range localisation
 	return (
 		<div className="firstConnection">
 			<div className="menu">
@@ -141,11 +143,11 @@ function FirstConnection() {
 					</div>
 					<div className="form-group">
 						<label htmlFor="rangeAge">range age</label>
-
+						<input type="range" min="18" max="100" step="1" {...register("rangeAge", {required: false})} aria-invalid={errors.rangeAge ? true : false}/>
 					</div>
 					<div className="form-group">
 						<label htmlFor="rangelocalisation">range localisation</label>
-
+						<input type="range" min="0" max="100" step="1" {...register("rangelocalisation", {required: false})} aria-invalid={errors.rangelocalisation ? true : false}/>
 					</div>
 					<div className="form-group">
 						<label>Interests (Select up to minimun 7)</label>

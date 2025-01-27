@@ -4,28 +4,28 @@ import { io, Socket } from "socket.io-client";
 import { UserContext } from './UserContext';
 import 'react-toastify/dist/ReactToastify.css';
 
-const WebSocketContext = createContext<Socket | undefined>(undefined);
+export const WebSocketContext = createContext<Socket | undefined>(undefined);
 
-enum NotificationType {
+export enum NotificationType {
 	Info,
 	Success,
 	Warning,
 	Error
 }
 
-interface Notification {
+export interface Notification {
 	type: NotificationType;
 	message: string;
 }
 
-const notificationFunctions = {
+export const notificationFunctions = {
 	[NotificationType.Info]: toast.info,
 	[NotificationType.Success]: toast.success,
 	[NotificationType.Warning]: toast.warning,
 	[NotificationType.Error]: toast.error,
 };
 
-function WebSocketProvider({ children }: { children: ReactNode }) {
+export default function WebSocketProvider({ children }: { children: ReactNode }) {
 	const user = useContext(UserContext);
 	const [socket, setSocket] = useState<Socket | undefined>(undefined);
 
@@ -55,5 +55,3 @@ function WebSocketProvider({ children }: { children: ReactNode }) {
 	);
 
 }
-
-export { WebSocketProvider, WebSocketContext, NotificationType, Notification, notificationFunctions };

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import ChatService from 'src/chat/chat.service';
 import { Database } from 'src/database/Database';
-import Action, { ActionStatus } from 'src/entities/action.interface';
-import Chat from 'src/entities/chat.interface';
+import Action, { ActionStatus } from 'src/interface/action.interface';
+import Chat from 'src/interface/chat.interface';
 
 @Injectable()
 class ActionService {

@@ -1,18 +1,8 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import Users from '../interface/users.interface';
 
-interface IUser {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	birthDate: Date;
-	username: string;
-	status: string;
-	biography: string;
-	pictures: string[];
-	tags: string[];
-}
+interface IUser extends Users {}
 
 interface UserContextProp {
 	user: IUser | undefined;
@@ -20,15 +10,16 @@ interface UserContextProp {
 	updateUserFromCookie: () => void;
 }
 
-const UserContext = createContext<UserContextProp | undefined>(undefined);
+export const UserContext = createContext<UserContextProp | undefined>(undefined);
 
-function UserProvider({ children }: { children: ReactNode }) {
+export default function UserProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<IUser | undefined>(undefined);
 
 	const updateUserFromCookie = () => {
+		if (typeof document === 'undefined') return;
 		const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
 			const [key, value] = cookie.split('=');
-			acc[key] = value;
+			acc[key] = decodeURIComponent(value);
 			return acc;
 		}, {} as Record<string, string>);
 		const token = cookies['Auth'];
@@ -61,5 +52,3 @@ function UserProvider({ children }: { children: ReactNode }) {
 		</UserContext.Provider>
 	);
 }
-
-export { UserProvider, UserContext };

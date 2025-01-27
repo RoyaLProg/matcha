@@ -21,9 +21,9 @@ interface ChatContextType {
 	refreshMessages: () => void;
 }
 
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
+export const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-function ChatProvider({ children } : { children: ReactNode }) {
+export default function ChatProvider({ children } : { children: ReactNode }) {
 	const [selectedChat, setSelectedChat] = useState<Chat | undefined>(undefined);
 	const [messages, setMessages] = useState<Message[] | undefined>(undefined);
 	const socket = useContext(WebSocketContext);
@@ -97,5 +97,3 @@ function ChatProvider({ children } : { children: ReactNode }) {
 				{children}
 			</ChatContext.Provider>);
 }
-
-export { ChatProvider, ChatContext };

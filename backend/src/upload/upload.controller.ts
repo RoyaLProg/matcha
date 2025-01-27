@@ -1,10 +1,10 @@
 import { Controller, Param, Post, Request, UploadedFiles, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { UploadService } from "./upload.service";
-import Users from "src/entities/users.interface";
-import Picture from "src/entities/picture.interface";
-import Chat from "src/entities/chat.interface";
-import Message, { MessageType } from "src/entities/message.interface";
+import Users from "src/interface/users.interface";
+import Picture from "src/interface/picture.interface";
+import Chat from "src/interface/chat.interface";
+import Message, { MessageType } from "src/interface/message.interface";
 import { Database } from "src/database/Database";
 
 

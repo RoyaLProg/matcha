@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
 import ChatService from './chat.service';
-import Chat from 'src/entities/chat.interface';
-import Message from 'src/entities/message.interface';
+import Chat from 'src/interface/chat.interface';
+import Message from 'src/interface/message.interface';
 
 @Controller('chat')
 class ChatController {
