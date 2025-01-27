@@ -1,8 +1,8 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import ChatService from './chat.service';
 import Chat from 'src/interface/chat.interface';
 import Message from 'src/interface/message.interface';
-
+import AuthGuard from 'src/auth/auth.guard';
 @Controller('chat')
 class ChatController {
 	constructor(
@@ -10,6 +10,7 @@ class ChatController {
 	) {}
 
 	@Post('sendmessage')
+	@UseGuards(AuthGuard)
 	async sendMessage(@Body() { userId, targetUserId, message }) : Promise<Message> {
 		try {
 			return await this.chatService.sendMessage({ userId, targetUserId, message });
@@ -22,6 +23,7 @@ class ChatController {
 	}
 
 	@Get()
+	@UseGuards(AuthGuard)
 	async getChatsByUserId(@Query('userId') userId: number) : Promise<Chat[] | undefined> {
 		if (!userId) {
 			throw new HttpException('UserId is required', HttpStatus.BAD_REQUEST);
@@ -37,6 +39,7 @@ class ChatController {
 	}
 
 	@Get(':id/messages')
+	@UseGuards(AuthGuard)
 	async getMessagesByChatId(@Query('chatId') chatId: number) : Promise<Message[] | undefined> {
 		if (!chatId) {
 			throw new HttpException('ChatId is required', HttpStatus.BAD_REQUEST);
