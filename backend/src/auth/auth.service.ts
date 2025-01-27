@@ -1,27 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import Users from 'src/entities/users.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
-import Auth, { TokenType } from 'src/entities/auth.entity';
+import Auth, { TokenType } from 'src/entities/auth.interface';
 import { Database } from '../database/Database';
+import Users from 'src/entities/users.interface';
+
 @Injectable()
 class AuthService {
 
 	constructor(
-		@InjectRepository(Users)
-		private readonly usersRepository: Repository<Users>,
-		@InjectRepository(Auth)
-		private readonly authRepository: Repository<Auth>,
 		private readonly database: Database
 	) {}
 
 	async addUser(user: Users): Promise<Users> {
-		return await this.usersRepository.save(user);
+		return (await this.database.addOne('users', user)) as Users;
 	}
 
 	private async addToken(token: Auth) {
-		return await this.authRepository.save(token);
+		return (await this.database.addOne('auth', token)) as Auth;
 	}
 
 	async create_token(user: Users, type?: TokenType): Promise<Auth>{
@@ -35,23 +30,26 @@ class AuthService {
 	}
 
 	async getToken(token: string): Promise<Auth | null>{
-		return await this.authRepository.findOne({where: {token: token}, relations: ["user"]});
+		const result = (await this.database.getFirstRow('auth', [], { token: token }, { Users: { userId: 'id' } })) as Auth | null;
+		return result;
 	}
 
 	async deleteToken(token: string) {
-		return await this.authRepository.delete({token: token});
+		return await this.database.deleteRows('auth', { token: token });
 	}
 
 	async updateUser(user: Users) {
-		return await this.usersRepository.save(user);
+		const updatedUser = await this.database.updateRows('users', user, { id: user.id });
+		return updatedUser as Users;
 	}
 
 	async getLogin(username: string, password: string): Promise<Users | null> {
-		return await this.usersRepository.findOne({ where: { username: username, password: password }});
+		const user = (await this.database.getFirstRow('users', [], { username: username, password: password })) as Users | null;
+		return user;
 	}
 
 	async test(){
-		return this.database.getFirstRow('auth', [], {}, {Users: {userId: 'id'}});
+		return await this.database.getFirstRow('auth', [], {}, { Users: { userId: 'id' } });
 	}
 }
 

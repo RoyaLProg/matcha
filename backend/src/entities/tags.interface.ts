@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import Settings from './settings.entity';
+import Settings from './settings.interface';
 
 export enum TagCategory {
 	Interests = 'interests',
@@ -76,20 +76,11 @@ export enum Tags {
 	Creative = 'creative',
 }
 
-@Entity()
-class TagsEntity {
-	@PrimaryGeneratedColumn()
+interface Tag {
 	id?: number;
-
-	@Column({ type: 'enum', enum: TagCategory })
 	category: TagCategory;
-
-	@Column({ type: 'enum', enum: Tags })
 	tag: Tags;
-
-	@ManyToOne(() => Settings, (settings) => settings.tags, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'settingsId' })
-	settings: Settings;
+	settings?: Settings;
 }
 
-export default TagsEntity;
+export default Tag;

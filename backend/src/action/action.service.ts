@@ -1,20 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import ChatService from 'src/chat/chat.service';
-import Action, { ActionStatus } from 'src/entities/action.entity';
-import Chat from 'src/entities/chat.entity';
-import { DataSource } from 'typeorm';
+import { Database } from 'src/database/Database';
+import Action, { ActionStatus } from 'src/entities/action.interface';
+import Chat from 'src/entities/chat.interface';
 
 @Injectable()
 class ActionService {
 	constructor(
-		private dataSources: DataSource,
+		private database: Database,
 		private readonly chatService: ChatService
 	) {}
 
 	async handleLike({ userId, targetUserId, status } : { userId: number, targetUserId: number, status: ActionStatus }) : Promise<Chat | void> {
 		if (status === ActionStatus.Like) {
-			const userLike = await this.dataSources.getRepository(Action).findOne({ where: { user: { id: userId }, targetUser: { id: targetUserId }, status: ActionStatus.Like } });
-			const targetUserLike = await this.dataSources.getRepository(Action).findOne({ where: { user: { id: targetUserId }, targetUser: { id: userId }, status: ActionStatus.Like } });
+			const userLike = await this.database.getFirstRow('action', [], { userId, targetUserId, status: ActionStatus.Like, }) as Action;
+			const targetUserLike = await this.database.getFirstRow('action', [], { userId: targetUserId, targetUserId: userId, status: ActionStatus.Like, }) as Action;
 
 			if (userLike && targetUserLike) {
 				return await this.chatService.createChat({ userId, targetUserId });
