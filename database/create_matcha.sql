@@ -45,7 +45,7 @@ BEGIN
     END IF;
 END $$;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS Users (
     id SERIAL PRIMARY KEY,
     "fistName" VARCHAR(255) NOT NULL,
     "lastName" VARCHAR(255) NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS settings (
     biography VARCHAR(255) DEFAULT '',
     gender user_gender_enum,
     "sexualOrientation" user_sexual_orientation_enum,
-    CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS picture (
@@ -95,8 +95,8 @@ CREATE TABLE IF NOT EXISTS chat (
     "userId" INT NOT NULL,
     "targetUserId" INT NOT NULL,
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_user_chat FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE,
-    CONSTRAINT fk_target_user FOREIGN KEY ("targetUserId") REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_user_chat FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_target_user FOREIGN KEY ("targetUserId") REFERENCES Users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS message (
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS message (
     "fileUrl" VARCHAR(255),
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_chat FOREIGN KEY ("chatId") REFERENCES chat (id) ON DELETE CASCADE,
-    CONSTRAINT fk_user_message FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_user_message FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS history (
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS history (
     message TEXT NOT NULL,
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "isRead" BOOLEAN DEFAULT FALSE,
-    CONSTRAINT fk_user_history FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_user_history FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS auth (
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS auth (
     token TEXT NOT NULL,
     type token_type_enum DEFAULT 'create',
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_user_auth FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_user_auth FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS action (
@@ -134,6 +134,6 @@ CREATE TABLE IF NOT EXISTS action (
     "userId" INT NOT NULL,
     "targetUserId" INT NOT NULL,
     status action_status_enum NOT NULL,
-    CONSTRAINT fk_user_action FOREIGN KEY ("userId") REFERENCES users (id) ON DELETE CASCADE,
-    CONSTRAINT fk_target_user_action FOREIGN KEY ("targetUserId") REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_user_action FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_target_user_action FOREIGN KEY ("targetUserId") REFERENCES Users (id) ON DELETE CASCADE
 );

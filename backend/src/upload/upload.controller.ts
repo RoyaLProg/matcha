@@ -1,17 +1,17 @@
 import { Controller, Param, Post, Request, UploadedFiles, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
-import { DataSource } from "typeorm";
 import { UploadService } from "./upload.service";
-import Users from "src/entities/users.entity";
-import Picture from "src/entities/picture.entity";
-import Chat from "src/entities/chat.entity";
-import Message, { MessageType } from "src/entities/message.entity";
+import Users from "src/entities/users.interface";
+import Picture from "src/entities/picture.interface";
+import Chat from "src/entities/chat.interface";
+import Message, { MessageType } from "src/entities/message.interface";
+import { Database } from "src/database/Database";
 
 
 @Controller("upload")
 class UploadController {
 	constructor(
-		private dataSource: DataSource
+		private database: Database
 	) {}
 	@Post('picture')
 	@UseInterceptors(FilesInterceptor('files', 5, {
@@ -20,15 +20,19 @@ class UploadController {
 	}))
 	async uploadPictures(@UploadedFiles() files: Express.Multer.File[], @Request() req) {
 		const userId = req.user.id;
-		const user = await this.dataSource.getRepository(Users).findOne({ where: { id: userId } });
-		const savedPictures = [];
-		for (const file of files) {
-			const picture = this.dataSource.getRepository(Picture).create({
-				url: `/uploads/pictures/${file.filename}`,
-				settings: user.settings
-			});
-			savedPictures.push(await this.dataSource.getRepository(Picture).save(picture));
+		const user = await this.database.getFirstRow('users', [], { id: userId }, { settings: { id: 'settingsId' } }) as Users;
+		if (!user) {
+			throw new Error('User not found');
 		}
+		const savedPictures: Picture[] = [];
+		for (const file of files) {
+			const picture = {
+				url: `/uploads/pictures/${file.filename}`,
+				settings: user.settings,
+			};
+			const savedPicture = await this.database.addOne('pictures', picture);
+			savedPictures.push(savedPicture as Picture);
+		  }
 	return { message: 'Pictures uploaded successfully!', pictures: savedPictures };
 	}
 
@@ -39,20 +43,16 @@ class UploadController {
 	}))
 	async uploadVideos(@Param('chatId') chatId: number, @UploadedFiles() file: Express.Multer.File, @Request() req) {
 		const userId = req.user.id;
-		const chat = await this.dataSource.getRepository(Chat).findOne({
-			where: { id: chatId },
-			relations: ['user', 'targetUser'],
-		});
-		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId)) {
+		const chat = await this.database.getFirstRow('chat',[], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } } ) as Chat;
+		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId))
 			throw new Error('You do not have access to this chat');
-		}
-		const videoMessage = this.dataSource.getRepository(Message).create({
-			chat,
-			sender: { id: userId },
+		const videoMessage = {
+			chat: chat.id,
+			sender: userId,
 			type: MessageType.Video,
 			fileUrl: `/uploads/videos/${file.filename}`,
-		});
-		const savedVideo = await this.dataSource.getRepository(Message).save(videoMessage);
+		};
+		const savedVideo = await this.database.addOne('message', videoMessage);
 		return { message: 'Videos uploaded successfully!', videos: savedVideo };
 	}
 
@@ -63,20 +63,16 @@ class UploadController {
 	}))
 	async uploadAudios( @Param('chatId') chatId: number, @UploadedFiles() file: Express.Multer.File, @Request() req ) {
 		const userId = req.user.id;
-		const chat = await this.dataSource.getRepository(Chat).findOne({
-			where: { id: chatId },
-			relations: ['user', 'targetUser'],
-		});
-		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId)) {
+		const chat = await this.database.getFirstRow( 'chat', [], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } } ) as Chat;
+		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId))
 			throw new Error('You do not have access to this chat');
-		}
-		const audioMessage = this.dataSource.getRepository(Message).create({
-			chat,
-			sender: { id: userId },
+		const audioMessage = {
+			chat: chat.id,
+			sender: userId,
 			type: MessageType.Audio,
 			fileUrl: `/uploads/audios/${file.filename}`,
-		});
-		const savedAudio = await this.dataSource.getRepository(Message).save(audioMessage);
+		};
+		const savedAudio = await this.database.addOne('message', audioMessage);
 		return { message: 'Audios uploaded successfully!', audios: savedAudio };
 	}
 }

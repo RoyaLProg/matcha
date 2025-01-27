@@ -1,46 +1,45 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import Users from 'src/entities/users.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Database } from 'src/database/Database';
+import Users from 'src/entities/users.interface';
 
 @Injectable()
 class UserService {
 	constructor(
-		@InjectRepository(Users)
-		private userRepository: Repository<Users>
+		private database: Database
 	) { }
 
 	async findAll() : Promise<Users[]> {
-		return await this.userRepository.find();
+		const users = await this.database.getRows('users');
+		return users as Users[];
 	}
 
 	async findOne(id: number) : Promise<Users> {
-		const user = await this.userRepository.findOne({ where: { id } });
-		if (!user) {
+		const user = await this.database.getFirstRow('users', [], { id });
+		if (!user)
 			throw new Error('User not found');
-		}
-		return user;
+		return user as Users;
 	}
 
 	async update(id: number, data: Partial<Users>) : Promise<Users> {
-		const user = await this.userRepository.findOne({ where: { id } });
-		if (!user) {
+		const user = await this.database.getFirstRow('users', [], { id });
+		if (!user)
 			throw new Error('User not found');
-		}
-		Object.assign(user, data);
-		return await this.userRepository.save(user);
+		const updatedUser = await this.database.updateRows('users', data, { id });
+		return updatedUser[0] as Users;
 	}
 
 	async remove(id: number) : Promise<void> {
-		const user = await this.userRepository.findOne({ where: { id } });
-		if (!user) {
+		const user = await this.database.getFirstRow('users', [], { id });
+		if (!user)
 			throw new Error('User not found');
-		}
-		await this.userRepository.remove(user);
+		await this.database.deleteRows('users', { id });
 	}
 
 	async findOneByUsername(username: string) : Promise<Users> {
-		return await this.userRepository.findOne({ where: { username: username } });
+		const user = await this.database.getFirstRow('users', [], { username });
+		if (!user)
+			throw new Error('User not found');
+		return user as Users;
 	}
 }
 

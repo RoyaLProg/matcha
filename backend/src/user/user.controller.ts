@@ -1,8 +1,8 @@
 import { Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus } from '@nestjs/common';
-import Users from 'src/entities/users.entity';
+import Users from 'src/entities/users.interface';
 import UserService from './user.service';
 
-@Controller('users')
+@Controller('Users')
 class UserController {
 	constructor(private readonly userService: UserService) { }
 
@@ -12,7 +12,7 @@ class UserController {
 			return this.userService.findAll();
 		} catch (error) {
 			throw new HttpException(
-				'Failed to retrieve users',
+				'Failed to retrieve Users',
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}

@@ -1,12 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
-import Users from 'src/entities/users.entity';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import Users from 'src/entities/users.interface';
 import AuthService from './auth.service';
 import { sha256 } from 'js-sha256';
 import { MailerService } from '@nestjs-modules/mailer';
 import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
-import { TokenType } from 'src/entities/auth.entity';
+import { TokenType } from 'src/entities/auth.interface';
 import { hash } from 'crypto';
 
 @Controller("auth")
@@ -36,7 +36,7 @@ export class AuthController {
 	@Post('register')
 	async register(@Body() body,@Res() res: Response) {
 		const user: Users = {
-			fistName: body.firstName,
+			firstName: body.firstName,
 			lastName: body.lastName,
 			username: body.username,
 			password: body.password,
