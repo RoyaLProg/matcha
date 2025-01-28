@@ -76,7 +76,7 @@ export class Database {
 
 		for (let i = 0; i < keys.length; i++)
 		{
-			rv += `${keys[i]}='${values[i]}'`;
+			rv += `"${keys[i]}"='${values[i]}'`;
 			if ( i != keys.length - 1 )
 				rv += ' AND ';
 		}
