@@ -64,8 +64,7 @@ export class AuthController {
 			throw new BadRequestException('email or user already exist');
 		}
 		try {
-			const myUser = await this.userService.findOneByUsername(user.username);
-			const token = await this.authService.create_token(myUser);
+			const token = await this.authService.create_token(result);
 			const message = `Welcome to Matcha the latte
 
 							Can you please click this <a href="http://localhost:5173/verify/${token.token}">link</a> to confirm your email`;
