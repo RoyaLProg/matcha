@@ -22,7 +22,7 @@
 	width: 100%;
 }
 
-.login .loginForm form {
+.login .loginForm #form {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
@@ -33,8 +33,8 @@
 	border-radius: 5px;
 }
 
-.login .loginForm form input[type='text'],
-.login .loginForm form input[type='password'] {
+.login .loginForm #form input[type='text'],
+.login .loginForm #form input[type='password'] {
 	padding: 10px;
 	border: none;
 	border-radius: 5px;
@@ -44,12 +44,12 @@
 	width: 100%;
 }
 
-.login .loginForm form input[type="text"][aria-invalid="true"],
-.login .loginForm form input[type="password"][aria-invalid="true"] {
+.login .loginForm #form input[type="text"][aria-invalid="true"],
+.login .loginForm #form input[type="password"][aria-invalid="true"] {
   border: 2px solid red;
 }
 
-.login .loginForm form input[type='submit'] {
+.login .loginForm #form input[type='submit'] {
 	padding: 10px;
 	border: none;
 	border-radius: 5px;
@@ -63,13 +63,13 @@
 	box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-.login .loginForm form input[type='submit']:hover {
+.login .loginForm #form input[type='submit']:hover {
 	background-color: #666;
 	transform: translateY(-2px);
 }
 
-.login .loginForm form input[type='text']:focus,
-.login .loginForm form input[type='password']:focus {
+.login .loginForm #form input[type='text']:focus,
+.login .loginForm #form input[type='password']:focus {
 	outline: none;
 }
 
