@@ -15,7 +15,7 @@ export class Database {
 		let query = `INSERT INTO ${table} (${Object.keys(columns).map((v) => {return `"${v}"`})}) VALUES (${Object.values(columns).map((v) => {return `'${v}'`})});`;
 		try {
 			await Database._pool.query(query);
-			return columns;
+			return await this.getFirstRow(table, [], columns);
 		} catch (e) {
 			throw (e);
 		}
