@@ -12,17 +12,16 @@ import Profile from "./profil/Profile";
 import HomeDefault, { Home } from "./home/Home";
 
 export function MatchaRoutes() {
-	// const user = useContext(UserContext);
-	// if (!user?.user)
-	// 	return (
-	// 		<Routes>
-	// 			<Route path="/" element={<FirstConnection />} />
-	// 		</Routes>
-	// 		)
+	const user = useContext(UserContext);
+	if (!user?.user?.settings)
+		return (
+			<Routes>
+				<Route path="/" element={<FirstConnection />} />
+			</Routes>
+			)
 	return (
 		<Routes>
-			{/* <Route path="/" element={<Home />} /> */}
-			<Route path="/" element={<FirstConnection />} />
+			<Route path="/" element={<Home />} />
 			<Route path="/chatlist" element={<ChatsList />} />
 			<Route path="/chat" element={<Chat />} />
 			<Route path="/verify/:token" element={<Verify />} />

@@ -8,6 +8,9 @@ import AuthService from './auth/auth.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { JwtModule } from '@nestjs/jwt';
 import { Database } from './database/Database';
+import SettingsService from './user/settings.service';
+import UploadController from './upload/upload.controller';
+import { UploadService } from './upload/upload.service';
 
 @Module({
 	imports: [
@@ -19,11 +22,13 @@ import { Database } from './database/Database';
 		}),
 		JwtModule
 	],
-  controllers: [UserController, AuthController],
+  controllers: [UserController, AuthController, UploadController],
   providers: [SocketsService,
 			  UserService,
-			  AppGateway,
 			  AuthService,
+			  SettingsService,
+			  UploadService,
+			  AppGateway,
 			  Database]
 })
 export class AppModule {}

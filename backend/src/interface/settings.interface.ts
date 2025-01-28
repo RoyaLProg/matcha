@@ -1,7 +1,5 @@
 import Picture from './picture.interface';
-import { Tags } from './tags.interface';
-import Users from './users.interface';
-
+import Tag from './tags.interface';
 
 export enum UserGender {
 	Man = 'man',
@@ -32,7 +30,7 @@ interface Settings {
 	gender: UserGender;
 	sexualOrientation: UserSexualOrientation;
 	pictures: Picture[];
-	tags: Tags[];
+	tags: Tag[];
 }
 
 export default Settings;

@@ -9,15 +9,15 @@ export class UploadService {
 		return diskStorage({
 			destination: `./uploads/${folder}`,
 			filename: (req, file, cb) => {
-			const uniqueSuffix = `${uuidv4()}${extname(file.originalname)}`;
-			cb(null, uniqueSuffix);
-		},
-	});
-}
+				const uniqueSuffix = `${uuidv4()}${extname(file.originalname)}`;
+				cb(null, uniqueSuffix);
+			},
+		});
+	}
 
 	static fileFilter(allowedTypes: RegExp) {
 		return (req: any, file: Express.Multer.File, cb: (error: Error | null, acceptFile: boolean) => void) => {
-			const isValid = allowedTypes.test(extname(file.originalname).toLowerCase());
+			const isValid = allowedTypes.test(file.mimetype);
 			if (isValid) {
 				cb(null, true);
 			} else {

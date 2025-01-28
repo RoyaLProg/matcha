@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Database } from 'src/database/Database';
+import Picture from 'src/interface/picture.interface';
+import Settings from 'src/interface/settings.interface';
+import Tag from 'src/interface/tags.interface';
 import Users from 'src/interface/users.interface';
 
 @Injectable()
@@ -14,9 +17,19 @@ export default class UserService {
 	}
 
 	async findOne(id: number) : Promise<Users> {
-		const user = await this.database.getFirstRow('users', [], { id });
+		const user = await this.database.getFirstRow('users', [], { id }) as Users;
 		if (!user)
 			throw new Error('User not found');
+		const settings = await this.database.getFirstRow('settings', [], { userId: id }) as Settings;
+		if (settings) {
+			user.settings = settings;
+			const tags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
+			const pictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
+			if (tags)
+				settings.tags = tags;
+			if (pictures)
+				settings.pictures = pictures;
+		}
 		return user as Users;
 	}
 

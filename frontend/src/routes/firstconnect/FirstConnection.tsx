@@ -2,8 +2,9 @@ import "./FirstConnection.css";
 import getTags from "../../assets/tags";
 import { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { UserContext } from "../../context/UserContext";
+import { cookies, UserContext } from "../../context/UserContext";
 import Settings, { UserGender, UserSexualOrientation } from "../../interface/settings.interface";
+import Picture from "../../interface/picture.interface";
 
 function FirstConnection() {
 	const user = useContext(UserContext);
@@ -78,39 +79,73 @@ function FirstConnection() {
 			return;
 		}
 
-		const formattedPictures = uploadedPictures.map((file) => ({
-			url: URL.createObjectURL(file),
-			isProfile: profilePicture === file.name,
-		}));
+		try {
+			let hasProfilePicture = false;
+			const pictures = uploadedPictures.map((file) => {
+				const isProfile = profilePicture === file.name;
+				if (isProfile) hasProfilePicture = true;
+				return { name: file.name, isProfile };
+			});
+			if (!hasProfilePicture && pictures.length > 0)
+				pictures[0].isProfile = true;
 
-		const formattedTags = selectedTags.map((tag) => {
-			const category = Object.keys(tagss).find((category) =>
-				tagss[category as keyof typeof Tags].includes(tag)
-			);
-			return {
-				category: category || "unknown",
-				tag,
+			// Étape 3 : Formater les tags
+			const formattedTags = selectedTags.map((tag) => {
+				const category = Object.keys(tagss).find((category) =>
+					tagss[category as keyof typeof Tags].includes(tag)
+				);
+				return {
+					category: category || "unknown",
+					tag,
+				};
+			});
+
+			const formData = new FormData();
+
+			uploadedPictures.forEach((file) => {
+				formData.append("files", file);
+			});
+
+			// Étape 4 : Préparer les données
+			const data: Settings = {
+				userId: user?.user?.id?.toString() || "",
+				country: values.country || "",
+				city: values.city || "",
+				latitude: values.latitude || 0,
+				longitude: values.longitude || 0,
+				maxDistance: rangeLocalisation,
+				geoloc: values.geoloc || false,
+				minAgePreference: rangeAgeMin,
+				maxAgePreference: rangeAgeMax,
+				biography: values.biography || "",
+				gender: values.gender || UserGender.Undefined,
+				sexualOrientation: values.sexualOrientation || UserSexualOrientation.Undefined,
+				pictures: pictures as Picture[],
+				tags: formattedTags,
 			};
-		});
 
-		const data: Settings = {
-			userId: user?.user?.id?.toString() || "",
-			country: values.country || "",
-			city: values.city || "",
-			latitude: values.latitude || 0,
-			longitude: values.longitude || 0,
-			maxDistance: rangeLocalisation,
-			geoloc: values.geoloc || false,
-			minAgePreference: rangeAgeMin,
-			maxAgePreference: rangeAgeMax,
-			biography: values.biography || "",
-			gender: values.gender || UserGender.Undefined,
-			sexualOrientation: values.sexualOrientation || UserSexualOrientation.Undefined,
-			pictures: formattedPictures,
-			tags: formattedTags,
-		};
+			formData.append("data", JSON.stringify(data));
+			// Étape 5 : Envoyer les données au backend
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/create`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${cookies["Auth"]}`,
+				},
+				body: formData,
+			});
 
-		console.log("Data to send:", data);
+			if (!response.ok) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
+			const result = await response.json();
+			if (result.error) {
+				console.error("Error during submit:", result.error);
+				return;
+			}
+			user?.setUserSettings(result);
+		} catch (error) {
+			console.error("Error during submit:", error);
+		}
 	}
 
 
