@@ -19,7 +19,7 @@ export enum UserSexualOrientation {
 
 interface Settings {
 	id?: number;
-	user: Users;
+	userId: string;
 	country: string;
 	city: string;
 	latitude?: number;

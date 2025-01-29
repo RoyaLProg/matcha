@@ -21,7 +21,7 @@ export class Database {
 		}
 	}
 
-	public async getRows(table: string, columns?: Array<string>, where?: Object): Promise<Object> {
+	public async getRows(table: string, columns?: Array<string>, where?: Object): Promise<Object[]> {
 		let whereString: undefined | string = this.createWhere(where);
 
 		let query = `SELECT ${columns ? columns.map((v) => {return `"${v}"`}) : '*'} FROM ${table} ${whereString ?? ''}`;

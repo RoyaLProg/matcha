@@ -8,20 +8,22 @@ interface UserContextProp {
 	user: IUser | undefined;
 	setUser: (user: IUser | undefined) => void;
 	updateUserFromCookie: () => void;
+	setUserSettings: (settings: any) => void;
 }
+
+export const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
+	const [key, value] = cookie.split('=');
+	acc[key] = decodeURIComponent(value);
+	return acc;
+}, {} as Record<string, string>);
 
 export const UserContext = createContext<UserContextProp | undefined>(undefined);
 
 export default function UserProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<IUser | undefined>(undefined);
-
+	// recupere faire un fetch getUser avec le token
 	const updateUserFromCookie = () => {
 		if (typeof document === 'undefined') return;
-		const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
-			const [key, value] = cookie.split('=');
-			acc[key] = decodeURIComponent(value);
-			return acc;
-		}, {} as Record<string, string>);
 		const token = cookies['Auth'];
 		if (token) {
 			try {
@@ -42,12 +44,17 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 		}
 	};
 
+	const setUserSettings = (settings: any) => {
+		if (!user) return;
+		setUser({ ...user, settings });
+	}
+
 	useEffect(() => {
 		updateUserFromCookie();
 	}, []);
 
 	return (
-		<UserContext.Provider value={{ user, setUser, updateUserFromCookie }}>
+		<UserContext.Provider value={{ user, setUser, updateUserFromCookie, setUserSettings }}>
 			{children}
 		</UserContext.Provider>
 	);

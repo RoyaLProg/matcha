@@ -10,12 +10,12 @@ interface Users {
 	firstName: string;
 	lastName: string;
 	email: string;
-	birthDate: Date;
+	birthDate: string;
 	username: string;
 	password?: string;
 	status?: UserStatus;
 	isValidated: boolean;
-	settings?: Settings;
+	settings?: Settings; 
 }
 
 export default Users;

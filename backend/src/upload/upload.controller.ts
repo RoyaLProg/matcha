@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { UploadService } from "./upload.service";
 import Users from "src/interface/users.interface";
@@ -19,25 +19,21 @@ class UploadController {
 	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {
 		storage: UploadService.fileStorage('pictures'),
-		fileFilter: UploadService.fileFilter(/jpeg|jpg|png|gif/),
+		fileFilter: UploadService.fileFilter(/image\/jpeg|image\/png|image\/gif/),
 	}))
-	async uploadPictures(@UploadedFiles() files: Express.Multer.File[], @Request() req) {
+	async uploadPictures(@UploadedFiles() files: Express.Multer.File[], @Request() req): Promise<Picture[]> {
 		const userId = req.user.id;
-		const user = await this.database.getFirstRow('users', [], { id: userId }, { settings: { id: 'settingsId' } }) as Users;
+		const user = await this.database.getFirstRow('users', [], { id: userId }) as Users;
 		if (!user) {
-			throw new Error('User not found');
+			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 		}
-		const savedPictures: Picture[] = [];
-		for (const file of files) {
-			const picture = {
-				url: `/uploads/pictures/${file.filename}`,
-				settings: user.settings,
-			};
-			const savedPicture = await this.database.addOne('pictures', picture);
-			savedPictures.push(savedPicture as Picture);
-		  }
-	return { message: 'Pictures uploaded successfully!', pictures: savedPictures };
+		const uploadedPictures = files.map((file, index) => ({
+			url: `/uploads/pictures/${file.filename}`,
+			isProfile: index === 0,
+		}));
+		return uploadedPictures;
 	}
+
 
 	@Post(':chatId/video')
 	@UseGuards(AuthGuard)
@@ -47,11 +43,14 @@ class UploadController {
 	}))
 	async uploadVideos(@Param('chatId') chatId: number, @UploadedFiles() file: Express.Multer.File, @Request() req) {
 		const userId = req.user.id;
-		const chat = await this.database.getFirstRow('chat',[], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } } ) as Chat;
-		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId))
-			throw new Error('You do not have access to this chat');
-		const videoMessage = {
-			chat: chat.id,
+		const chat = await this.database.getFirstRow('chat', [], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } }) as Chat;
+
+		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId)) {
+			throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
+		}
+
+		const videoMessage: Partial<Message> = {
+			chat: chat,
 			sender: userId,
 			type: MessageType.Video,
 			fileUrl: `/uploads/videos/${file.filename}`,
@@ -66,13 +65,16 @@ class UploadController {
 		storage: UploadService.fileStorage('audios'),
 		fileFilter: UploadService.fileFilter(/mp3|wav|ogg/),
 	}))
-	async uploadAudios( @Param('chatId') chatId: number, @UploadedFiles() file: Express.Multer.File, @Request() req ) {
+	async uploadAudios(@Param('chatId') chatId: number, @UploadedFiles() file: Express.Multer.File, @Request() req) {
 		const userId = req.user.id;
-		const chat = await this.database.getFirstRow( 'chat', [], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } } ) as Chat;
-		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId))
-			throw new Error('You do not have access to this chat');
-		const audioMessage = {
-			chat: chat.id,
+		const chat = await this.database.getFirstRow('chat', [], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } }) as Chat;
+
+		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId)) {
+			throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
+		}
+
+		const audioMessage: Partial<Message> = {
+			chat: chat,
 			sender: userId,
 			type: MessageType.Audio,
 			fileUrl: `/uploads/audios/${file.filename}`,
