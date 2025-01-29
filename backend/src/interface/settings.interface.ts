@@ -1,5 +1,5 @@
 import Picture from './picture.interface';
-import { Tags } from './tags.interface';
+import Tag from './tags.interface';
 import Users from './users.interface';
 
 
@@ -32,7 +32,7 @@ interface Settings {
 	gender: UserGender;
 	sexualOrientation: UserSexualOrientation;
 	pictures: Picture[];
-	tags: Tags[];
+	tags: Tag[];
 }
 
 export default Settings;

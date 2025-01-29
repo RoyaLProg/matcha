@@ -30,6 +30,7 @@ export default class UserService {
 			if (pictures)
 				settings.pictures = pictures;
 		}
+		delete user.password;
 		return user as Users;
 	}
 

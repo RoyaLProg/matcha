@@ -9,24 +9,25 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
 import AuthGuard from 'src/auth/auth.guard';
 import UserGuard from './user.guard';
+import { get } from 'http';
+import Tag from 'src/interface/tags.interface';
 
 @Controller('Users')
 class UserController {
 	constructor(private readonly userService: UserService, private readonly settingsService: SettingsService) { }
 
 	@Post('/settings/create')
-	// @UseGuards(AuthGuard)
+	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {
 		storage: UploadService.fileStorage('pictures'),
 		fileFilter: UploadService.fileFilter(/image\/jpeg|image\/png|image\/gif/),
 	}))
 	async createSettings(@UploadedFiles() files: Express.Multer.File[], @Body() body: any, @Request() req): Promise<Settings> {
-		// const userId = req.user.id;
 		const invalidFiles = files.filter((file) => !['image/jpeg', 'image/png', 'image/gif'].includes(file.mimetype));
 		if (invalidFiles.length > 0) {
 			files.forEach((file) => {
 				const filePath = `./uploads/pictures/${file.filename}`;
-				fs.unlinkSync(filePath); // Supprime le fichier
+				fs.unlinkSync(filePath);
 			});
 			throw new HttpException(`Unsupported file type. Allowed types: .png, .jpg, .jpeg, .gif`, HttpStatus.BAD_REQUEST);
 		}
@@ -37,8 +38,8 @@ class UserController {
 		try {
 			parsedData = JSON.parse(body.data);
 			const { tags, pictures, ...settingsData } = parsedData;
-			// if (settingsData.userId !== userId)
-			// 	throw new HttpException('You do not have permission to create settings for this user', HttpStatus.FORBIDDEN);
+			if (settingsData.userId != req.user.id)
+				throw new HttpException('You do not have permission to create settings for this user', HttpStatus.FORBIDDEN);
 			const settings = await this.settingsService.createSettings(settingsData as Settings);
 			createdSettingsId = settings.id;
 			const createdTags = await Promise.all(
@@ -75,18 +76,23 @@ class UserController {
 			if (createdSettingsId) {
 				await this.settingsService.deleteSettings(createdSettingsId);
 			}
-			throw new HttpException('Failed to create settings', HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new HttpException('Failed to create settings', HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	@Get()
-	getAllUsers() : Promise<Users[]>{
+	@Get('me')
+	@UseGuards(AuthGuard)
+	async getMe(@Request() req) : Promise<Users | null> {
+		console.log('req.user:', req.user);
 		try {
-			return this.userService.findAll();
+			const user = await this.userService.findOne(req.user.id);
+			return user;
 		} catch (error) {
+			if (error.message === 'User not found')
+				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
 			throw new HttpException(
-				'Failed to retrieve Users',
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				'Failed to retrieve user',
+				HttpStatus.BAD_REQUEST,
 			);
 		}
 	}
@@ -104,7 +110,24 @@ class UserController {
 				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
 			throw new HttpException(
 				'Failed to retrieve user',
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+	}
+
+	@Patch('settings/me')
+	@UseGuards(AuthGuard)
+	async updateSettingMe(@Request() req, @Body() body: any) : Promise<Partial<Settings>> {
+		try {
+			await this.settingsService.updateSettings(body.data, req.user.id);
+			return await this.settingsService.getSettings(req.user.id);
+		} catch (error) {
+			if (error.message === 'User not found') {
+ 				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+			}
+			throw new HttpException(
+				error.message,
+				HttpStatus.BAD_REQUEST,
 			);
 		}
 	}
@@ -120,7 +143,7 @@ class UserController {
 			}
 			throw new HttpException(
 				'Failed to update user',
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.BAD_REQUEST,
 			);
 		}
 	}
@@ -137,7 +160,7 @@ class UserController {
 			}
 			throw new HttpException(
 				'Failed to delete user',
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.BAD_REQUEST,
 			);
 		}
 	}
