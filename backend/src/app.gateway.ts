@@ -6,12 +6,19 @@ import {
 	OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { SocketsService } from './sockets.service';
 import Users, { UserStatus } from './interface/users.interface';
 import { Database } from './database/Database';
+import * as cookie from 'cookie';
 
-@WebSocketGateway()
+@WebSocketGateway({
+	cors: {
+		origin: 'http://localhost:5173',
+		allowedHeaders: ['Authorization'],
+		credentials: true,
+	},
+})
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
 		private database: Database,
@@ -24,17 +31,16 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	handleConnection(socket: Socket) {
 		const request = socket.handshake;
-		const token = request.headers.authorization;
+		const cookies = cookie.parse(request.headers.cookie || '');
+		const token = cookies['Auth'];
 		if (token) {
-			jwt.verify(token, process.env.JWT_SECRET, (err, decoded: JwtPayload) => {
+			jwt.verify(token, process.env.JWT_SECRET, (err, decoded: jwt.JwtPayload) => {
 				if (err) {
 					this.logger.error('Unauthorized connection');
 					socket.disconnect();
 				} else {
-
-					if (this. saveUserIdSocket(decoded.sub, socket)) {
+					if (this. saveUserIdSocket(decoded.id, socket))
 						this.logger.log(`Client connected: ${socket.id}`);
-					}
 				}
 			});
 		} else {

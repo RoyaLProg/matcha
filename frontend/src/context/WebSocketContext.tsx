@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { toast, ToastContainer } from "react-toastify";
 import { io, Socket } from "socket.io-client";
-import { UserContext } from './UserContext';
+import { cookies, UserContext } from './UserContext';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const WebSocketContext = createContext<Socket | undefined>(undefined);
@@ -30,22 +30,24 @@ export default function WebSocketProvider({ children }: { children: ReactNode })
 	const [socket, setSocket] = useState<Socket | undefined>(undefined);
 
 	useEffect(() => {
-		if (user && user.token) {
+		if (user && cookies['Auth']) {
 			const socketIOClient = io(`${import.meta.env.VITE_API_URL}`, {
-				extraHeaders: {
-					Authorization: `Bearer ${user.token}`,
-				},
+				withCredentials: true,
 			});
-			setSocket(socketIOClient);
+			socketIOClient.on("connect", () => {
+				console.log("Connected to WebSocket");
+				setSocket(socketIOClient);
+			});
 			socketIOClient.on("notification", (notification: Notification) => {
 				notificationFunctions[notification.type](notification.message);
 			});
 			return () => {
 				socketIOClient.off("connect");
+				socketIOClient.off("notification");
 				socketIOClient.disconnect();
 			};
 		}
-	}, [user?.token]);
+	}, [user]);
 	const value = useMemo(() => socket, [socket]);
 	return (
 		<WebSocketContext.Provider value={value}>

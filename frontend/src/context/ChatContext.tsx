@@ -30,11 +30,9 @@ export default function ChatProvider({ children } : { children: ReactNode }) {
 
 	const fetchMessages = async (chatId: number) => {
 		try {
-			const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/${chatId}/messages`, {
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/${chatId}/messages`, {
 				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-				},
+				credentials: "include",
 			});
 			if (!response.ok) {
 				throw new Error("Failed to fetch messages");
