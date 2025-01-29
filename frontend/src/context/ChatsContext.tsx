@@ -21,12 +21,9 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const socket = useContext(WebSocketContext)
 	const fetchChats = async () => {
 		if (user) {
-			const response = await fetch(`${import.meta.env.VITE_API_URL}/chats?userId=${user.id}`, {
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chats?userId=${user.user?.id}`, {
 				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${user.token}`,
-				},
+				credentials: "include",
 			});
 			const data = await response.json();
 			setChats(data);
