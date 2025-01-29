@@ -11,6 +11,10 @@ import { Database } from './database/Database';
 import SettingsService from './user/settings.service';
 import UploadController from './upload/upload.controller';
 import { UploadService } from './upload/upload.service';
+import ActionController from './action/action.controller';
+import ActionService from './action/action.service';
+import MatchService from './action/match.service';
+import ChatService from './chat/chat.service';
 
 @Module({
 	imports: [
@@ -22,12 +26,15 @@ import { UploadService } from './upload/upload.service';
 		}),
 		JwtModule
 	],
-  controllers: [UserController, AuthController, UploadController],
+  controllers: [UserController, AuthController, UploadController, ActionController],
   providers: [SocketsService,
 			  UserService,
 			  AuthService,
 			  SettingsService,
 			  UploadService,
+			  ActionService,
+			  MatchService,
+			  ChatService,
 			  AppGateway,
 			  AuthService,
 			  Database]
