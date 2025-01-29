@@ -11,6 +11,21 @@ services:
     restart: always
     networks:
       - matcha
+  script:
+    image: python:3.10  # Utilisez une image Python
+    container_name: generate_fake_data
+    volumes:
+      - ./database:/app  # Montez le dossier contenant votre script
+    working_dir: /app
+    command: sh -c "pip install -r requirements.txt && python generate_data.py"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      - database
+    networks:
+      - matcha
 
   backend:
     build: ./backend

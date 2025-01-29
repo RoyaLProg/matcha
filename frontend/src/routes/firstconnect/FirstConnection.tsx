@@ -38,26 +38,6 @@ function FirstConnection() {
 	}, [setValue]);
 
 
-	useEffect(() => {
-		// Obtenir les coordonnées GPS
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(
-				async (position) => {
-					const { latitude, longitude } = position.coords;
-					const response = await fetch(
-						`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-					);
-					const data = await response.json();
-					if (data) {
-						setValue("country", data.countryName || "");
-						setValue("city", data.city || "");
-					}
-				},
-				(error) => console.error("Error getting location:", error)
-			);
-		}
-	}, [setValue]);
-
 	function handleTagClick(tag: string) {
 		if (selectedTags.includes(tag)) {
 			setSelectedTags(selectedTags.filter((t) => t !== tag));
@@ -149,9 +129,7 @@ function FirstConnection() {
 			// Étape 5 : Envoyer les données au backend
 			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/create`, {
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${cookies["Auth"]}`,
-				},
+				credentials: "include",
 				body: formData,
 			});
 

@@ -42,13 +42,26 @@ export default class SettingsService {
 	}
 
 
-	async updateSettings(data: any, id: number) : Promise<Settings> {
-		const settings = await this.database.updateRows("settings", data, { id });
-		return settings[0] as Settings;
+	async updateSettings(data: Partial<Settings>, id: number) : Promise<void> {
+		try {
+			await this.database.updateRows("settings", data, { userId: id });
+		}
+		catch (error) {
+			throw new Error(`Failed to update settings: ${error.message}`);
+		}
 	}
 
 	async getSettings(id: number) : Promise<Settings> {
-		const settings = await this.database.getFirstRow("settings", [], { id });
+		const settings = await this.database.getFirstRow("settings", [], { userId: id }) as Settings;
+		if (!settings)
+			throw new Error("Settings not found");
+		const settingsId = settings.id;
+		const tags = await this.database.getRows("tags_entity", [], { settingsId });
+		const pictures = await this.database.getRows("picture", [], { settingsId });
+		if (tags)
+			settings.tags = tags as Tag[];
+		if (pictures)
+			settings.pictures = pictures as Picture[];
 		return settings as Settings;
 	}
 

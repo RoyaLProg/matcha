@@ -10,13 +10,13 @@ import ChatProvider from './context/ChatContext.tsx'
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
 		<UserProvider>
-			<WebSocketProvider>
+			{/* <WebSocketProvider> */}
 				<ChatsProvider>
 					<ChatProvider>
 						<App />
 					</ChatProvider>
 				</ChatsProvider>
-			</WebSocketProvider>
+			{/* </WebSocketProvider> */}
 		</UserProvider>
 	</StrictMode>,
 )

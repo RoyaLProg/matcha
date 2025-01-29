@@ -76,14 +76,14 @@ export class AuthController {
 		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000); // time in a year
 
 		console.log(x);
-		
+
 		if( x < 18)
 			return 'you must be at least 18 years old to register'
 		if ( x > 80)
 			return `really ? You are telling me you are ${Math.floor(x)} years old?`
 		return null;
 	}
-	
+
 	checkFirstName(value: string) {
 		if (!value || !value.length)
 			return ('you must provide a firstName');
@@ -142,7 +142,7 @@ export class AuthController {
 			// gender: UserGender.Undefined,
 			isValidated: false,
 		}
-		
+
 		const errors = this.checkRegister(user);
 		if (errors)
 			throw new BadRequestException(errors);
@@ -206,8 +206,8 @@ export class AuthController {
 				throw new UnauthorizedException('username or password incorrect');
 			if (!user.isValidated)
 				throw new UnauthorizedException('you need to verify your email first');
-			delete user.password;
-			const jwt: string = this.jwtService.sign(JSON.stringify(user), {secret: process.env.JWT_SECRET});
+			const payload = { id: user.id };
+			const jwt: string = this.jwtService.sign(payload, {secret: process.env.JWT_SECRET});
 			let eat = new Date();
 			eat.setMonth(eat.getMonth() + 2);
 			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: false, expires: eat, path: '/'});
