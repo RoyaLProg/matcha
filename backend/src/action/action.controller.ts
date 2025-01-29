@@ -1,11 +1,15 @@
-import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, Get, UseGuards } from '@nestjs/common';
 import ActionService from './action.service';
 import Chat from 'src/interface/chat.interface';
+import MatchService from './match.service';
+import { get } from 'http';
+import AuthGuard from 'src/auth/auth.guard';
 
 @Controller('action')
 class ActionController {
 	constructor(
-		private actionService: ActionService
+		private actionService: ActionService,
+		private matchService: MatchService
 	) {}
 
 	@Post('like')
@@ -24,6 +28,21 @@ class ActionController {
 		}
 	}
 
+	@Get('matches')
+	@UseGuards(AuthGuard)
+	async getMatches(@Body() { userId }) : Promise<any> {
+		try {
+			const matches = await this.matchService.getMatches(userId);
+			if (matches)
+				return matches;
+			return { message: 'No matches found' };
+		}catch (err) {
+			throw new HttpException(
+				err.message || 'Failed to get matches',
+				HttpStatus.BAD_REQUEST
+			)
+		}
+	}
 }
 
 export default ActionController;
