@@ -4,18 +4,27 @@ import { Observable } from "rxjs";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
-export default class AuthGuard implements CanActivate {
+export default class UserGuard implements CanActivate {
 	constructor(
 		private readonly jwtService: JwtService,
 	){}
 
 	validateRequest(request: Request): boolean {
-		const jwt = request.cookies['Auth'];
-		//console.log(jwt);
+		const jwt = request.cookies['auth'];
+		
 		try {
-			this.jwtService.verify(jwt, {secret: process.env.JWT_SECRET});
+			const jwtDecoded = this.jwtService.verify(jwt, {secret: process.env.JWT_SECRET});
+			const path = request.originalUrl.split('/');
+			const id = Number(path[path.length - 1]);
+
+			console.log(id, jwtDecoded);
+
+			if (!id)
+				return true;
+
+			if (id !== jwtDecoded['id'])
+				return false;
 		} catch (e) {
-			console.log(e);
 			return false;
 		}
 		return true

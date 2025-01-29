@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import AuthService from './auth.service';
 import { sha256 } from 'js-sha256';
@@ -7,7 +7,10 @@ import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { TokenType } from 'src/interface/auth.interface';
-import { hash } from 'crypto';
+import AuthGuard from './auth.guard';
+
+type MyOmit<T, K extends PropertyKey> =
+    { [P in keyof T as Exclude<P, K>]: T[P] }
 
 @Controller("auth")
 export class AuthController {
@@ -25,12 +28,105 @@ export class AuthController {
 	}
 
 	checkPassword(value: string) {
+		if (! value || !value.length)
+			return 'you must provide a password';
+		if (value.length < 8 || value.length > 255)
+			return ('password must be between 8 and 255 charaters long');
+
 		const i1 = new RegExp(/[_\-\*@!]/).test(value);
 		const i2 = new RegExp(/[0-9]/).test(value);
 		const i3 = new RegExp(/[a-z]/).test(value);
 		const i4 = new RegExp(/[A-Z]/).test(value);
 
-		return (i1 && i2 && i3 && i4);
+		if (!i1)
+			return ('password must contain at least a special charater (_-*@!)');
+		if (!i2)
+			return ('password must contain at least a number');
+		if (!i3)
+			return ('password must contain at least a lowercase charater');
+		if (!i4)
+			return ('password must contain at least a uppercase charater');
+		return null;
+	}
+
+	checkUsername(value: string) {
+		if (! value || !value.length )
+			return 'you must provided a username';
+		if (! new RegExp(/^[A-Za-z0-9_-]+$/i).test(value))
+			return ('username contains illegal charaters');
+		if (value.length < 5 || value.length > 16)
+			return ('username must be between 5 and 16 charaters long')
+		return null;
+	}
+
+	checkEmail(value: string) {
+		if (!value || !value.length)
+			return ('you must provide an email');
+		if (! new RegExp(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/).test(value) )
+			return ('not a valid email');
+		if (value.length > 255)
+			return ('email is too long');
+		return null;
+	}
+
+	checkBirthDate(value: string): string | null {
+		if (!value || !value.length)
+			return 'you must provide your birthday'
+
+		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000); // time in a year
+
+		console.log(x);
+		
+		if( x < 18)
+			return 'you must be at least 18 years old to register'
+		if ( x > 80)
+			return `really ? You are telling me you are ${Math.floor(x)} years old?`
+		return null;
+	}
+	
+	checkFirstName(value: string) {
+		if (!value || !value.length)
+			return ('you must provide a firstName');
+		if (! new RegExp(/[a-zA-Z\-]|[space]/i).test(value))
+			return ('first name contain illegal charaters');
+		if (value.length > 255)
+			return ('first name is too long');
+		return null;
+	}
+
+	checkLastName(value: string) {
+		if (!value || !value.length)
+			return ('you must provide a lastName');
+		if (! new RegExp(/[a-zA-Z\-]|[space]/i).test(value))
+			return ('last name contain illegal charaters');
+		if (value.length > 255)
+			return ('last name is too long');
+		return null;
+	}
+
+	checkRegister(user: Users) {
+		let error: Object = {};
+		let x = this.checkPassword(user.password);
+		if (x)
+			error['password'] = x;
+		x = this.checkUsername(user.username);
+		if (x)
+			error['username'] = x;
+		x = this.checkEmail(user.email);
+		if (x)
+			error['email'] = x;
+		x = this.checkBirthDate(user.birthDate);
+		if (x)
+			error['birthDate'] = x;
+		x = this.checkLastName(user.lastName);
+		if (x)
+			error['lastName'] = x;
+		x = this.checkFirstName(user.firstName);
+		if (x)
+			error['firstName'] = x;
+		if (Object.keys(error).length === 0)
+			return null;
+		return error;
 	}
 
 	@Post('register')
@@ -46,11 +142,11 @@ export class AuthController {
 			// gender: UserGender.Undefined,
 			isValidated: false,
 		}
+		
+		const errors = this.checkRegister(user);
+		if (errors)
+			throw new BadRequestException(errors);
 
-		if (! new RegExp(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/).test(user.email) )
-			throw new BadRequestException('not a valid email');
-		if (! this.checkPassword(user.password))
-			throw new BadRequestException('password is too weak');
 		const hash = sha256.create();
 		user.password = hash.update(user.password).hex();
 		let result: Users;
@@ -58,11 +154,10 @@ export class AuthController {
 		try {
 			result =  await this.authService.addUser(user);
 		} catch (e) {
-			throw new BadRequestException('email or user already exist');
+			throw new BadRequestException({other: 'email or user already exist'});
 		}
 		try {
-			const myUser = await this.userService.findOneByUsername(user.username);
-			const token = await this.authService.create_token(myUser);
+			const token = await this.authService.create_token(result);
 			const message = `Welcome to Matcha the latte
 
 							Can you please click this <a href="http://localhost:5173/verify/${token.token}">link</a> to confirm your email`;
@@ -73,10 +168,10 @@ export class AuthController {
 			});
 		} catch (e) {
 			console.log(e);
-			throw new BadRequestException('could not send email');
+			throw new BadRequestException({other: 'could not send email'});
 		}
 
-		return res.status(201).send({ message: 'Acound created, please verify your email' });
+		return 'Account created, please verify your email';
 	}
 
 	@Delete('verify/:token')
@@ -104,13 +199,15 @@ export class AuthController {
 	async login(@Body() body, @Res({passthrough: true}) res: Response) {
 			const hash = sha256.create();
 			const password = hash.update(body.password).hex();
+			if (this.checkUsername(body.username))
+				throw new UnauthorizedException('username or passowrd incorrect');
 			const user: Users | null = await this.authService.getLogin(body.username, password);
 			if (user === null)
 				throw new UnauthorizedException('username or password incorrect');
 			if (!user.isValidated)
 				throw new UnauthorizedException('you need to verify your email first');
-			const payload: Omit<Users, 'password'> = user;
-			const jwt: string = this.jwtService.sign(JSON.stringify(payload), {secret: process.env.JWT_SECRET});
+			delete user.password;
+			const jwt: string = this.jwtService.sign(JSON.stringify(user), {secret: process.env.JWT_SECRET});
 			let eat = new Date();
 			eat.setMonth(eat.getMonth() + 2);
 			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: false, expires: eat, path: '/'});
@@ -158,6 +255,7 @@ export class AuthController {
 			throw new BadRequestException('password does not comply with requirements');
 
 		let user = Authtoken['users'];
+		user.birthDate = new Date(user.birthDate).toISOString().slice(0,10);
 
 		const hash = sha256.create();
 		user.password = hash.update(body.password).hex();
@@ -168,8 +266,9 @@ export class AuthController {
 	}
 
 	@Get('test')
+	@UseGuards(AuthGuard)
 	async test2() {
-		return await this.authService.test();
+		return 'i am guarded';
 	}
 }
 

@@ -1,6 +1,5 @@
 import "./Login.css";
 import { useContext, useState } from "react";
-import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { UserContext } from "../../context/UserContext";
 import { notificationFunctions, NotificationType } from "../../context/WebSocketContext";
@@ -11,14 +10,13 @@ interface IForm {
 }
 
 function Login() {
-	const { handleSubmit, register, formState: {errors} } = useForm<IForm>();
-	const [password, setPassword] = useState<string>("");
 	const userConext = useContext(UserContext);
 	const navigate = useNavigate();
+	const [values, setValues] = useState<IForm>({username: '', password: ''});
 
-	async function onSubmit(values: IForm) {
+	async function onSubmit() {
 		const data = { username: values.username, password: values.password };
-	
+
 		await fetch(import.meta.env.VITE_API_URL + '/api/auth/login', {
 			method: 'POST',
 			credentials: 'include',
@@ -39,34 +37,23 @@ function Login() {
 			.catch((e) => console.error('Fetch error:', e));
 	}
 	
-
-	function checkPassword(value: string) {
-		const i1 = new RegExp(/[_\-\*@!]/).test(value);
-		const i2 = new RegExp(/[0-9]/).test(value);
-		const i3 = new RegExp(/[a-z]/).test(value);
-		const i4 = new RegExp(/[A-Z]/).test(value);
-		setPassword(value);
-
-		return (i1 && i2 && i3 && i4);
-	}
-
 	return (
 	<div className="login">
 		<div className="loginLogo">
 			<span className="logo"></span>
 		</div>
 		<div className="loginForm">
-			<form onSubmit={handleSubmit(onSubmit)}>
+			<div id="form">
 				<label id="username">
 					Username :
-					<input type='text' {...register("username", {required: true, maxLength: 255, pattern: /^[A-Za-z0-9_-]+$/i})} aria-invalid={errors.username ? true : false}/>
+					<input type='text' onChange={(e) => setValues({...values, username: e.target.value})}/>
 				</label>
 				<label id="password">
 					Password :
-					<input type="password" defaultValue={password} {...register("password", {required: true, maxLength: 256, minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => checkPassword(value)})} aria-invalid={errors.password ? true : false}/>
+					<input type="password" onChange={(e) => setValues({...values, password: e.target.value})} />
 				</label>
-				<input type="submit" value={'login'}/>
-			</form>
+				<input type="submit" value={'login'} onClick={() => onSubmit()}/>
+			</div>
 			<div className="loginButtons">
 				<Link to={"/register"}><button> Register </button></Link>
 				<Link to={"/forgot"}><button> Forgot Password </button></Link>

@@ -15,7 +15,7 @@ interface Users {
 	password?: string;
 	status?: UserStatus;
 	isValidated: boolean;
-	settings?: Settings; 
+	settings?: Settings;
 }
 
 export default Users;

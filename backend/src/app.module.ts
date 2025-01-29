@@ -29,6 +29,7 @@ import { UploadService } from './upload/upload.service';
 			  SettingsService,
 			  UploadService,
 			  AppGateway,
+			  AuthService,
 			  Database]
 })
 export class AppModule {}

@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request } from '@nestjs/common';
+import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import UserService from './user.service';
 import Settings from 'src/interface/settings.interface';
@@ -7,8 +7,10 @@ import * as fs from 'fs';
 import Picture from 'src/interface/picture.interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
+import AuthGuard from 'src/auth/auth.guard';
+import UserGuard from './user.guard';
 
-@Controller('users')
+@Controller('Users')
 class UserController {
 	constructor(private readonly userService: UserService, private readonly settingsService: SettingsService) { }
 
@@ -90,12 +92,13 @@ class UserController {
 	}
 
 	@Get(':id')
-	// @UseGuards(AuthGuard)
-	getUser(@Param('id') id: number, @Request() req) : Promise<Users> {
+	async getUser(@Param('id') id: number) : Promise<Users> {
 		try {
-			// if (req.user.id !== id)
-			// 	throw new HttpException('You do not have permission to access this user', HttpStatus.FORBIDDEN);
-			return this.userService.findOne(id);
+			const user = await this.userService.findOne(id);
+			delete user.settings
+			delete user.password
+			delete user.email
+			return user;
 		} catch (error) {
 			if (error.message === 'User not found')
 				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
@@ -107,6 +110,7 @@ class UserController {
 	}
 
 	@Patch(':id')
+	@UseGuards(AuthGuard, UserGuard)
 	updateUser(@Param('id') id: number, @Body() data: Partial<Users>) : Promise<Users> {
 		try {
 			return this.userService.update(id, data);
@@ -123,6 +127,7 @@ class UserController {
 
 
 	@Delete(':id')
+	@UseGuards(AuthGuard, UserGuard)
 	deleteUser(@Param('id') id: number) : Promise<void> {
 		try {
 			return this.userService.remove(id);

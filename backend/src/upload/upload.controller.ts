@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Request, UploadedFiles, UseInterceptors, HttpException, HttpStatus } from "@nestjs/common";
+import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { UploadService } from "./upload.service";
 import Users from "src/interface/users.interface";
@@ -6,13 +6,17 @@ import Picture from "src/interface/picture.interface";
 import Chat from "src/interface/chat.interface";
 import Message, { MessageType } from "src/interface/message.interface";
 import { Database } from "src/database/Database";
+import AuthGuard from "src/auth/auth.guard";
+
 
 @Controller("upload")
 class UploadController {
-	constructor(private database: Database) {}
-
+	constructor(
+		private database: Database
+	) {}
+	
 	@Post('picture')
-	// @UseGuards(AuthGuard)
+	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {
 		storage: UploadService.fileStorage('pictures'),
 		fileFilter: UploadService.fileFilter(/image\/jpeg|image\/png|image\/gif/),
@@ -32,6 +36,7 @@ class UploadController {
 
 
 	@Post(':chatId/video')
+	@UseGuards(AuthGuard)
 	@UseInterceptors(FileInterceptor('file', {
 		storage: UploadService.fileStorage('videos'),
 		fileFilter: UploadService.fileFilter(/mp4|mkv|avi/),
@@ -55,6 +60,7 @@ class UploadController {
 	}
 
 	@Post(':chatId/audio')
+	@UseGuards(AuthGuard)
 	@UseInterceptors(FileInterceptor('file', {
 		storage: UploadService.fileStorage('audios'),
 		fileFilter: UploadService.fileFilter(/mp3|wav|ogg/),

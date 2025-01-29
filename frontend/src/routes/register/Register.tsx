@@ -1,8 +1,7 @@
 import "./Register.css"
-import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { notificationFunctions, NotificationType } from "../../context/WebSocketContext";
+import { useState } from "react";
 
 interface IForm {
 	firstName: string
@@ -15,21 +14,27 @@ interface IForm {
 }
 
 export default function Register() {
-	const { handleSubmit, register, formState: {errors} } = useForm<IForm>();
-	const [ password, setPassword ] = useState<string>("");
 	const navigate = useNavigate();
+	const [errors, setErrors] = useState<any | null>(null);
+	const [values, setValues] = useState<IForm>({firstName: '', lastName: '', username: '', email: '', birthDate: new Date(), password: '', confirmPassword: ''});
 
-	async function onSubmit(values: IForm) {
-		const data = { firstName: values.firstName, lastName: values.lastName, username: values.username, email: values.email, birthDate: values.birthDate, password: password }
+	async function onSubmit() {
+		setErrors(null);
+
+		if (values.password != values.confirmPassword) {
+			setErrors({confirmPassword: 'passwords does not match'});
+			return ;
+		}
+
 		await fetch(import.meta.env.VITE_API_URL + "/api/auth/register",
 			  {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(data)
+				body: JSON.stringify(values)
 			  }
 		).then((rv) => {
 			if (!rv.ok) {
-				rv.json().then((value) => notificationFunctions[NotificationType.Error](value['message']));
+				rv.json().then((value) => setErrors(value));
 			} else {
 				rv.json().then((value) => {
 					notificationFunctions[NotificationType.Success](value.message);
@@ -40,56 +45,57 @@ export default function Register() {
 		.catch((e) => console.log(e));
 	}
 
-	function checkPassword(value: string) {
-		const i1 = new RegExp(/[_\-\*@!]/).test(value);
-		const i2 = new RegExp(/[0-9]/).test(value);
-		const i3 = new RegExp(/[a-z]/).test(value);
-		const i4 = new RegExp(/[A-Z]/).test(value);
-		setPassword(value);
-
-		return (i1 && i2 && i3 && i4);
-	}
-
 	return (
 		<div className="register">
 			<div className="registerLogo">
 				<span className="logo"></span>
 			</div>
+				{ errors ?
+					<div className="error">
+						{
+							Object.values(errors).map((v) => {
+								return (<p className="error-message"> {v as String} </p>);
+							})
+						}
+					</div>
+					:
+					''
+				}
 			<div className="registerForm">
-				<form onSubmit={handleSubmit(onSubmit)}>
+				<div id="form">
 					<div className="formGroup">
 						<label id="first-name">
 							First Name :
-							<input type="text" {...register("firstName", {required: true, maxLength: 255, pattern: /^[A-Za-z]+$/i})} aria-invalid={errors.firstName ? true : false}/>
+							<input type="text" onChange={(e) => setValues({...values, firstName: e.target.value})} aria-invalid={errors && errors.firstName ? true : false}/>
 						</label>
 
 						<label id="last-name">
 							Last Name :
-							<input type="text" {...register("lastName", {required: true, maxLength: 255, pattern: /^[A-Za-z]+$/i})} aria-invalid={errors.lastName ? true : false}/>
+							<input type="text" onChange={(e) => setValues({...values, lastName: e.target.value})} aria-invalid={errors && errors.lastName ? true : false}/>
 						</label>
 					</div>
 					<label id="username">
 						Username :
-						<input type="text" {...register("username", {required: true, maxLength: 255, pattern: /^[A-Za-z0-9_-]+$/i})} aria-invalid={errors.username ? true : false}/>
+						<input type="text" onChange={(e) => setValues({...values, username: e.target.value})} aria-invalid={errors && errors.username ? true : false}/>
 					</label>
 					<label id="email">
 						Email :
-						<input type="email" {...register("email", {required: true, maxLength: 255, pattern: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/i})} aria-invalid={errors.email ? true : false}/>
+						<input type="email" onChange={(e) => setValues({...values, email: e.target.value})} aria-invalid={errors && errors.email ? true : false}/>
 					</label>
 					<label id="birthday">
 						Birthday :
-						<input type="date" {...register("birthDate", {required: true, valueAsDate: true, validate: value => {let x = new Date().getFullYear() - value.getFullYear(); return x > 17 && x < 80}})} aria-invalid={errors.birthDate ? true : false}/>
+						<input type="date" onChange={(e) => setValues({...values, birthDate: e.target.valueAsDate as Date})} aria-invalid={errors && errors.birthDate ? true : false}/>
 					</label>
 					<label id="password">
 						Password :
-						<input type="password" defaultValue={password} {...register("password", {required: true, maxLength: 256, minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => checkPassword(value)})} aria-invalid={errors.password ? true : false}/>
+						<input type="password" onChange={(e) => setValues({...values, password: e.target.value})} aria-invalid={errors && errors.password ? true : false}/>
 					</label>
 					<label id="confirm-password">
 						Confirm Password :
-						<input type="password" {...register("confirmPassword", {required: true, maxLength: 256,minLength: 8, pattern: /^[A-Za-z0-9_\-@!\*]+$/i, validate: value => {return (value == password)}})} aria-invalid={errors.confirmPassword ? true : false}/>
+						<input type="password" onChange={(e) => setValues({...values, confirmPassword: e.target.value})} aria-invalid={errors && errors.confirmPassword ? true : false}/>
 					</label>
-					<input type="submit" />
-				</form>
+					<button id='form-submit' onClick={ () => onSubmit() }>Submit</button>
+				</div>
 				<div className="registerButtons">
 					<Link to={"/"}><button> Back </button></Link>
 					<Link to={"/login"}><button> Login </button></Link>

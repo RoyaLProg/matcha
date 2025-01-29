@@ -43,7 +43,7 @@ export class Database {
 					let col = Object.keys(values)[0];
 					let val = Object.values(values)[0];
 					let where = {};
-					where[`${val}`] = obj[`${col}`];
+					where[`${val}`] = obj[`${col}`]; 
 					obj[`${keys[i]}`] = await this.getFirstRow(keys[i], [], where);
 				}
 			}
@@ -54,7 +54,7 @@ export class Database {
 				let val = Object.values(rel)[0];
 				let where = {};
 				console.log(col, val, object);
-				where[`${val}`] = object[`${col}`];
+				where[`${val}`] = object[`${col}`]; 
 				object[`${keys[i]}`] = await this.getFirstRow(keys[i], [], where);
 			}
 		}
