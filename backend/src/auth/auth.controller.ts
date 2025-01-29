@@ -171,7 +171,7 @@ export class AuthController {
 			throw new BadRequestException({other: 'could not send email'});
 		}
 
-		return 'Account created, please verify your email';
+		return res.status(201).send({ message: 'account has been created, please confirm you email !' });
 	}
 
 	@Delete('verify/:token')
@@ -180,7 +180,7 @@ export class AuthController {
 			throw new BadRequestException('token is empty');
 
 		const Authtoken = await this.authService.getToken(token) as Object;
-		if (Authtoken === null)
+		if (!Authtoken)
 			throw new BadRequestException('token is invalid');
 		if (Authtoken['type'] !== TokenType.CREATE)
 			throw new BadRequestException('token is invalid');
@@ -200,9 +200,9 @@ export class AuthController {
 			const hash = sha256.create();
 			const password = hash.update(body.password).hex();
 			if (this.checkUsername(body.username))
-				throw new UnauthorizedException('username or passowrd incorrect');
+				throw new UnauthorizedException('username or password incorrect');
 			const user: Users | null = await this.authService.getLogin(body.username, password);
-			if (user === null)
+			if (!user)
 				throw new UnauthorizedException('username or password incorrect');
 			if (!user.isValidated)
 				throw new UnauthorizedException('you need to verify your email first');
@@ -247,7 +247,7 @@ export class AuthController {
 			throw new BadRequestException('token is empty');
 
 		const Authtoken = await this.authService.getToken(token);
-		if (Authtoken === null)
+		if (!Authtoken)
 			throw new BadRequestException('token is invalid');
 		if (Authtoken.type !== TokenType.PASS_RESET)
 			throw new BadRequestException('token is invalid');
