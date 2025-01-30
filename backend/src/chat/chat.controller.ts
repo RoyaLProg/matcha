@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Query, Request, UseGuards } from '@nestjs/common';
 import ChatService from './chat.service';
 import Chat from 'src/interface/chat.interface';
 import Message from 'src/interface/message.interface';
@@ -22,14 +22,11 @@ class ChatController {
 		}
 	}
 
-	@Get()
+	@Get('me')
 	@UseGuards(AuthGuard)
-	async getChatsByUserId(@Query('userId') userId: number) : Promise<Chat[] | undefined> {
-		if (!userId) {
-			throw new HttpException('UserId is required', HttpStatus.BAD_REQUEST);
-		  }
+	async getChatsMe(@Request() req) : Promise<Chat[] | undefined> {
 		try {
-			return await this.chatService.getChatsByUserId({ userId });
+			return await this.chatService.getChatsByUserId({ userId: req.user.id });
 		}catch (err) {
 			throw new HttpException(
 				err.message || 'Failed to get chats',
@@ -38,22 +35,6 @@ class ChatController {
 		}
 	}
 
-	@Get(':id/messages')
-	@UseGuards(AuthGuard)
-	async getMessagesByChatId(@Query('chatId') chatId: number) : Promise<Message[] | undefined> {
-		if (!chatId) {
-			throw new HttpException('ChatId is required', HttpStatus.BAD_REQUEST);
-		  }
-		try {
-			// return await this.chatService.getMessagesByChatId({ chatId });
-			return undefined
-		}catch (err) {
-			throw new HttpException(
-				err.message || 'Failed to get messages',
-				HttpStatus.BAD_REQUEST
-			)
-		}
-	}
 }
 
 export default ChatController;

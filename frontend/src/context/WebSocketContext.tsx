@@ -30,7 +30,9 @@ export default function WebSocketProvider({ children }: { children: ReactNode })
 	const [socket, setSocket] = useState<Socket | undefined>(undefined);
 
 	useEffect(() => {
+
 		if (user && cookies['Auth']) {
+			console.log('Connecting to WebSocket');
 			const socketIOClient = io(`${import.meta.env.VITE_API_URL}`, {
 				withCredentials: true,
 			});

@@ -9,13 +9,13 @@ interface Users {
 	id?: number;
 	firstName: string;
 	lastName: string;
-	email: string;
-	birthDate: string;
+	email?: string;
+	birthDate?: string;
 	username: string;
 	password?: string;
 	status?: UserStatus;
-	isValidated: boolean;
-	settings?: Settings; 
+	isValidated?: boolean;
+	settings?: Settings;
 }
 
 export default Users;
