@@ -35,10 +35,25 @@ class ChatService {
 		return newMessage as Message;
 	}
 
+	private async getMessagesByChatId({ chatId } : { chatId: number }) : Promise<Message[] | undefined> {
+		const messages = await this.database.getRows( 'message', [], { chatId }, { user: { id: 'userId' } }) as Message[];
+		if (!messages || messages.length === 0)
+			return undefined;
+
+		return messages as Message[];
+	}
+
 	async getChatsByUserId({ userId } : { userId: number }) : Promise<Chat[] | undefined> {
-		const chats = await this.database.getRows('chat', [], { $or: [ { userId: userId }, { targetUserId: userId }, ], });
+		const chats = await this.database.getRows( 'chat', [], { $or: [{ userId: userId }, { targetUserId: userId }] }) as Chat[];
+
+		if (!chats || chats.length === 0)
+			return undefined;
+		for (const chat of chats) {
+			chat.messages = await this.getMessagesByChatId({ chatId: chat.id });
+		}
 		return chats as Chat[];
 	}
+
 }
 
 export default ChatService;

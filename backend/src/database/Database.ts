@@ -21,16 +21,19 @@ export class Database {
 		}
 	}
 
-	public async getRows(table: string, columns?: Array<string>, where?: Object): Promise<Object[]> {
+	public async getRows(table: string, columns?: Array<string>, where?: Object, relations?: Object): Promise<Object[]> {
 		let whereString: undefined | string = this.createWhere(where);
 
 		let query = `SELECT ${columns ? columns.map((v) => {return `"${v}"`}) : '*'} FROM ${table} ${whereString ?? ''}`;
 		let result = await Database._pool.query(query);
 
+		if (relations && result.rows.length > 0)
+			return await this.getRelations(result.rows, relations) as Object[];
+
 		return result.rows;
 	}
 
-	private async getRelations(object: Array<Object> | Object, relations: Object): Promise<Object> {
+	private async getRelations(object: Array<Object> | Object, relations: Object): Promise<Object | Object[]> {
 
 		let keys = Object.keys(relations);
 		let values: Object[] = Object.values(relations);
@@ -43,7 +46,7 @@ export class Database {
 					let col = Object.keys(values)[0];
 					let val = Object.values(values)[0];
 					let where = {};
-					where[`${val}`] = obj[`${col}`]; 
+					where[`${val}`] = obj[`${col}`];
 					obj[`${keys[i]}`] = await this.getFirstRow(keys[i], [], where);
 				}
 			}
@@ -54,7 +57,7 @@ export class Database {
 				let val = Object.values(rel)[0];
 				let where = {};
 				console.log(col, val, object);
-				where[`${val}`] = object[`${col}`]; 
+				where[`${val}`] = object[`${col}`];
 				object[`${keys[i]}`] = await this.getFirstRow(keys[i], [], where);
 			}
 		}

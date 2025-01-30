@@ -1,17 +1,14 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { WebSocketContext } from "./WebSocketContext";
 import { UserContext } from "./UserContext";
-
-interface Chat {
-	id: number,
-	name: string,
-	lastMessage?: string,
-}
+import Chat from "../interface/chat.interface";
 
 interface ChatsContextType {
 	chats: Chat[] | undefined;
 	refreshChats: () => void;
 }
+
+interface IChat extends Chat {}
 
 export const ChatsContext = createContext<ChatsContextType | undefined>(undefined);
 
@@ -21,7 +18,7 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const socket = useContext(WebSocketContext)
 	const fetchChats = async () => {
 		if (user) {
-			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chats?userId=${user.user?.id}`, {
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chats/me`, {
 				method: "GET",
 				credentials: "include",
 			});
@@ -45,6 +42,12 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const refreshChats = async () => {
 		await fetchChats();
 	};
+
+
+
+
+
+
 	return (<ChatsContext.Provider value={{ chats, refreshChats }}>
 				{children}
 			</ChatsContext.Provider>);
