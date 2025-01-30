@@ -25,13 +25,13 @@ class ChatService {
 		await this.database.deleteRows('chat', { $or: [ { userId: userId, targetUserId: targetUserId }, { userId: targetUserId, targetUserId: userId }, ], });
 	}
 
-	async sendMessage({ userId, targetUserId, message } : { userId: number, targetUserId: number, message: string }) : Promise<Message> {
-		const chat = await this.database.getFirstRow('chat',[],{ $or: [ { userId: userId, targetUserId: targetUserId }, { userId: targetUserId, targetUserId: userId }, ],}, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } }) as Chat;
+	async sendMessage(message: Partial<Message>) : Promise<Message> {
+		const chat = await this.database.getFirstRow('chat', [], { id: message.chat.id }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } }) as Chat;
 		if (!chat)
 			throw new Error('Chat not found');
-		if (chat.user.id !== userId && chat.targetUser.id !== userId)
+		if (chat.user.id != message.userId || chat.targetUser.id != message.userId)
 			throw new Error('User not authorized');
-		const newMessage = await this.database.addOne('message', { chatId: chat.id, userId, content: message, createdAt: new Date(), });
+		const newMessage = await this.database.addOne('message', { chatId: message.chat.id, userId: message.userId, content: message.content, createdAt: new Date(), });	
 		return newMessage as Message;
 	}
 

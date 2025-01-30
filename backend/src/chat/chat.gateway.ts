@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import Message from 'src/interface/message.interface';
 import { SocketsService } from 'src/sockets.service';
 
 @WebSocketGateway()
@@ -21,11 +22,11 @@ class ChatGateway {
 		this.logger.log(`Client ${client.id} joining room ${room}`);
 	}
 
-	emitMessage(chatId: number, message: any): void {
-		const room = `chat_${chatId}`;
+	emitMessage(message: Message): void {
+		const room = `chat_${message.chat.id}`;
 		this.server.to(room).emit('receiveMessage', message);
 		this.logger.log(`Message émis à la room ${room}: ${JSON.stringify(message)}`);
-	  }
+	}
 
 	@SubscribeMessage(`LeaveRoom`)
 	handleLeaveRoom(client: Socket, room: string) {

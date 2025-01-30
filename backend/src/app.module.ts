@@ -15,6 +15,7 @@ import ActionController from './action/action.controller';
 import ActionService from './action/action.service';
 import MatchService from './action/match.service';
 import ChatService from './chat/chat.service';
+import ChatController from './chat/chat.controller';
 
 @Module({
 	imports: [
@@ -26,7 +27,7 @@ import ChatService from './chat/chat.service';
 		}),
 		JwtModule
 	],
-  controllers: [UserController, AuthController, UploadController, ActionController],
+  controllers: [UserController, AuthController, UploadController, ActionController, ChatController],
   providers: [SocketsService,
 			  UserService,
 			  AuthService,
