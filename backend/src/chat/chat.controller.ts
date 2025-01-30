@@ -11,9 +11,9 @@ class ChatController {
 
 	@Post('sendmessage')
 	@UseGuards(AuthGuard)
-	async sendMessage(@Body() { userId, targetUserId, message }) : Promise<Message> {
+	async sendMessage(@Body()  message: Partial<Message> ) : Promise<Message> {
 		try {
-			return await this.chatService.sendMessage({ userId, targetUserId, message });
+			return await this.chatService.sendMessage(message);
 		}catch (err) {
 			throw new HttpException(
 				err.message || 'Failed to send message',

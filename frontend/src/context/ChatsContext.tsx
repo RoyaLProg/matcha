@@ -26,7 +26,7 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const fetchChats = async () => {
 		if (!user) return;
 		try {
-			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chats/me`, {
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/me`, {
 				method: "GET",
 				credentials: "include",
 			});
@@ -91,11 +91,7 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({
-						userId: newMessage.userId,
-						targetUserId: newMessage.chatId,
-						message: newMessage,
-					}),
+					body: JSON.stringify({message: newMessage}),
 				});
 				if (!response.ok) throw new Error("Failed to send message");
 				const sentMessage: Message = await response.json();
