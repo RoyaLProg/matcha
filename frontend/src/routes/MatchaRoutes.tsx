@@ -17,6 +17,7 @@ export function MatchaRoutes() {
 		return (
 			<Routes>
 				<Route path="/" element={<FirstConnection />} />
+				<Route path="*" element={<Navigate to={'/'}/>} />
 			</Routes>
 			)
 	return (
@@ -40,7 +41,6 @@ export function MatchaRoutesDefault() {
 		<Route path="/verify/:token" element={<Verify />} />
 		<Route path="/forgot" element={<Forgot />} />
 		<Route path="/forgot/:token" element={<Forgot />} />
-		<Route path="/profile" element={<Profile />} />
 		<Route path="*" element={<Navigate to={'/'}/>} />
 	</Routes>
 	);
