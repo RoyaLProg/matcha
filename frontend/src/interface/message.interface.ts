@@ -1,4 +1,3 @@
-import Chat from "./chat.interface";
 import Users from "./users.interface";
 
 export enum MessageType {
@@ -9,12 +8,14 @@ export enum MessageType {
 
 interface Message {
 	id?: number;
-	chat: Chat;
-	sender: Users;
+	chatId: number;
+	userId: number;
 	type?: MessageType;
 	content: string | null;
 	fileUrl: string | null;
 	createdAt?: Date;
+	// sender = user de userId
+	sender: Users;
 }
 
 export default Message;
