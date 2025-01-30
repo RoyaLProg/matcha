@@ -10,6 +10,7 @@ import { useContext } from "react";
 import FirstConnection from "./firstconnect/FirstConnection";
 import Profile from "./profile/Profile";
 import HomeDefault, { Home } from "./home/Home";
+import Settings from "./settings/Settings";
 
 export function MatchaRoutes() {
 	const user = useContext(UserContext);
@@ -27,6 +28,7 @@ export function MatchaRoutes() {
 			<Route path="/chat" element={<Chat />} />
 			<Route path="/verify/:token" element={<Verify />} />
 			<Route path="/profile" element={<Profile />} />
+			<Route path="/profile/settings" element={<Settings />} />
 			<Route path="*" element={<Navigate to={'/'}/>} />
 		</Routes>
 	)

@@ -23,12 +23,13 @@ export default class UserService {
 		const settings = await this.database.getFirstRow('settings', [], { userId: id }) as Settings;
 		if (settings) {
 			user.settings = settings;
-			const tags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
-			const pictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
+			const tags = await this.database.getRows('tags_entity', [], { settingsId: settings.id })// as Tag[];
+			const pictures = await this.database.getRows('picture', [], { settingsId: settings.id })// as Picture[];
+			console.log(tags, pictures);
 			if (tags)
-				settings.tags = tags;
+				settings.tags = tags.map((v) => {return v as Tag});
 			if (pictures)
-				settings.pictures = pictures;
+				settings.pictures = pictures.map((v) => {return v as Picture});
 		}
 		delete user.password;
 		return user as Users;

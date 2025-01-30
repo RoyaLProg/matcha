@@ -115,7 +115,11 @@ class UserController {
 		}
 	}
 
-	@Patch('settings/me')
+	@Patch('settings')
+	@UseInterceptors(FilesInterceptor('files', 5, {
+		storage: UploadService.fileStorage('pictures'),
+		fileFilter: UploadService.fileFilter(/image\/jpeg|image\/png|image\/gif/),
+	}))
 	@UseGuards(AuthGuard)
 	async updateSettingMe(@Request() req, @Body() body: any) : Promise<Partial<Settings>> {
 		try {

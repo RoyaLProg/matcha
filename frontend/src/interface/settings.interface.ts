@@ -15,7 +15,7 @@ export enum UserSexualOrientation {
 	Undefined = 'undefined',
 }
 
-interface Settings {
+interface ISettings {
 	id?: number;
 	userId: string;
 	country: string;
@@ -33,4 +33,4 @@ interface Settings {
 	tags: Tag[];
 }
 
-export default Settings;
+export default ISettings;
