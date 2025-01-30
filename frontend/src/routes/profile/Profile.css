@@ -1,0 +1,112 @@
+#profile .card {
+	color: black;
+	padding: 15px;
+	height: fit-content;
+	background-color: whitesmoke;
+	width: 500px;
+	border-radius: 17px;
+}
+
+#profile .content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 25px;
+	width: 100%;
+}
+
+#profile .content .card .yourListPicture {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	max-width: 500px;
+	max-height: 500px;
+	width: 100%;
+}
+#profile .content .card .yourListPicture img {
+	width: 100%;
+	height: auto;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#profile .content .card .yourListPicture .material-symbols-outlined {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 2rem;
+	color: white;
+	background-color: rgba(0, 0, 0, 0.3);
+	border-radius: 50%;
+	padding: 10px;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+}
+#profile .content .card .yourListPicture .material-symbols-outlined:hover {
+	background-color: rgba(0, 0, 0, 0.5);
+	transform: translateY(-50%) scale(1.2);
+}
+
+#profile .content .card .yourListPicture .material-symbols-outlined:first-child {
+	left: 10px;
+}
+
+#profile .content .card .yourListPicture .material-symbols-outlined:last-child {
+	right: 10px;
+}
+
+#profile .content .card .yourListPicture img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	aspect-ratio: 1 / 1;
+	border-radius: 10px;
+}
+
+#profile .content .card .Button {
+	display: flex;
+	max-width: 400px;
+	width: 100%;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+#profile .content .card .Button button {
+	width: 50px;
+	height: 50px;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+#profile .yourProfile {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+#profile #nav {
+	display: flex;
+	justify-content: space-between;
+}
+
+#profile #nav a {
+	padding: 15px 30px;
+	background-color: #555;
+	cursor: pointer;
+	margin-top: 15px;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	border-radius: 15px;
+}
+
+#profile #nav a:hover {
+	background-color: #444;
+	transform: scale(1.1);
+}
