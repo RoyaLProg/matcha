@@ -5,6 +5,7 @@
 	align-items: center;
 	gap: 25px;
 	height: 100%;
+	width: 100%;
 }
 
 .alignement {
@@ -193,20 +194,20 @@
 	background-color: #3366cc;
 	transform: scale(1.1);
 }
-.yourProfile {
+.home .yourProfile {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 }
 
-.card {
+.home .card {
 	color: black;
 	padding: 15px;
-	height: 757px;
+	height: fit-content;
 	background-color: whitesmoke;
 }
 
-#container {
+.home #container {
 	width: 500px;
 	display: flex;
 	flex-direction: row;
