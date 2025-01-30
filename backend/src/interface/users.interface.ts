@@ -9,12 +9,12 @@ interface Users {
 	id?: number;
 	firstName: string;
 	lastName: string;
-	email: string;
-	birthDate: string;
+	email?: string;
+	birthDate?: string;
 	username: string;
 	password?: string;
 	status?: UserStatus;
-	isValidated: boolean;
+	isValidated?: boolean;
 	settings?: Settings;
 }
 
