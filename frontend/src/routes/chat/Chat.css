@@ -530,3 +530,7 @@
 	border-radius: 20px;
 	outline: none;
 }
+
+.addButton {
+	background-color: #aaa;
+}
