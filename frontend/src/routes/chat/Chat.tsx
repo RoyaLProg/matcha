@@ -68,6 +68,7 @@ function Chat() {
 			<div className="chatInput">
 				<button className="microButton"><span className="material-symbols-outlined">mic</span></button>
 				<button className="videoButton"><span className="material-symbols-outlined">videocam</span></button>
+				<button className="addButton"><span className="material-symbols-outlined">add</span></button>
 				<input type="text" placeholder="Type a message" />
 				<button className="sendButton"><span className="material-symbols-outlined">send</span></button>
 			</div>
