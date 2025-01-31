@@ -21,8 +21,8 @@ cursor = conn.cursor()
 fake = Faker()
 
 # Listes pour les valeurs ENUM
-genders = ['man', 'woman', 'other', 'undefined']
-sexual_orientations = ['heterosexual', 'bisexual', 'homosexual', 'undefined']
+genders = ['man', 'woman', 'other']
+sexual_orientations = ['heterosexual', 'bisexual', 'homosexual' ]
 tags_enum = [
     'cinema', 'series_tv', 'netflix', 'youtube', 'books', 'podcasts', 'music', 'video_games',
     'travel', 'photography', 'football', 'basketball', 'swimming', 'tennis', 'yoga', 'running',
@@ -50,8 +50,8 @@ def create_user():
     first_name = fake.first_name()
     last_name = fake.last_name()
     email = fake.email()[:255]  # Limiter à 255 caractères
-    birth_date = fake.date_of_birth(minimum_age=18, maximum_age=60)
-    username = create_unique_username()
+    birth_date = fake.date_of_birth(minimum_age=18, maximum_age=30)
+    username = create_unique_username()+str(random.randint(0, 1000))
 
     cursor.execute("""
         INSERT INTO Users ("firstName", "lastName", email, "birthDate", username, password, "isValidated")
@@ -64,7 +64,7 @@ def create_settings(user_id):
     city = fake.city()
     latitude = round(random.uniform(41.0, 51.5), 6)
     longitude = round(random.uniform(-5.0, 9.0), 6)
-    max_distance = random.randint(10, 100)
+    max_distance = random.randint(100, 1000000000)
     biography = fake.text(max_nb_chars=200)
     gender = random.choice(genders)
     sexual_orientation = random.choice(sexual_orientations)
@@ -108,7 +108,7 @@ def generate_fake_data(num_users):
             conn.commit()  # Valide la transaction si tout est correct
 
 try:
-    generate_fake_data(500)
+    generate_fake_data(2000)
 except Exception as e:
     print(f"Erreur générale : {e}")
 finally:

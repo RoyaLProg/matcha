@@ -44,9 +44,10 @@ export default class MatchService {
 			const userPictures = await this.database.getRows('picture', [], { settingsId: userSettings.id }) as Picture[];
 			if (userTags.length === 0) throw new Error('User has no tags');
 			if (userPictures.length === 0) throw new Error('User has no pictures');
-			const potentialUsersSetting = await this.database.getRows('settings', [], { userId: { $ne: userId } }) as Settings[];
+			const potentialUsersSetting = await this.database.getRows('settings', []) as Settings[];
 			if (potentialUsersSetting.length === 0) throw new Error('No potential users found');
 			const potentialUsers = await Promise.all(potentialUsersSetting.map(async (settings) => {
+				if (Number(settings.userId) === userId) return null
 				const otherTags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
 				const distance = await this.calculateDistance(userSettings.latitude, userSettings.longitude, settings.latitude, settings.longitude);
 				const commonTagsCount = await this.findCommonTags(userTags, otherTags);
@@ -57,8 +58,9 @@ export default class MatchService {
 				delete otherUser.email;
 				const age = await this.calculeAge(otherUser.birthDate);
 				if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;
-				const userLikeOther = await this.database.getFirstRow('action', [], { $or: [ { userId, targetUserId: settings.userId, type: 'like' }, { userId: settings.userId, targetUserId: userId, type: 'like' } ]});
-				if (userLikeOther) return null;
+				const userLikeOther = await this.database.getRows('action', [], { userId: userId, targetUserId: settings.userId, status: 'like'});
+				const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
+				if (userLikeOther.length > 0 || userLikeReverse.length > 0) return null;
 				const otherPictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
 				if (otherPictures.length === 0) return null;
 				return { user: otherUser, settings, tags: otherTags, pictures: otherPictures, distance, age };

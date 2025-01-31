@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpException, HttpStatus, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, Get, UseGuards, Request } from '@nestjs/common';
 import ActionService from './action.service';
 import Chat from 'src/interface/chat.interface';
 import MatchService from './match.service';
@@ -30,9 +30,10 @@ class ActionController {
 
 	@Get('matches')
 	@UseGuards(AuthGuard)
-	async getMatches(@Body() { userId }) : Promise<any> {
+	async getMatches(@Request() req) : Promise<any> {
+		console.log('coucvou', req.user.id)
 		try {
-			const matches = await this.matchService.getMatches(userId);
+			const matches = await this.matchService.getMatches(req.user.id);
 			if (matches)
 				return matches;
 			return { message: 'No matches found' };
