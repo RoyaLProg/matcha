@@ -1,8 +1,19 @@
+import { useContext } from "react";
 import "./Chat.css"
 import { Link } from "react-router-dom";
+import { ChatsContext } from "../../context/ChatsContext";
+import { WebSocketContext } from "../../context/WebSocketContext";
+import { UserContext } from "../../context/UserContext";
 
 function ChatsList() {
-	const name = "edouard";
+	const user = useContext(UserContext);
+	const chats = useContext(ChatsContext);
+	const socket = useContext(WebSocketContext);
+
+	if (!socket || !chats)
+		return <div>Loading...</div>;
+	if (!chats.chats || chats.chats.length === 0)
+		return <div>No chats found</div>;
 	return (
 		<div className="chatList">
 			<div className="menu">
@@ -16,40 +27,36 @@ function ChatsList() {
 				</div>
 			</div>
 			<div className="content">
-				<div className="yourProfileInfo">
-					<div className="chatListPicture">
-						<Link to={`/profile?username=${name}`}><img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" /></Link>
-					</div>
-					<div className="chatListProfile">
-						<div className="name">
-							<span>John Doe</span>
+			{chats.chats.map((chat) => {
+					const otherUser = chat.user.id === user?.user?.id ? chat.targetUser : chat.user;
+					const otherPictureProfile = otherUser.settings?.pictures?.find((picture) => picture.isProfile);
+					return (
+						<div className="yourProfileInfo" key={chat.id}>
+							<div className="chatListPicture">
+								<Link to={`/profile?username=${otherUser.username}`}>
+									<img src={otherPictureProfile?.url || "https://www.w3schools.com/w3images/avatar2.png"} alt="profile" />
+								</Link>
+							</div>
+							<div className="chatListProfile">
+								<div className="name">
+									<span>{otherUser.firstName || "Unknown"}</span>
+								</div>
+								<p className="username">@{otherUser.username}</p>
+								<p className="lastMessage">
+									Last message: {chat.messages?.length ? chat.messages[chat.messages.length - 1].content : "No messages yet"}
+								</p>
+							</div>
+							<div className="chatButton">
+								<Link to={`/chat/${chat.id}`}>
+									<button>
+										<span className="material-symbols-outlined">chat</span>
+									</button>
+								</Link>
+							</div>
 						</div>
-						<p className="username">@johndoe</p>
-						<p className="lastMessage">Last message: Hi there!</p>
-					</div>
-					<div className="chatButton">
-						<Link to={"/chat"}>
-							<button><span className="material-symbols-outlined">chat</span></button>
-						</Link>
-					</div>
-				</div>
-				<div className="yourProfileInfo">
-					<div className="chatListPicture">
-						<Link to={`/profile?username=${name}`}><img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" /></Link>
-					</div>
-					<div className="chatListProfile">
-						<div className="name">
-							<span>John Doe</span>
-						</div>
-						<p className="username">@johndoe</p>
-						<p className="lastMessage">Last message: Hi there!</p>
-					</div>
-					<div className="chatButton">
-						<Link to={"/chat"}>
-							<button><span className="material-symbols-outlined">chat</span></button>
-						</Link>
-					</div>
-				</div>
+					);
+				})}
+
 			</div>
 		</div>
 	);

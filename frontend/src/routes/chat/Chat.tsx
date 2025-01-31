@@ -1,6 +1,4 @@
 import "./Chat.css"
-import { useContext } from "react";
-import { WebSocketContext } from "../../context/WebSocketContext";
 import { Link } from "react-router-dom";
 
 

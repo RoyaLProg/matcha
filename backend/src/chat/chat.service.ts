@@ -31,7 +31,7 @@ class ChatService {
 			throw new Error('Chat not found');
 		if (chat.user.id != message.userId || chat.targetUser.id != message.userId)
 			throw new Error('User not authorized');
-		const newMessage = await this.database.addOne('message', { chatId: message.chat.id, userId: message.userId, content: message.content, createdAt: new Date(), });	
+		const newMessage = await this.database.addOne('message', { chatId: message.chat.id, userId: message.userId, content: message.content, createdAt: new Date(), });
 		return newMessage as Message;
 	}
 
@@ -43,9 +43,9 @@ class ChatService {
 		return messages as Message[];
 	}
 
-	async getChatsByUserId({ userId } : { userId: number }) : Promise<Chat[] | undefined> {
+	async getChatsByUserId(userId: number) : Promise<Chat[] | undefined> {
 		const chats = await this.database.getRows( 'chat', [], { $or: [{ userId: userId }, { targetUserId: userId }] }) as Chat[];
-
+		console.log(chats)
 		if (!chats || chats.length === 0)
 			return undefined;
 		for (const chat of chats) {
