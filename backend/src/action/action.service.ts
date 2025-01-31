@@ -16,9 +16,8 @@ class ActionService {
 			const userLike = await this.database.getFirstRow('action', [], { userId, targetUserId, status: ActionStatus.Like, }) as Action;
 			const targetUserLike = await this.database.getFirstRow('action', [], { userId: targetUserId, targetUserId: userId, status: ActionStatus.Like, }) as Action;
 
-			if (userLike && targetUserLike) {
+			if (userLike && targetUserLike)
 				return await this.chatService.createChat({ userId, targetUserId });
-			}
 		} else if (status === ActionStatus.Dislike) {
 			await this.chatService.deleteChat({ userId, targetUserId });
 		} else {
