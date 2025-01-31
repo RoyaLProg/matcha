@@ -1,0 +1,25 @@
+#verify {
+	display: flex;
+	flex-direction: column;
+	gap: 50px;
+}
+
+#verify a{
+	padding: 15px 30px;
+	background: #444;
+	border-radius: 15px;
+}
+
+#verify #error {
+	padding: 15px 0px;
+	width: 100%;
+	background: #fcc;
+	color: red;
+}
+
+#verify #success {
+	padding: 15px 0px;
+	width: 100%;
+	background: #cfc;
+	color: green;
+}
