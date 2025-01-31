@@ -26,7 +26,8 @@ class ChatController {
 	@UseGuards(AuthGuard)
 	async getChatsMe(@Request() req) : Promise<Chat[] | undefined> {
 		try {
-			return await this.chatService.getChatsByUserId({ userId: req.user.id });
+			console.log(req.user.id)
+			return await this.chatService.getChatsByUserId(req.user.id);
 		}catch (err) {
 			throw new HttpException(
 				err.message || 'Failed to get chats',
