@@ -10,19 +10,22 @@ class ChatService {
 	) {}
 
 	async createChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<Chat> {
-		const existingChat = await this.database.getFirstRow('chat', [], { $or: [{ userId: userId, targetUserId: targetUserId },{ userId: targetUserId, targetUserId: userId }, ], }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } });
-		if (existingChat)
-			return existingChat as Chat;
+		const existingChat1 = await this.database.getFirstRow('chat', [], { userId: userId, targetUserId: targetUserId });
+		const existingChat2 = await this.database.getFirstRow('chat', [], { userId: targetUserId, targetUserId: userId });
+		if (existingChat1) return existingChat1 as Chat;
+		if (existingChat2) return existingChat2 as Chat;
 		const user = await this.database.getFirstRow('users', [], { id: userId });
 		const targetUser = await this.database.getFirstRow('users', [], { id: targetUserId });
-		if (!user || !targetUser)
+		if (!user || !targetUser) {
 			throw new Error('User not found');
-		const newChat = await this.database.addOne('chat', { userId, targetUserId, createdAt: new Date(), });
+		}
+		const newChat = await this.database.addOne('chat', { userId, targetUserId }); 
 		return newChat as Chat;
 	}
 
 	async deleteChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<void> {
-		await this.database.deleteRows('chat', { $or: [ { userId: userId, targetUserId: targetUserId }, { userId: targetUserId, targetUserId: userId }, ], });
+		await this.database.deleteRows('chat', { userId: userId, targetUserId: targetUserId });
+		await this.database.deleteRows('chat', { userId: targetUserId, targetUserId: userId });	
 	}
 
 	async sendMessage(message: Partial<Message>) : Promise<Message> {

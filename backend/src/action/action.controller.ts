@@ -2,7 +2,6 @@ import { Controller, Post, Body, HttpException, HttpStatus, Get, UseGuards, Requ
 import ActionService from './action.service';
 import Chat from 'src/interface/chat.interface';
 import MatchService from './match.service';
-import { get } from 'http';
 import AuthGuard from 'src/auth/auth.guard';
 
 @Controller('action')
@@ -13,13 +12,13 @@ class ActionController {
 	) {}
 
 	@Post('like')
-	async like(@Body() { userId, targetUserId, status }) : Promise<Chat | { message: string }> {
+	async like(@Body() { userId, targetUserId, status }) : Promise<{ message: string, chat: null | Chat}> {
 		try {
+			console.log({ userId, targetUserId, status });
 			const actionResult = await this.actionService.handleLike({ userId, targetUserId, status });
 			if (actionResult)
-				return actionResult;
-
-			return { message: 'Action completed successfully' };
+				return { message: 'Action completed successfully', chat: actionResult };
+			return { message: 'Action completed successfully', chat: null };
 		}catch (err) {
 			throw new HttpException(
 				err.message || 'Failed to handle action',
@@ -31,7 +30,6 @@ class ActionController {
 	@Get('matches')
 	@UseGuards(AuthGuard)
 	async getMatches(@Request() req) : Promise<any> {
-		console.log('coucvou', req.user.id)
 		try {
 			const matches = await this.matchService.getMatches(req.user.id);
 			if (matches)

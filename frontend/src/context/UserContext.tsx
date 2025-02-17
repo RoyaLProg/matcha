@@ -37,7 +37,7 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 
 	const updateUserSettingsAPI = async (settings: Partial<Settings>) => {
 		try {
-			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/me`, {
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ data: settings }),
