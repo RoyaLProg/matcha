@@ -16,6 +16,9 @@ import ActionService from './action/action.service';
 import MatchService from './action/match.service';
 import ChatService from './chat/chat.service';
 import ChatController from './chat/chat.controller';
+import { join } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
+
 
 @Module({
 	imports: [
@@ -25,7 +28,11 @@ import ChatController from './chat/chat.controller';
 				from: '"matcha noreply" <matcha.noreply@matcha.com>',
 			},
 		}),
-		JwtModule
+		JwtModule,
+		ServeStaticModule.forRoot({
+			rootPath: join(__dirname, '..', 'uploads'), // 📂 Dossier à servir
+			serveRoot: '/uploads', // 🔗 URL accessible
+		  }),
 	],
   controllers: [UserController, AuthController, UploadController, ActionController, ChatController],
   providers: [SocketsService,

@@ -7,25 +7,23 @@ import { MessageType } from "../../interface/message.interface";
 
 
 function Chat() {
-	const [messages, setMessages] = useState([
-		{ type: "text", content: "Hi there!", sender: "other" },
-		{ type: "text", content: "How are you?", sender: "me" },
-	]);
 	const [isRecordingAudio, setIsRecordingAudio] = useState(false);
 	const [isRecordingVideo, setIsRecordingVideo] = useState(false);
 	const [previewAudio, setPreviewAudio] = useState(null);
+	const [previewAudioFile, setPreviewAudioFile] = useState<File | null>(null);
 	const [previewVideo, setPreviewVideo] = useState(null);
+	const [previewVideoFile, setPreviewVideoFile] = useState<File | null>(null);
 	const [stream, setStream] = useState(null);
 	const mediaRecorderRef = useRef(null);
 	const chunksRef = useRef([]);
 	const videoRef = useRef(null);
 
-	const { chats, sendMessage } = useContext(ChatsContext) ?? {};
-const { user } = useContext(UserContext) ?? {};
-const { id } = useParams();
-const currentChat = chats?.find((chat) => chat.id === Number(id));
+	const { chats, sendMessage, sendMediaMessage } = useContext(ChatsContext) ?? {};
+	const { user } = useContext(UserContext) ?? {};
+	const { id } = useParams();
+	const currentChat = chats?.find((chat) => chat.id === Number(id));
 
-const [messageText, setMessageText] = useState("");
+	const [messageText, setMessageText] = useState("");
 
 
 	// audio
@@ -56,20 +54,21 @@ const [messageText, setMessageText] = useState("");
 			mediaRecorderRef.current.stop();
 			mediaRecorderRef.current.onstop = () => {
 				const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-				const audioURL = URL.createObjectURL(audioBlob);
-				setPreviewAudio(audioURL);
+				setPreviewAudioFile(new File([audioBlob], "audioMessage.webm", { type: "audio/webm" }));
+				setPreviewAudio(URL.createObjectURL(audioBlob));
 				setIsRecordingAudio(false);
+				stream?.getTracks().forEach(track => track.stop());
 			};
-			stream?.getTracks().forEach(track => track.stop());
 		}
-	}
+	};
 
 	const cancelAudio = () => {
 		setPreviewAudio(null);
 	};
 
 	const sendAudio = () => {
-		setMessages(prev => [...prev, { type: "audio", content: previewAudio, sender: "me" }]);
+		if (!currentChat || !previewAudioFile) return;
+		sendMediaMessage(currentChat.id, previewAudioFile, "audio");
 		setPreviewAudio(null);
 	};
 
@@ -105,27 +104,28 @@ const [messageText, setMessageText] = useState("");
 			mediaRecorderRef.current.stop();
 			mediaRecorderRef.current.onstop = () => {
 				const videoBlob = new Blob(chunksRef.current, { type: "video/webm" });
-				const videoURL = URL.createObjectURL(videoBlob);
-				setPreviewVideo(videoURL);
+				setPreviewVideoFile(new File([videoBlob], "videoMessage.webm", { type: "video/webm" }));
+				setPreviewVideo(URL.createObjectURL(videoBlob));
 				setIsRecordingVideo(false);
 				stream?.getTracks().forEach(track => track.stop());
 			};
 		}
-	}
+	};
 
 	const cancelVideo = () => {
 		setPreviewVideo(null);
 	};
 
 	const sendVideo = () => {
-		setMessages(prev => [...prev, { type: "video", content: previewVideo, sender: "me" }]);
+		if (!currentChat || !previewVideoFile) return;
+		sendMediaMessage(currentChat.id, previewVideoFile, "video");
 		setPreviewVideo(null);
 	};
 
 	const sendNewMessage = () => {
 		console.log("DEBUG | Message:", messageText);
-console.log("DEBUG | User:", user);
-console.log("DEBUG | Current Chat:", currentChat);
+		console.log("DEBUG | User:", user);
+		console.log("DEBUG | Current Chat:", currentChat);
 
 		if (!messageText.trim() || !sendMessage || !currentChat || !user) return;
 
@@ -140,9 +140,7 @@ console.log("DEBUG | Current Chat:", currentChat);
 		};
 
 		sendMessage(newMessage);
-
-		// ✅ Ajouter le message immédiatement dans le chat
-		currentChat.messages = [...(currentChat.messages ?? []), newMessage];
+		// currentChat.messages = [...(currentChat.messages ?? []), newMessage];
 
 		setMessageText(""); // Réinitialise l'input après envoi
 	};
@@ -179,21 +177,26 @@ console.log("DEBUG | Current Chat:", currentChat);
 
 				<div className="chatContent">
 					<div className="chatMessage">
-						{messages.map((message, index) => (
-							<div key={index} className={`message ${message.sender === "me" ? "myMessage" : "yourMessage"}`}>
-								{message.type === "text" && <p>{message.content}</p>}
-								{message.type === "audio" && (
-									<audio controls>
-										<source src={message.content} type="audio/webm" />
-									</audio>
-								)}
-								{message.type === "video" && (
-									<video controls width="200">
-										<source src={message.content} type="video/webm" />
-									</video>
-								)}
-							</div>
-						))}
+					{currentChat?.messages?.map((message, index) => (
+						<div key={index} className={`message ${message.userId === user?.id ? "myMessage" : "yourMessage"}`}>
+							{/* 📝 Texte */}
+							{message.type === MessageType.Text && <p>{message.content}</p>}
+
+							{/* 🎙 Audio */}
+							{message.type === MessageType.Audio && message.fileUrl && (
+								<audio controls>
+									<source src={`${import.meta.env.VITE_API_URL}${message.fileUrl}`} type="audio/webm" />
+								</audio>
+							)}
+
+							{/* 🎥 Vidéo */}
+							{message.type === MessageType.Video && message.fileUrl && (
+								<video controls width="200">
+									<source src={`${import.meta.env.VITE_API_URL}${message.fileUrl}`} type="video/webm" />
+								</video>
+							)}
+						</div>
+					))}
 					</div>
 				</div>
 				{previewAudio && (

@@ -37,59 +37,66 @@ class UploadController {
 
 
 	@Post(':chatId/video')
-	@UseGuards(AuthGuard)
-	@UseInterceptors(FileInterceptor('file', {
-		storage: UploadService.fileStorage('videos'),
-		fileFilter: UploadService.fileFilter(/mp4|mkv|avi/),
-	}))
-	async uploadVideos(@Param('chatId') chatId: number, @UploadedFiles() file: Express.Multer.File, @Request() req) {
-		const userId = req.user.id;
-		const chat = await this.database.getFirstRow('chat', [], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } }) as Chat;
+@UseGuards(AuthGuard)
+@UseInterceptors(FileInterceptor('file', {
+    storage: UploadService.fileStorage('videos'),
+    fileFilter: UploadService.fileFilter(/video\/webm/), // ✅ Accepte WebM
+}))
+async uploadVideo(
+    @Param('chatId') chatId: number, 
+    @UploadedFile() file: Express.Multer.File, 
+    @Request() req
+) {
+    const userId = req.user.id;
 
-		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId)) {
-			throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
-		}
+    const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
+	if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
+        throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
+    }
 
-		const videoMessage: Partial<Message> = {
-			chatId: chatId,
-			// sender: userId,
-			type: MessageType.Video,
-			fileUrl: `/upload/videos/${file.filename}`,
-		};
-		const savedVideo = await this.database.addOne('message', videoMessage);
-		return { message: 'Videos uploaded successfully!', videos: savedVideo };
+    const videoMessage: Partial<Message> = {
+        chatId,
+        userId, 
+        type: MessageType.Video,
+        content: null,
+        fileUrl: `/uploads/videos/${file.filename}`,
+    };
+
+    const savedVideo = await this.database.addOne('message', videoMessage);
+    return { message: 'Video uploaded successfully!', video: savedVideo };
+}
+
+@Post(':chatId/audio')
+@UseGuards(AuthGuard)
+@UseInterceptors(FileInterceptor('file', {
+    storage: UploadService.fileStorage('audios'),
+    fileFilter: UploadService.fileFilter(/audio\/webm/), // ✅ Accepte WebM
+}))
+async uploadAudio(
+    @Param('chatId') chatId: number, 
+    @UploadedFile() file: Express.Multer.File, 
+    @Request() req
+) {
+    const userId = req.user.id;
+	console.log(userId);
+	
+    const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
+	console.log("🔍 Chat récupéré :", chat);
+    if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
+		throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
 	}
+	console.log("oui");
+    const audioMessage: Partial<Message> = {
+        chatId,
+        userId, 
+        type: MessageType.Audio,
+        content: null,
+        fileUrl: `/uploads/audios/${file.filename}`,
+    };
 
-	@Post(':chatId/audio')
-	@UseGuards(AuthGuard)
-	@UseInterceptors(FileInterceptor('file', {
-		storage: UploadService.fileStorage('audios'),
-		fileFilter: UploadService.fileFilter(/mp3|wav|ogg/),
-	}))
-	async uploadAudios(@Param('chatId') chatId: number, @UploadedFiles() file: Express.Multer.File, @Request() req) {
-		const userId = req.user.id;
-		const chat = await this.database.getFirstRow('chat', [], { id: chatId }, { user: { id: 'userId' }, targetUser: { id: 'targetUserId' } }) as Chat;
-
-		if (!chat || (chat.user.id !== userId && chat.targetUser.id !== userId)) {
-			throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
-		}
-
-		const audioMessage: Partial<Message> = {
-			chatId: chatId,
-			// sender: userId,
-			type: MessageType.Audio,
-			fileUrl: `/upload/audios/${file.filename}`,
-		};
-		const savedAudio = await this.database.addOne('message', audioMessage);
-		return { message: 'Audios uploaded successfully!', audios: savedAudio };
-	}
-
-	@Get('pictures/:file')
-	@UseGuards(AuthGuard)
-	async getPicture(@Param('file') file: string) {
-		const data = createReadStream(join(process.cwd(), `/uploads/pictures/${file}`));
-		return new StreamableFile(data);
-	}
+    const savedAudio = await this.database.addOne('message', audioMessage);
+    return { message: 'Audio uploaded successfully!', audio: savedAudio };
+}
 }
 
 export default UploadController;

@@ -8,6 +8,7 @@ interface ChatsContextType {
 	chats: Chat[] | undefined;
 	refreshChats: () => void;
 	sendMessage: (newMessage: Message) => void;
+	sendMediaMessage:(chatId: number, file: File, type: "audio" | "video") => void;
 }
 
 interface IChat extends Chat {}
@@ -126,7 +127,40 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 		}
 	}
 
-	return (<ChatsContext.Provider value={{ chats, refreshChats, sendMessage }}>
+	const sendMediaMessage = async (chatId: number, file: File, type: "audio" | "video") => {
+		try {
+			const formData = new FormData();
+			formData.append("file", file);
+	
+			const apiUrl = `${import.meta.env.VITE_API_URL}/api/upload/${chatId}/${type}`;
+	
+			const response = await fetch(apiUrl, {
+				method: "POST",
+				body: formData,
+				credentials: "include",
+			});
+	
+			if (!response.ok) throw new Error(`Failed to send ${type} message`);
+	
+			// 🔥 On récupère le message créé
+			const mediaMessage = await response.json();
+			console.log(mediaMessage)
+			const messageData = mediaMessage[type];
+	
+			console.log(messageData);
+			setChats((prevChats) =>
+				prevChats?.map((chat) =>
+					chat.id === chatId
+						? { ...chat, messages: sortMessages([...(chat.messages ?? []), messageData]) }
+						: chat
+				)
+			);
+		} catch (error) {
+			console.error(`Error sending ${type} message:`, error);
+		}
+	};
+
+	return (<ChatsContext.Provider value={{ chats, refreshChats, sendMessage, sendMediaMessage }}>
 				{children}
 			</ChatsContext.Provider>);
 }
