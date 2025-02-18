@@ -43,7 +43,6 @@ export function MatchaRoutesDefault() {
 		<Route path="/verify/:token" element={<Verify />} />
 		<Route path="/forgot" element={<Forgot />} />
 		<Route path="/forgot/:token" element={<Forgot />} />
-		<Route path="*" element={<Navigate to={'/'}/>} />
 	</Routes>
 	);
 }

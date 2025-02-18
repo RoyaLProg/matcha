@@ -71,6 +71,12 @@ function FirstConnection() {
 			setUploadedPictures([...uploadedPictures, ...newFiles]);
 		}
 	}
+	
+	function handleDeleteImage(fileName: string) {
+		setUploadedPictures(
+			uploadedPictures.filter((x) => x.name != fileName)
+		)
+	}
 
 	async function onSubmit(event) {
 		event.preventDefault();

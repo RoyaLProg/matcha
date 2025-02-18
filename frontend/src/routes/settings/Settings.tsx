@@ -2,14 +2,21 @@ import "./Settings.css"
 import { useContext, useEffect, useState, useRef } from "react";
 import { UserContext } from "../../context/UserContext";
 import getTags from "../../assets/tags";
-import { useForm } from "react-hook-form";
 import ISettings, { UserGender, UserSexualOrientation } from "../../interface/settings.interface";
-import Picture from "../../interface/picture.interface";
-import {Tags} from "../../interface/tags.interface"; 
 
 export default function Settings() {
 	const user = useContext(UserContext);
-	const { handleSubmit, register, setValue, formState: { errors } } = useForm<ISettings>();
+	const [formData, setFormData] = useState({
+		gender: user?.user?.settings?.gender,
+		sexualOrientation: user?.user?.settings?.sexualOrientation,
+		biography: user?.user?.settings?.biography,
+		country: user?.user?.settings?.country,
+		city: user?.user?.settings?.city,
+		geoloc: user?.user?.settings?.geoloc,
+		latitude: user?.user?.settings?.latitude,
+		longitude: user?.user?.settings?.longitude,
+	});
+	
 	const [selectedTags, setSelectedTags] = useState<string[]>(user?.user?.settings?.tags.map((v) => {return format(v.tag)}) ?? []);
 	const [profilePicture, setProfilePicture] = useState<string>("");
 	const [uploadedPictures, setUploadedPictures] = useState<File[]>([]);
@@ -22,24 +29,31 @@ export default function Settings() {
 	console.log(selectedTags);
 
 	useEffect(() => {
-	if (navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(
-		async (position) => {
-			const { latitude, longitude } = position.coords;
-			const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
-			const data = await response.json();
-			if (data) {
-				setValue("country", data.countryName || "");
-				setValue("city", data.city || "");
-			}
-			setValue("latitude", latitude);
-			setValue("longitude", longitude);
-		},
-		(error) => console.error("Error getting location:", error)
-		);
-	}
-	}, [setValue]);
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(async (position) => {
+				const { latitude, longitude } = position.coords;
+				const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+				const data = await response.json();
+				if (data) {
+					setFormData((prev) => ({
+						...prev,
+						country: data.countryName || "",
+						city: data.city || "",
+						latitude,
+						longitude,
+					}));
+				}
+			});
+		}
+	}, []);
 
+	function handleChange(event) {
+		const { name, value, type, checked } = event.target;
+		setFormData((prev) => ({
+			...prev,
+			[name]: type === "checkbox" ? checked : value,
+		}));
+	}
 
 	function handleTagClick(tag: string) {
 		if (selectedTags.includes(tag)) {
@@ -71,12 +85,12 @@ export default function Settings() {
 		}
 	}
 
-	async function onSubmit(values: Partial<ISettings>) {
+	async function onSubmit(event) {
+		event.preventDefault();
 		if (selectedTags.length < 7) {
 			console.log("Please select at least 7 tags");
 			return;
 		}
-
 		if (uploadedPictures.length < 1) {
 			console.log("Please upload at least one picture");
 			return;
@@ -89,60 +103,37 @@ export default function Settings() {
 				if (isProfile) hasProfilePicture = true;
 				return { name: file.name, isProfile };
 			});
-			if (!hasProfilePicture && pictures.length > 0)
-				pictures[0].isProfile = true;
+			if (!hasProfilePicture && pictures.length > 0) pictures[0].isProfile = true;
 
-			// Étape 3 : Formater les tags
 			const formattedTags = selectedTags.map((tag) => {
-				const category = Object.keys(tagss).find((category) =>
-					tagss[category as keyof typeof Tags].includes(tag)
-				);
-				return {
-					category: category || "unknown",
-					tag,
-				};
+				const category = Object.keys(tagss).find((category) => tagss[category].includes(tag));
+				return { category: category || "unknown", tag };
 			});
 
-			const formData = new FormData();
-
-			uploadedPictures.forEach((file) => {
-				formData.append("files", file);
-			});
-
-			// Étape 4 : Préparer les données
-			const data: ISettings = {
+			const data = {
+				...formData,
 				userId: user?.user?.id?.toString() || "",
-				country: values.country || "",
-				city: values.city || "",
-				latitude: values.latitude || 0,
-				longitude: values.longitude || 0,
 				maxDistance: rangeLocalisation,
-				geoloc: values.geoloc || false,
 				minAgePreference: rangeAgeMin,
 				maxAgePreference: rangeAgeMax,
-				biography: values.biography || "",
-				gender: values.gender || UserGender.Undefined,
-				sexualOrientation: values.sexualOrientation || UserSexualOrientation.Undefined,
-				pictures: pictures as Picture[],
+				pictures,
 				tags: formattedTags,
 			};
 
-			formData.append("data", JSON.stringify(data));
-			// Étape 5 : Envoyer les données au backend
+			const formDataToSend = new FormData();
+			uploadedPictures.forEach((file) => {
+				formDataToSend.append("files", file);
+			});
+			formDataToSend.append("data", JSON.stringify(data));
+
 			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings`, {
 				method: "PATCH",
 				credentials: "include",
-				body: formData,
+				body: formDataToSend,
 			});
 
-			if (!response.ok) {
-				throw new Error(`HTTP error! Status: ${response.status}`);
-			}
+			if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 			const result = await response.json();
-			if (result.error) {
-				console.error("Error during submit:", result.error);
-				return;
-			}
 			user?.setUserSettings(result);
 		} catch (error) {
 			console.error("Error during submit:", error);
@@ -173,29 +164,27 @@ export default function Settings() {
 			</div>
 			<div className="content">
 				<h2>Update your profile</h2>
-				<form onSubmit={handleSubmit(onSubmit)}>
+				<form onSubmit={onSubmit}>
 					{/* Champ pour le genre */}
 					<div className="form-group">
 						<label htmlFor="gender">Gender</label>
-						<select {...register("gender", { required: true })} defaultValue={user?.user?.settings?.gender} aria-invalid={errors.gender ? true : false}>
+						<select onChange={handleChange} defaultValue={user?.user?.settings?.gender}>
 							<option value="">Select Gender</option>
 							<option value={UserGender.Man}>Man</option>
 							<option value={UserGender.Woman}>Woman</option>
 							<option value={UserGender.Other}>Other</option>
 						</select>
-						{errors.gender && <p className="error">Gender is required</p>}
 					</div>
 
 					{/* Champ pour les préférences sexuelles */}
 					<div className="form-group">
 						<label htmlFor="sexualOrientation">Sexual Preferences</label>
-						<select {...register("sexualOrientation", { required: true })} defaultValue={user?.user?.settings?.sexualOrientation} aria-invalid={errors.sexualOrientation ? true : false}>
+						<select onChange={handleChange} defaultValue={user?.user?.settings?.sexualOrientation}>
 							<option value="">Select Preferences</option>
 							<option value={UserSexualOrientation.Heterosexual}>Heterosexual</option>
 							<option value={UserSexualOrientation.Bisexual}>Bisexual</option>
 							<option value={UserSexualOrientation.Homosexual}>Homosexual</option>
 						</select>
-						{errors.sexualOrientation && <p className="error">Sexual preferences are required</p>}
 					</div>
 
 					{/* Champ pour la biographie */}
@@ -203,10 +192,9 @@ export default function Settings() {
 						<label htmlFor="biography">Biography</label>
 						<textarea
 							placeholder="Tell us about yourself..."
-							{...register("biography", { required: true })}
-							aria-invalid={errors.biography ? true : false} defaultValue={user?.user?.settings?.biography}
+							onChange={handleChange}
+							defaultValue={user?.user?.settings?.biography}
 						/>
-						{errors.biography && <p className="error">Biography is required</p>}
 					</div>
 
 					{/* Champ pour le pays */}
@@ -215,10 +203,9 @@ export default function Settings() {
 						<input
 							type="text"
 							placeholder="Enter your country"
-							{...register("country", { required: true })}
-							aria-invalid={errors.country ? true : false} defaultValue={user?.user?.settings?.country}
+							onChange={handleChange}
+							defaultValue={user?.user?.settings?.country}
 						/>
-						{errors.country && <p className="error">Country is required</p>}
 					</div>
 
 					{/* Champ pour la ville */}
@@ -227,10 +214,9 @@ export default function Settings() {
 						<input
 							type="text"
 							placeholder="Enter your city"
-							{...register("city", { required: true })}
-							aria-invalid={errors.city ? true : false} defaultValue={user?.user?.settings?.city}
+							onChange={handleChange}
+							defaultValue={user?.user?.settings?.city}
 						/>
-						{errors.city && <p className="error">City is required</p>}
 					</div>
 
 					{/* Checkbox pour la géolocalisation */}
@@ -238,7 +224,7 @@ export default function Settings() {
 						<label htmlFor="geoloc">Enable Geolocation</label>
 						<input
 							type="checkbox"
-							{...register("geoloc")}
+							onChange={handleChange}
 							defaultChecked={user?.user?.settings?.geoloc}
 						/>
 					</div>
