@@ -26,7 +26,7 @@ class UserController {
 		const invalidFiles = files.filter((file) => !['image/jpeg', 'image/png', 'image/gif'].includes(file.mimetype));
 		if (invalidFiles.length > 0) {
 			files.forEach((file) => {
-				const filePath = `./uploads/pictures/${file.filename}`;
+				const filePath = `./upload/pictures/${file.filename}`;
 				fs.unlinkSync(filePath);
 			});
 			throw new HttpException(`Unsupported file type. Allowed types: .png, .jpg, .jpeg, .gif`, HttpStatus.BAD_REQUEST);
@@ -51,7 +51,7 @@ class UserController {
 			for (const [index, file] of files.entries()) {
 				const isProfileFromRequest = pictures && pictures[index] ? pictures[index].isProfile : false;
 				const picture = {
-					url: `/uploads/pictures/${file.filename}`,
+					url: `/upload/pictures/${file.filename}`,
 					isProfile: isProfileFromRequest,
 				}
 				const createdPicture = await this.settingsService.createPicture(settings.id, picture);
@@ -121,9 +121,22 @@ class UserController {
 		fileFilter: UploadService.fileFilter(/image\/jpeg|image\/png|image\/gif/),
 	}))
 	@UseGuards(AuthGuard)
-	async updateSettingMe(@Request() req, @Body() body: any) : Promise<Partial<Settings>> {
+	async updateSettingMe(@UploadedFiles() files: Express.Multer.File[], @Request() req, @Body() body: any) : Promise<Partial<Settings>> {
 		try {
-			await this.settingsService.updateSettings(body.data, req.user.id);
+			const data = JSON.parse(body.data);
+
+			const pictures = [...data.pictures];
+			const tags = [...data.tags];
+			delete data.pictures;
+			delete data.tags;
+			console.log(tags);
+
+			files.forEach(
+				(f, i) => pictures[i].url = `/upload/pictures/${f.filename}`
+			);
+
+
+			await this.settingsService.updateSettings(data, pictures, tags, req.user.id);
 			return await this.settingsService.getSettings(req.user.id);
 		} catch (error) {
 			if (error.message === 'User not found') {

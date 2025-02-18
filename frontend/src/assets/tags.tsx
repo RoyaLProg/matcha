@@ -13,7 +13,7 @@ export const Tags: Record<keyof typeof TagCategory, string[]> = {
 		"Cinema",
 		"Series TV",
 		"Netflix",
-		"YouTube",
+		"Youtube",
 		"Books",
 		"Podcasts",
 		"Music",
@@ -50,7 +50,6 @@ export const Tags: Record<keyof typeof TagCategory, string[]> = {
 		"Barbecue",
 	],
 	[TagCategory.Culture]: [
-		"Sci-Fi",
 		"Fantasy",
 		"Documentaries",
 		"Anime",

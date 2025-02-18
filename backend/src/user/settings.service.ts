@@ -14,6 +14,7 @@ export default class SettingsService {
 	}
 
 	async createTag(settingsId: number, tag: Tag): Promise<Tag> {
+		console.log(tag);
 		const formattedCategory = tag.category.toLowerCase().replace(/\s+/g, '_');
 		const formattedTag = tag.tag.toLowerCase().replace(/\s+/g, '_');
 		try {
@@ -42,9 +43,14 @@ export default class SettingsService {
 	}
 
 
-	async updateSettings(data: Partial<Settings>, id: number) : Promise<void> {
+	async updateSettings(settings: Partial<Settings>, pictures: Picture[], tags: Tag[], id: number) : Promise<void> {
 		try {
-			await this.database.updateRows("settings", data, { userId: id });
+			const settingsId = (await this.database.getFirstRow("settings", ["id"], {userId: id}))['id'];
+			await this.database.updateRows("settings", settings, { userId: id });
+			await this.database.deleteRows("picture", { settingsId: settingsId });
+			pictures.forEach((p) => this.createPicture(settingsId, p));
+			await this.database.deleteRows("tags_entity", { settingsId: settingsId });
+			tags.forEach((t) => this.createTag(settingsId, t));
 		}
 		catch (error) {
 			throw new Error(`Failed to update settings: ${error.message}`);

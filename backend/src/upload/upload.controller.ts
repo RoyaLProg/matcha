@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus } from "@nestjs/common";
+import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { UploadService } from "./upload.service";
 import Users from "src/interface/users.interface";
@@ -7,7 +7,8 @@ import Chat from "src/interface/chat.interface";
 import Message, { MessageType } from "src/interface/message.interface";
 import { Database } from "src/database/Database";
 import AuthGuard from "src/auth/auth.guard";
-
+import { createReadStream } from "fs";
+import { join } from "path";
 
 @Controller("upload")
 class UploadController {
@@ -28,7 +29,7 @@ class UploadController {
 			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 		}
 		const uploadedPictures = files.map((file, index) => ({
-			url: `/uploads/pictures/${file.filename}`,
+			url: `/upload/pictures/${file.filename}`,
 			isProfile: index === 0,
 		}));
 		return uploadedPictures;
@@ -53,7 +54,7 @@ class UploadController {
 			chat: chat,
 			sender: userId,
 			type: MessageType.Video,
-			fileUrl: `/uploads/videos/${file.filename}`,
+			fileUrl: `/upload/videos/${file.filename}`,
 		};
 		const savedVideo = await this.database.addOne('message', videoMessage);
 		return { message: 'Videos uploaded successfully!', videos: savedVideo };
@@ -77,10 +78,17 @@ class UploadController {
 			chat: chat,
 			sender: userId,
 			type: MessageType.Audio,
-			fileUrl: `/uploads/audios/${file.filename}`,
+			fileUrl: `/upload/audios/${file.filename}`,
 		};
 		const savedAudio = await this.database.addOne('message', audioMessage);
 		return { message: 'Audios uploaded successfully!', audios: savedAudio };
+	}
+
+	@Get('pictures/:file')
+	@UseGuards(AuthGuard)
+	async getPicture(@Param('file') file: string) {
+		const data = createReadStream(join(process.cwd(), `/uploads/pictures/${file}`));
+		return new StreamableFile(data);
 	}
 }
 

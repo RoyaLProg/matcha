@@ -5,6 +5,7 @@
 	background-color: whitesmoke;
 	border-radius: 17px;
 	height: 750px;
+	width: 430px;
 }
 
 #profile {
@@ -52,6 +53,9 @@
 	flex-direction: column;
 	align-items: flex-start;
 	justify-items: space-around;
+	text-align: justify;
+	word-break: normal;
+	text-justify: inter-word;
 }
 
 #profile #nav {

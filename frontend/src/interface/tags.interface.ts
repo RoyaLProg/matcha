@@ -16,7 +16,7 @@ export enum Tags {
 	Cinema = 'cinema',
 	SeriesTV = 'series_tv',
 	Netflix = 'netflix',
-	YouTube = 'youtube',
+	Youtube = 'youtube',
 	Books = 'books',
 	Podcasts = 'podcasts',
 	Music = 'music',
@@ -53,7 +53,6 @@ export enum Tags {
 	Barbecue = 'barbecue',
 
 	// Culture
-	SciFi = 'sci_fi',
 	Fantasy = 'fantasy',
 	Documentaries = 'documentaries',
 	Anime = 'anime',
