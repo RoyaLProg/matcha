@@ -23,7 +23,7 @@ class ChatGateway {
 	}
 
 	emitMessage(message: Message): void {
-		const room = `chat_${message.chat.id}`;
+		const room = `chat_${message.chatId}`;
 		this.server.to(room).emit('receiveMessage', message);
 		this.logger.log(`Message émis à la room ${room}: ${JSON.stringify(message)}`);
 	}

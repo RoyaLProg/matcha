@@ -9,9 +9,8 @@ export enum MessageType {
 
 interface Message {
 	id?: number;
-	chat: Chat;
+	chatId: number;
 	userId: number;
-	sender: Users;
 	type?: MessageType;
 	content: string | null;
 	fileUrl: string | null;

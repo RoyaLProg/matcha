@@ -14,8 +14,6 @@ interface Message {
 	content: string | null;
 	fileUrl: string | null;
 	createdAt?: Date;
-	// sender = user de userId
-	sender: Users;
 }
 
 export default Message;

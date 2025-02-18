@@ -14,9 +14,17 @@ interface IChat extends Chat {}
 
 export const ChatsContext = createContext<ChatsContextType | undefined>(undefined);
 
-const sortMessages = (messages: Message[]) => {
-	return messages.sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
+const sortMessages = (messages: Message[]): Message[] => {
+	if (!Array.isArray(messages))
+		return [];
+
+	return messages.sort((a, b) => {
+		const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+		const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+		return timeA - timeB;
+	});
 };
+
 
 export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const [chats, setChats] = useState<Chat[]>();
@@ -26,18 +34,27 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const fetchChats = async () => {
 		if (!user) return;
 		try {
-			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/me`, {
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/`, {
 				method: "GET",
 				credentials: "include",
 			});
+			if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
 			const data = await response.json();
+			console.log("📩 Données des chats reçues :", data);
+
+			if (!Array.isArray(data))
+				return setChats([]);
 			const updatedChats = await Promise.all(
 				data.map(async (chat: IChat) => {
-					chat.messages = await sortMessages(chat.messages!);
+					if (!Array.isArray(chat.messages))
+						chat.messages = [];
+					else
+						chat.messages = await sortMessages(chat.messages);
 					return chat;
 				})
 			);
 			setChats(updatedChats);
+
 		} catch (error) {
 			console.error("Erreur lors de la récupération des chats :", error);
 		}
@@ -86,8 +103,9 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const sendMessage = async(newMessage: Message) => {
 		if (newMessage.chatId) {
 			try {
-				const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/sendmessage`, {
+				const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/sendmessage`, {
 					method: "POST",
+					credentials: "include",
 					headers: {
 						"Content-Type": "application/json",
 					},

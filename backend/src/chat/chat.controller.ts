@@ -11,9 +11,10 @@ class ChatController {
 
 	@Post('sendmessage')
 	@UseGuards(AuthGuard)
-	async sendMessage(@Body()  message: Partial<Message> ) : Promise<Message> {
+	async sendMessage(@Body() body: any) : Promise<Message> {
 		try {
-			return await this.chatService.sendMessage(message);
+			console.log(body)
+			return await this.chatService.sendMessage(body.message);
 		}catch (err) {
 			throw new HttpException(
 				err.message || 'Failed to send message',
@@ -22,12 +23,13 @@ class ChatController {
 		}
 	}
 
-	@Get('me')
+	@Get()
 	@UseGuards(AuthGuard)
-	async getChatsMe(@Request() req) : Promise<Chat[] | undefined> {
+	async getChatsMe(@Request() req) : Promise<Chat[]> {
 		try {
 			console.log(req.user.id)
-			return await this.chatService.getChatsByUserId(req.user.id);
+			const chat = await this.chatService.getChatsByUserId(req.user.id) ?? [];
+			return chat;
 		}catch (err) {
 			throw new HttpException(
 				err.message || 'Failed to get chats',

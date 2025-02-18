@@ -14,6 +14,7 @@ import Settings from "./settings/Settings";
 
 export function MatchaRoutes() {
 	const user = useContext(UserContext);
+	console.log(user);
 	if (!user?.user?.settings)
 		return (
 			<Routes>
@@ -25,7 +26,7 @@ export function MatchaRoutes() {
 		<Routes>
 			<Route path="/" element={<Home />} />
 			<Route path="/chatlist" element={<ChatsList />} />
-			<Route path="/chat" element={<Chat />} />
+			<Route path="/chat/:id" element={<Chat />} />
 			<Route path="/verify/:token" element={<Verify />} />
 			<Route path="/profile" element={<Profile />} />
 			<Route path="/profile/settings" element={<Settings />} />

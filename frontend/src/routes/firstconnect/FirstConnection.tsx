@@ -23,7 +23,7 @@ function FirstConnection() {
 	const [uploadedPictures, setUploadedPictures] = useState<File[]>([]);
 	const [rangeAgeMin, setRangeAgeMin] = useState<number>(18);
 	const [rangeAgeMax, setRangeAgeMax] = useState<number>(22);
-	const [rangeLocalisation, setRangeLocalisation] = useState<number>(0);
+	const [rangeLocalisation, setRangeLocalisation] = useState<number>(10);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const tagss = getTags();
 

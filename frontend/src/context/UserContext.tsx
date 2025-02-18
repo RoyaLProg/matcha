@@ -70,6 +70,7 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 				if (responseUser.ok) {
 					const fetchedUser: IUser = await responseUser.json();
 					setUser(fetchedUser);
+					console.log(fetchedUser);
 					if (fetchedUser.settings)
 						if (fetchedUser.settings?.geoloc) {
 							navigator.geolocation.getCurrentPosition(
@@ -81,6 +82,7 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 										const updatedSettings: Partial<Settings> = { latitude, longitude, country: data.countryName || 'Unknown', city: data.city || 'Unknown' };
 										setUserSettings(updatedSettings);
 										updateUserSettingsAPI(updatedSettings);
+										console.log(updatedSettings)
 									}
 								},
 								async (error) => {

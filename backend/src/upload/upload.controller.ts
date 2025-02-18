@@ -15,7 +15,7 @@ class UploadController {
 	constructor(
 		private database: Database
 	) {}
-	
+
 	@Post('picture')
 	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {
@@ -51,8 +51,8 @@ class UploadController {
 		}
 
 		const videoMessage: Partial<Message> = {
-			chat: chat,
-			sender: userId,
+			chatId: chatId,
+			// sender: userId,
 			type: MessageType.Video,
 			fileUrl: `/upload/videos/${file.filename}`,
 		};
@@ -75,8 +75,8 @@ class UploadController {
 		}
 
 		const audioMessage: Partial<Message> = {
-			chat: chat,
-			sender: userId,
+			chatId: chatId,
+			// sender: userId,
 			type: MessageType.Audio,
 			fileUrl: `/upload/audios/${file.filename}`,
 		};

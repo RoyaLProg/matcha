@@ -25,7 +25,7 @@ export default class UserService {
 			user.settings = settings;
 			const tags = await this.database.getRows('tags_entity', [], { settingsId: settings.id })// as Tag[];
 			const pictures = await this.database.getRows('picture', [], { settingsId: settings.id })// as Picture[];
-			console.log(tags, pictures);
+			// console.log(tags, pictures);
 			if (tags)
 				settings.tags = tags.map((v) => {return v as Tag});
 			if (pictures)
