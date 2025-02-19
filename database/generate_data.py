@@ -108,7 +108,7 @@ def generate_fake_data(num_users):
             conn.commit()  # Valide la transaction si tout est correct
 
 try:
-    generate_fake_data(2000)
+    generate_fake_data(200)
 except Exception as e:
     print(f"Erreur générale : {e}")
 finally:

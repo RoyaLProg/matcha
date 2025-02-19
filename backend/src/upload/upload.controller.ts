@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get } from "@nestjs/common";
+import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get, UploadedFile } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { UploadService } from "./upload.service";
 import Users from "src/interface/users.interface";
@@ -43,8 +43,8 @@ class UploadController {
     fileFilter: UploadService.fileFilter(/video\/webm/), // ✅ Accepte WebM
 }))
 async uploadVideo(
-    @Param('chatId') chatId: number, 
-    @UploadedFile() file: Express.Multer.File, 
+    @Param('chatId') chatId: number,
+    @UploadedFile() file: Express.Multer.File,
     @Request() req
 ) {
     const userId = req.user.id;
@@ -56,7 +56,7 @@ async uploadVideo(
 
     const videoMessage: Partial<Message> = {
         chatId,
-        userId, 
+        userId,
         type: MessageType.Video,
         content: null,
         fileUrl: `/upload/videos/${file.filename}`,
@@ -73,13 +73,13 @@ async uploadVideo(
     fileFilter: UploadService.fileFilter(/audio\/webm/), // ✅ Accepte WebM
 }))
 async uploadAudio(
-    @Param('chatId') chatId: number, 
-    @UploadedFile() file: Express.Multer.File, 
+    @Param('chatId') chatId: number,
+    @UploadedFile() file: Express.Multer.File,
     @Request() req
 ) {
     const userId = req.user.id;
 	console.log(userId);
-	
+
     const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
 	console.log("🔍 Chat récupéré :", chat);
     if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
@@ -88,7 +88,7 @@ async uploadAudio(
 	console.log("oui");
     const audioMessage: Partial<Message> = {
         chatId,
-        userId, 
+        userId,
         type: MessageType.Audio,
         content: null,
         fileUrl: `/upload/audios/${file.filename}`,
