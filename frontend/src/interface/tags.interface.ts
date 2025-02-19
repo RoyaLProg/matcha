@@ -1,4 +1,3 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import Settings from './settings.interface';
 
 export enum TagCategory {
