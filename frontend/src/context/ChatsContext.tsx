@@ -73,15 +73,15 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 			});
 		};
 		const handleReceiveMessage = async (newMessage: Message) => {
+			console.log(newMessage);
 			setChats((prevChats) => {
 				if (!prevChats) return prevChats;
-
 				return prevChats.map((chat) => {
 					if (chat.id === newMessage.chatId) {
 						return {
 							...chat,
 							messages: [...(chat.messages ?? []), newMessage].sort(
-								(a, b) => a.createdAt!.getTime() - b.createdAt!.getTime()
+								(a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime()
 							),
 						};
 					}
@@ -114,13 +114,13 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 				});
 				if (!response.ok) throw new Error("Failed to send message");
 				const sentMessage: Message = await response.json();
-				setChats((prevChats) =>
-					prevChats?.map((chat) =>
-						chat.id === sentMessage.chatId
-							? { ...chat, messages: sortMessages([...(chat.messages ?? []), sentMessage]) }
-							: chat
-					)
-				);
+				// setChats((prevChats) =>
+				// 	prevChats?.map((chat) =>
+				// 		chat.id === sentMessage.chatId
+				// 			? { ...chat, messages: sortMessages([...(chat.messages ?? []), sentMessage]) }
+				// 			: chat
+				// 	)
+				// );
 			} catch (error) {
 				console.error("Error sending message:", error);
 			}
@@ -148,13 +148,13 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 			const messageData = mediaMessage[type];
 
 			console.log(messageData);
-			setChats((prevChats) =>
-				prevChats?.map((chat) =>
-					chat.id === chatId
-						? { ...chat, messages: sortMessages([...(chat.messages ?? []), messageData]) }
-						: chat
-				)
-			);
+			// setChats((prevChats) =>
+			// 	prevChats?.map((chat) =>
+			// 		chat.id === chatId
+			// 			? { ...chat, messages: sortMessages([...(chat.messages ?? []), messageData]) }
+			// 			: chat
+			// 	)
+			// );
 		} catch (error) {
 			console.error(`Error sending ${type} message:`, error);
 		}

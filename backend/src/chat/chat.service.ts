@@ -12,7 +12,7 @@ class ChatService {
 		private readonly userService: UserService,
 		private readonly chatGateway: ChatGateway
 	) {}
-
+	// ameliorer la function pour emit le newchat avec le socket est faire presque comme getChatsByUserId
 	async createChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<Chat> {
 		const existingChat1 = await this.database.getFirstRow('chat', [], { userId: userId, targetUserId: targetUserId });
 		const existingChat2 = await this.database.getFirstRow('chat', [], { userId: targetUserId, targetUserId: userId });

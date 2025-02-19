@@ -9,11 +9,13 @@ import { Database } from "src/database/Database";
 import AuthGuard from "src/auth/auth.guard";
 import { createReadStream } from "fs";
 import { join } from "path";
+import ChatGateway from "src/chat/chat.gateway";
 
 @Controller("upload")
 class UploadController {
 	constructor(
-		private database: Database
+		private database: Database,
+        private readonly chatGateway: ChatGateway
 	) {}
 
 	@Post('picture')
@@ -63,6 +65,7 @@ async uploadVideo(
     };
 
     const savedVideo = await this.database.addOne('message', videoMessage);
+    this.chatGateway.emitMessage(savedVideo as Message);
     return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
@@ -95,6 +98,7 @@ async uploadAudio(
     };
 
     const savedAudio = await this.database.addOne('message', audioMessage);
+    this.chatGateway.emitMessage(savedAudio as Message);
     return { message: 'Audio uploaded successfully!', audio: savedAudio };
 }
 }

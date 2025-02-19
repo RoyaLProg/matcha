@@ -48,14 +48,18 @@ export default class MatchService {
 			if (potentialUsersSetting.length === 0) throw new Error('No potential users found');
 			const potentialUsers = await Promise.all(potentialUsersSetting.map(async (settings) => {
 				if (Number(settings.userId) === userId) return null
+				console.log(settings)
 				const otherTags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
 				const distance = await this.calculateDistance(userSettings.latitude, userSettings.longitude, settings.latitude, settings.longitude);
 				const commonTagsCount = await this.findCommonTags(userTags, otherTags);
+				console.log(commonTagsCount, ' ', distance);
 				if (commonTagsCount === 0 || distance > userSettings.maxDistance || distance > settings.maxDistance) return null;
+				console.log('oui')
 				const otherUser = await this.database.getFirstRow('users', [], { id: settings.userId }) as Users;
 				if (!otherUser) return null;
 				delete otherUser.password;
 				delete otherUser.email;
+				console.log('oui1')
 				// Vérification de la compatibilité des orientations sexuelles
 				const isCompatible = (userSettings.sexualOrientation === 'heterosexual' && settings.gender !== userSettings.gender) ||
 						(userSettings.sexualOrientation === 'homosexual' && settings.gender === userSettings.gender) ||
@@ -64,15 +68,18 @@ export default class MatchService {
 				const otherIsCompatible = (settings.sexualOrientation === 'heterosexual' && userSettings.gender !== settings.gender) ||
 						(settings.sexualOrientation === 'homosexual' && userSettings.gender === settings.gender) ||
 						(settings.sexualOrientation === 'bisexual' && userSettings.sexualOrientation === 'bisexual');
-
+				console.log(isCompatible, ' ', otherIsCompatible);
 				if (!isCompatible || !otherIsCompatible) return null;
 				const age = await this.calculeAge(otherUser.birthDate);
+				console.log(age);
 				if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;
 				const userLikeOther = await this.database.getRows('action', [], { userId: userId, targetUserId: settings.userId, status: 'like'});
-				const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
-				if (userLikeOther.length > 0 || userLikeReverse.length > 0) return null;
+				// const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
+				console.log(userLikeOther)
+				if (userLikeOther.length > 0) return null;
 				const otherPictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
 				if (otherPictures.length === 0) return null;
+				console.log('ouiii')
 				return { user: otherUser, settings, tags: otherTags, pictures: otherPictures, distance, age };
 			}));
 			return potentialUsers.filter((user) => user !== null);
