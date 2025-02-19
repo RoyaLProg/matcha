@@ -59,7 +59,7 @@ async uploadVideo(
         userId, 
         type: MessageType.Video,
         content: null,
-        fileUrl: `/uploads/videos/${file.filename}`,
+        fileUrl: `/upload/videos/${file.filename}`,
     };
 
     const savedVideo = await this.database.addOne('message', videoMessage);
@@ -91,7 +91,7 @@ async uploadAudio(
         userId, 
         type: MessageType.Audio,
         content: null,
-        fileUrl: `/uploads/audios/${file.filename}`,
+        fileUrl: `/upload/audios/${file.filename}`,
     };
 
     const savedAudio = await this.database.addOne('message', audioMessage);
