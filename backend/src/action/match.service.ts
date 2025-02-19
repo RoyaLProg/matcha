@@ -33,7 +33,7 @@ export default class MatchService {
 	private async findCommonTags(userTags: Tag[], otherUserTags: Tag[]) : Promise<number> {
 		return userTags.filter((tag) => otherUserTags.find((t) => t.category === tag.category && t.tag === tag.tag)).length;
 	}
-
+// manque la condition pour hetero homo autre probleme avec distance
 	async getMatches(userId: number) : Promise<any> {
 		try {
 			const userExists = await this.database.getFirstRow('users', [], { id: userId });
@@ -51,7 +51,7 @@ export default class MatchService {
 				const otherTags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
 				const distance = await this.calculateDistance(userSettings.latitude, userSettings.longitude, settings.latitude, settings.longitude);
 				const commonTagsCount = await this.findCommonTags(userTags, otherTags);
-				if (commonTagsCount === 0 || distance >= userSettings.maxDistance || distance >= settings.maxDistance) return null;
+				if (commonTagsCount === 0 || distance >= userSettings.maxDistance`` || distance >= settings.maxDistance) return null;
 				const otherUser = await this.database.getFirstRow('users', [], { id: settings.userId }) as Users;
 				if (!otherUser) return null;
 				delete otherUser.password;

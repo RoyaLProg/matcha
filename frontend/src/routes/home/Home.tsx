@@ -44,7 +44,7 @@ export function Home() {
 			console.warn("Action annulée : Aucun utilisateur connecté.");
 			return; // ✅ Empêche l'exécution si `user.user.id` est absent
 		}
-	
+
 		try {
 			const response = await fetch(`http://localhost:3000/api/action/like`, {
 				method: "POST",
@@ -55,7 +55,7 @@ export function Home() {
 					status
 				}),
 			});
-	
+
 			if (!response.ok) throw new Error(`Erreur lors de l'envoi du ${status}`);
 			const data = await response.json();
         	console.log("📩 Réponse du serveur :", data);
@@ -80,7 +80,7 @@ export function Home() {
 			removeCurrentMatch();
 		}
 	};
-	
+
 	const handleDislike = () => {
 		if (!user?.user?.id) return;
 		if (matches.length > 0) {
@@ -107,7 +107,7 @@ export function Home() {
 			setCurrentImageIndex((prevIndex) => (prevIndex + 1) % matches[currentIndex].pictures.length);
 		}
 	};
-	
+
 	const prevImage = () => {
 		if (matches.length > 0 && matches[currentIndex].pictures.length > 1) {
 			setCurrentImageIndex((prevIndex) => (prevIndex - 1 + matches[currentIndex].pictures.length) % matches[currentIndex].pictures.length);
@@ -116,7 +116,17 @@ export function Home() {
 
 	if (loading) return <p>Chargement en cours...</p>;
 	if (error) return <p>❌ Erreur : {error}</p>;
-	if (matches.length === 0) return <p>Aucun match trouvé.</p>;
+	if (matches.length === 0) return (<div className="home alignement">
+		<div className="menu">
+			<div className="logoMenu">
+				<span className="logo"></span>
+			</div>
+			<div className="myProfile">
+				<img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" />
+				<Link to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
+			</div>
+		</div>
+		</div>);
 
 	const currentMatch = matches[currentIndex];
 	const pictures = currentMatch.pictures || [];
@@ -151,7 +161,7 @@ export function Home() {
 							<p style={{fontSize: "32px"}}>{currentMatch.user.firstName} {currentMatch.user.lastName}, {currentMatch.age} ans</p>
 							<p style={{fontSize: "20px", color: "#aaa"}}>{currentMatch.settings.country}, {currentMatch.settings.city} ({currentMatch.distance.toFixed(1)} km)</p>
 							<p style={{fontSize: "15px", textAlign: "justify"}}>{currentMatch.settings.biography || "Aucune description disponible."} </p>
-							
+
 						</div>
 						{/* <div>
 								{currentMatch.tags.map((tag) => (

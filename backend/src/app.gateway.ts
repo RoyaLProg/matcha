@@ -14,11 +14,13 @@ import * as cookie from 'cookie';
 
 @WebSocketGateway({
 	cors: {
-		origin: 'http://localhost:5173',
-		allowedHeaders: ['Authorization'],
-		credentials: true,
+	  origin: "*", // Permet toutes les origines (évite les blocages CORS)
+	  methods: ["GET", "POST"], // Autorise ces méthodes
+	  allowedHeaders: ["Authorization", "Content-Type"], // Autorise les headers
+	  credentials: true, // Si tu envoies des cookies/tokens
 	},
-})
+  })
+
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
 		private database: Database,

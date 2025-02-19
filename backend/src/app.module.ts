@@ -18,6 +18,7 @@ import ChatService from './chat/chat.service';
 import ChatController from './chat/chat.controller';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import ChatGateway from './chat/chat.gateway';
 
 
 @Module({
@@ -43,6 +44,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 			  ActionService,
 			  MatchService,
 			  ChatService,
+			  ChatGateway,
 			  AppGateway,
 			  AuthService,
 			  Database]

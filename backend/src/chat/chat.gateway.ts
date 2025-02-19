@@ -12,7 +12,7 @@ class ChatGateway {
 
 	constructor(private socketsService: SocketsService) {}
 
-
+	// ajouter des securiter pour si la personne a bien accept a la room
 	@SubscribeMessage(`JoinRoom`)
 	handleJoinRoom(client: Socket, room: string) {
 		client.rooms.forEach((room) => {

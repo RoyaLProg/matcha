@@ -3,12 +3,14 @@ import { Database } from 'src/database/Database';
 import Chat from 'src/interface/chat.interface';
 import Message from 'src/interface/message.interface';
 import UserService from 'src/user/user.service';
+import ChatGateway from './chat.gateway';
 
 @Injectable()
 class ChatService {
 	constructor(
 		private database: Database,
-		private readonly userService: UserService
+		private readonly userService: UserService,
+		private readonly chatGateway: ChatGateway
 	) {}
 
 	async createChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<Chat> {
@@ -35,10 +37,8 @@ class ChatService {
 		const chat = await this.database.getFirstRow('chat', [], { id: message.chatId }) as Chat;
 		if (!chat)
 			throw new Error('Chat not found');
-		console.log('e1');
-		// if (chat.user.id != message.userId || chat.targetUser.id != message.userId)
-		// 	throw new Error('User not authorized');
 		const newMessage = await this.database.addOne('message', { chatId: message.chatId, userId: message.userId, content: message.content});
+		this.chatGateway.emitMessage(newMessage as Message);
 		return newMessage as Message;
 	}
 

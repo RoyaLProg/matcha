@@ -26,7 +26,7 @@ const sortMessages = (messages: Message[]): Message[] => {
 	});
 };
 
-
+// function a jouter pour mettre a jour le chat message quand on vas sur le message dans chat.tsx
 export default function ChatsProvider({ children } : { children: ReactNode }) {
 	const [chats, setChats] = useState<Chat[]>();
 	const user = useContext(UserContext);
@@ -131,22 +131,22 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 		try {
 			const formData = new FormData();
 			formData.append("file", file);
-	
+
 			const apiUrl = `${import.meta.env.VITE_API_URL}/api/upload/${chatId}/${type}`;
-	
+
 			const response = await fetch(apiUrl, {
 				method: "POST",
 				body: formData,
 				credentials: "include",
 			});
-	
+
 			if (!response.ok) throw new Error(`Failed to send ${type} message`);
-	
+
 			// 🔥 On récupère le message créé
 			const mediaMessage = await response.json();
 			console.log(mediaMessage)
 			const messageData = mediaMessage[type];
-	
+
 			console.log(messageData);
 			setChats((prevChats) =>
 				prevChats?.map((chat) =>

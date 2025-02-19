@@ -1,9 +1,10 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import "./Chat.css"
 import { Link, useParams } from "react-router-dom";
 import { ChatsContext } from "../../context/ChatsContext";
 import { UserContext } from "../../context/UserContext";
 import { MessageType } from "../../interface/message.interface";
+import { WebSocketContext } from "../../context/WebSocketContext";
 
 
 function Chat() {
@@ -22,10 +23,26 @@ function Chat() {
 	const { user } = useContext(UserContext) ?? {};
 	const { id } = useParams();
 	const currentChat = chats?.find((chat) => chat.id === Number(id));
-
+	const socket = useContext(WebSocketContext);
 	const [messageText, setMessageText] = useState("");
+	const prevRoomRef = useRef(null);
 
+	useEffect(() => {
+		if (!socket || !id) return;
+		const room = `chat_${id}`;
 
+		if (prevRoomRef.current) {
+			socket.emit("LeaveRoom", prevRoomRef.current);
+			console.log(`Quitte la room : ${prevRoomRef.current}`);
+		}
+		socket.emit("JoinRoom", room);
+		console.log(`Rejoint la room : ${room}`);
+		prevRoomRef.current = room;
+		return () => {
+			socket.emit("LeaveRoom", room);
+			console.log(`Quitte la room lors du démontage : ${room}`);
+		};
+	}, [socket, id]);
 	// audio
 	const startRecordingAudio = async () => {
 		try {
@@ -132,17 +149,13 @@ function Chat() {
 		const newMessage: Message = {
 			chatId: currentChat.id,
 			userId: user.id,
-			// sender: user,
 			type: MessageType.Text,
 			content: messageText,
 			fileUrl: null,
 			createdAt: new Date(),
 		};
-
 		sendMessage(newMessage);
-		// currentChat.messages = [...(currentChat.messages ?? []), newMessage];
-
-		setMessageText(""); // Réinitialise l'input après envoi
+		setMessageText("");
 	};
 
 
