@@ -33,6 +33,16 @@ class SocketsService {
 			return undefined;
 		return this.socketUsers.get(socket).userId;
 	}
+
+	getSocketByUserId(userId: string): Socket | undefined {
+		for (const [socket, user] of this.socketUsers.entries()) {
+			if (user.userId === userId) {
+				return socket;
+			}
+		}
+		return undefined; // Si aucun socket n'est trouvé
+	}
+
 }
 
 export { SocketsService, NotificationType };

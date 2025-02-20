@@ -89,11 +89,29 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 				});
 			});
 		};
-		socket.on("newChat", handleNewChat);
+		const handleReceiveMessages = async (newMessages: Message[]) => {
+			console.log(newMessages);
+			setChats((prevChats) => {
+				if (!prevChats) return prevChats;
+				return prevChats.map((chat) => {
+					const messagesForChat = newMessages.filter(msg => msg.chatId === chat.id);
+					if (messagesForChat.length === 0) return chat;
+					return {
+						...chat,
+						messages: messagesForChat.sort(
+							(a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime()
+						),
+					};
+				});
+			});
+		};
+		socket.on('newChat', handleNewChat);
 		socket.on("receiveMessage", handleReceiveMessage);
+		socket.on('receiveMessages', handleReceiveMessages);
 		return () => {
-			socket.off("newChat", handleNewChat);
+			socket.off('newChat', handleNewChat);
 			socket.off("receiveMessage", handleReceiveMessage);
+			socket.off('receiveMessages', handleReceiveMessages);
 		};
 	}, [socket]);
 

@@ -47,6 +47,7 @@ import ChatGateway from './chat/chat.gateway';
 			  ChatGateway,
 			  AppGateway,
 			  AuthService,
-			  Database]
+			  Database],
+
 })
 export class AppModule {}

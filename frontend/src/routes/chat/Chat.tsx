@@ -158,7 +158,7 @@ function Chat() {
 		setMessageText("");
 	};
 
-
+	console.log('curennt', currentChat);
 	return (
 		<div className="chat">
 			<div className="menu">
@@ -179,9 +179,20 @@ function Chat() {
 					</div>
 					<div className="chatProfile">
 						<div className="name">
-							<span>John Doe</span>
+							<span>
+								{currentChat
+								? (currentChat.user.id !== user.id
+										? currentChat.user.firstName
+										: currentChat.targetUser.firstName)
+								: "Utilisateur inconnu"}
+							</span>
 						</div>
-						<p className="username">@johndoe</p>
+						<p className="username">{currentChat
+							? (currentChat.user.id !== user.id
+								? `@${currentChat.user.username}`
+								: `@${currentChat.targetUser.username}`)
+							: "@unknown"}
+						</p>
 					</div>
 					<div className="chatBack">
 						<Link to={"/chatlist"}><button><span className="material-symbols-outlined">arrow_back</span></button></Link>

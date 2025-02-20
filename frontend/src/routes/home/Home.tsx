@@ -2,7 +2,6 @@ import { Link } from "react-router-dom"
 import { useContext, useEffect, useState } from "react";
 import "./Home.css"
 import Carrousel from "../components/carrousel";
-
 import { UserContext } from "../../context/UserContext";
 
 export function Home() {
