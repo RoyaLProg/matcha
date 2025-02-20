@@ -10,8 +10,11 @@ class ActionService {
 		private database: Database,
 		private readonly chatService: ChatService
 	) {}
-// function a ameliorer dans le like dislike
+
 	async handleLike({ userId, targetUserId, status } : { userId: number, targetUserId: number, status: ActionStatus }) : Promise<Chat | void> {
+		const userdisLike = await this.database.getFirstRow('action', [], { userId, targetUserId, status: ActionStatus.Dislike, }) as Action;
+		if (userdisLike)
+			await this.database.deleteRows('action', { id: userdisLike.id });
 		await this.database.addOne('action', { userId, targetUserId, status });
 		if (status === ActionStatus.Like) {
 			const userLike = await this.database.getFirstRow('action', [], { userId, targetUserId, status: ActionStatus.Like, }) as Action;

@@ -1,8 +1,9 @@
-import { Logger } from '@nestjs/common';
+import { forwardRef, Inject, Logger } from '@nestjs/common';
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import Message from 'src/interface/message.interface';
 import { SocketsService } from 'src/sockets.service';
+import ChatService from './chat.service';
 
 @WebSocketGateway()
 class ChatGateway {
@@ -10,15 +11,25 @@ class ChatGateway {
 	server: Server;
 	private logger: Logger = new Logger('ChatGateway');
 
-	constructor(private socketsService: SocketsService) {}
+	constructor(
+		@Inject(forwardRef(() => ChatService))
+		private readonly chatService: ChatService,
+		private readonly socketService: SocketsService,
+	) {}
 
-	// ajouter des securiter pour si la personne a bien accept a la room
 	@SubscribeMessage(`JoinRoom`)
-	handleJoinRoom(client: Socket, room: string) {
+	async handleJoinRoom(client: Socket, room: string) {
 		client.rooms.forEach((room) => {
 			client.leave(room);
 		});
+		const id = room.split('_')[1];
+		const userId = this.socketService.getUserId(client);
+		const bo = await this.chatService.getUserIdChat(Number(userId), Number(id))
+		if (!bo)
+			return;
 		client.join(room);
+		const messages = await this.chatService.getMessagesByChatId(Number(id));
+		client.emit('receiveMessages', messages);
 		this.logger.log(`Client ${client.id} joining room ${room}`);
 	}
 

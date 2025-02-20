@@ -32,7 +32,7 @@ import ChatGateway from './chat/chat.gateway';
 		JwtModule,
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', 'uploads'), // 📂 Dossier à servir
-			serveRoot: '/uploads', // 🔗 URL accessible
+			serveRoot: '/upload', // 🔗 URL accessible
 		  }),
 	],
   controllers: [UserController, AuthController, UploadController, ActionController, ChatController],
@@ -47,6 +47,7 @@ import ChatGateway from './chat/chat.gateway';
 			  ChatGateway,
 			  AppGateway,
 			  AuthService,
-			  Database]
+			  Database],
+
 })
 export class AppModule {}

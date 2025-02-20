@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Request, UploadedFiles, UploadedFile, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get } from "@nestjs/common";
+import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get, UploadedFile } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { UploadService } from "./upload.service";
 import Users from "src/interface/users.interface";
@@ -9,11 +9,13 @@ import { Database } from "src/database/Database";
 import AuthGuard from "src/auth/auth.guard";
 import { createReadStream } from "fs";
 import { join } from "path";
+import ChatGateway from "src/chat/chat.gateway";
 
 @Controller("upload")
 class UploadController {
 	constructor(
-		private database: Database
+		private database: Database,
+        private readonly chatGateway: ChatGateway
 	) {}
 
 	@Post('picture')
@@ -43,8 +45,8 @@ class UploadController {
     fileFilter: UploadService.fileFilter(/video\/webm/), // ✅ Accepte WebM
 }))
 async uploadVideo(
-    @Param('chatId') chatId: number, 
-    @UploadedFile() file: Express.Multer.File, 
+    @Param('chatId') chatId: number,
+    @UploadedFile() file: Express.Multer.File,
     @Request() req
 ) {
     const userId = req.user.id;
@@ -56,13 +58,14 @@ async uploadVideo(
 
     const videoMessage: Partial<Message> = {
         chatId,
-        userId, 
+        userId,
         type: MessageType.Video,
         content: null,
         fileUrl: `/upload/videos/${file.filename}`,
     };
 
     const savedVideo = await this.database.addOne('message', videoMessage);
+    this.chatGateway.emitMessage(savedVideo as Message);
     return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
@@ -73,13 +76,13 @@ async uploadVideo(
     fileFilter: UploadService.fileFilter(/audio\/webm/), // ✅ Accepte WebM
 }))
 async uploadAudio(
-    @Param('chatId') chatId: number, 
-    @UploadedFile() file: Express.Multer.File, 
+    @Param('chatId') chatId: number,
+    @UploadedFile() file: Express.Multer.File,
     @Request() req
 ) {
     const userId = req.user.id;
 	console.log(userId);
-	
+
     const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
 	console.log("🔍 Chat récupéré :", chat);
     if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
@@ -88,13 +91,14 @@ async uploadAudio(
 	console.log("oui");
     const audioMessage: Partial<Message> = {
         chatId,
-        userId, 
+        userId,
         type: MessageType.Audio,
         content: null,
         fileUrl: `/upload/audios/${file.filename}`,
     };
 
     const savedAudio = await this.database.addOne('message', audioMessage);
+    this.chatGateway.emitMessage(savedAudio as Message);
     return { message: 'Audio uploaded successfully!', audio: savedAudio };
   }import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
