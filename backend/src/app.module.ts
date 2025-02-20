@@ -19,6 +19,8 @@ import ChatController from './chat/chat.controller';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import ChatGateway from './chat/chat.gateway';
+import HistoryService from './history/history.service';
+import HistoryController from './history/history.controller';
 
 
 @Module({
@@ -35,7 +37,7 @@ import ChatGateway from './chat/chat.gateway';
 			serveRoot: '/upload', // 🔗 URL accessible
 		  }),
 	],
-  controllers: [UserController, AuthController, UploadController, ActionController, ChatController],
+  controllers: [UserController, AuthController, UploadController, ActionController, ChatController, HistoryController],
   providers: [SocketsService,
 			  UserService,
 			  AuthService,
@@ -47,7 +49,9 @@ import ChatGateway from './chat/chat.gateway';
 			  ChatGateway,
 			  AppGateway,
 			  AuthService,
-			  Database],
+			  Database,
+			  HistoryService
+			],
 
 })
 export class AppModule {}

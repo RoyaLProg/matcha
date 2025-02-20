@@ -9,12 +9,11 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
 import AuthGuard from 'src/auth/auth.guard';
 import UserGuard from './user.guard';
-import { get } from 'http';
-import Tag from 'src/interface/tags.interface';
+import HistoryService from 'src/history/history.service';
 
 @Controller('Users')
 class UserController {
-	constructor(private readonly userService: UserService, private readonly settingsService: SettingsService) { }
+	constructor(private readonly userService: UserService, private readonly settingsService: SettingsService, private readonly historyService: HistoryService) { }
 
 	@Post('/settings/create')
 	@UseGuards(AuthGuard)
@@ -104,6 +103,10 @@ class UserController {
 			delete user.settings
 			delete user.password
 			delete user.email
+			await this.historyService.pushHistory({
+				userId: id as Number,
+				message: "a user visited your profile",	
+			});
 			return user;
 		} catch (error) {
 			if (error.message === 'User not found')
