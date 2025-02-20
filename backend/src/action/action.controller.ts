@@ -3,12 +3,14 @@ import ActionService from './action.service';
 import Chat from 'src/interface/chat.interface';
 import MatchService from './match.service';
 import AuthGuard from 'src/auth/auth.guard';
+import HistoryService from 'src/history/history.service';
 
 @Controller('action')
 class ActionController {
 	constructor(
 		private actionService: ActionService,
-		private matchService: MatchService
+		private matchService: MatchService,
+		private historyService: HistoryService
 	) {}
 
 	@Post('like')
@@ -16,6 +18,10 @@ class ActionController {
 		try {
 			console.log({ userId, targetUserId, status });
 			const actionResult = await this.actionService.handleLike({ userId, targetUserId, status });
+			await this.historyService.pushHistory({
+				userId: targetUserId as Number,
+				message: "a user liked your profile",	
+			});
 			if (actionResult)
 				return { message: 'Action completed successfully', chat: actionResult };
 			return { message: 'Action completed successfully', chat: null };

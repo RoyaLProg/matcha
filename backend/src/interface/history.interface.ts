@@ -1,6 +1,6 @@
 interface History {
-	id?: number;
-	userId: number;
+	id?: Number;
+	userId: Number;
 	message: string;
 	createdAt?: Date;
 	readed?: boolean;
