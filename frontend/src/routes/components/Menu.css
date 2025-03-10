@@ -1,0 +1,72 @@
+#menu {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 90%;
+	height: 50px;
+	align-self: center;
+	justify-self: start;
+}
+
+#menu .myProfile {
+	width: fit-content;
+	display: flex;
+}
+
+#menu .myProfile button {
+	width: 100%;
+	height: 100%;
+	border: none;
+	background-color: #444;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	backdrop-filter: blur(10px);
+	transform: scale3d(1, 1, 1);
+}
+
+#menu .myProfile button img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+#menu .myProfile button:hover {
+	background-color: #666;
+	transform: scale3d(1.1, 1.1, 1.1);
+}
+
+#menu #profileMenu[aria-hidden='true'] {
+	display: none;
+}
+
+#menu #profilePicture {
+	width: 50px;
+}
+
+#logoMenu{
+	width: 50px;
+	height: 50px;
+}
+
+#profileMenu {
+	display: flex;
+	flex-direction: column;
+	width: 150px;
+	height: fit-content;
+	background-color: whitesmoke;
+	padding: 15px;
+	border-radius: 5px;
+	place-items: center;
+	text-align: center;
+	position: relative;
+	margin-right: -150px;
+	top: 50px;
+	right: 100px;
+}
+
+#profileMenu a {
+	border-bottom: 2px black solid;
+	width: 90%;
+	color: black;
+	
+}

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { useContext, useEffect, useState } from "react";
 import "./Home.css"
-import Carrousel from "../components/carrousel";
+import Carrousel from "../components/Carrousel";
 import { UserContext } from "../../context/UserContext";
 
 export function Home() {
@@ -37,7 +37,8 @@ export function Home() {
 	useEffect(() => {
 		fetchMatches();
 	}, []);
-
+	
+	// bro is using mf chatgpt to do his work
 	const sendAction = async (targetUserId, status) => {
 		if (!user?.user?.id) {
 			console.warn("Action annulée : Aucun utilisateur connecté.");
@@ -115,17 +116,7 @@ export function Home() {
 
 	if (loading) return <p>Chargement en cours...</p>;
 	if (error) return <p>❌ Erreur : {error}</p>;
-	if (matches.length === 0) return (<div className="home alignement">
-		<div className="menu">
-			<div className="logoMenu">
-				<span className="logo"></span>
-			</div>
-			<div className="myProfile">
-				<img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" />
-				<Link to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
-			</div>
-		</div>
-		</div>);
+	if (matches.length === 0) return (<p style={{margin: "auto"}}> We have no one for you D: </p>);
 
 	const currentMatch = matches[currentIndex];
 	const pictures = currentMatch.pictures || [];
@@ -133,15 +124,6 @@ export function Home() {
 	console.log(currentMatch)
 	return (
 		<div className="home alignement">
-			<div className="menu">
-				<div className="logoMenu">
-					<span className="logo"></span>
-				</div>
-				<div className="myProfile">
-					<img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" />
-					<Link to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
-				</div>
-			</div>
 			<div id="container">
 				<button className="dislikeButton" onClick={handleDislike}> <span className="material-symbols-outlined">thumb_down</span> </button>
 				<div className="content">
