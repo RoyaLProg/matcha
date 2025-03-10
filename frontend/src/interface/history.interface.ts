@@ -1,11 +1,9 @@
-import Users from "./users.interface";
-
-interface History {
+interface IHistory {
 	id?: number;
-	user: Users;
+	userId: number;
 	message: string;
 	createdAt?: Date;
-	isRead: boolean;
+	isReaded: boolean;
 }
 
-export default History;
+export default IHistory;
