@@ -154,14 +154,6 @@ export default function Settings() {
 
 	return (
 		<div className="firstConnection">
-			<div className="menu">
-				<div className="logoMenu">
-					<span className="logo"></span>
-				</div>
-				<div className="myProfile">
-					<img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" />
-				</div>
-			</div>
 			<div className="content">
 				<h2>Update your profile</h2>
 				<form onSubmit={onSubmit}>

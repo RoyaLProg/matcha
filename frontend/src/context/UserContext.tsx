@@ -3,11 +3,9 @@ import { jwtDecode } from 'jwt-decode';
 import Users from '../interface/users.interface';
 import Settings from '../interface/settings.interface';
 
-interface IUser extends Users {}
-
 interface UserContextProp {
-	user: IUser | undefined;
-	setUser: (user: IUser | undefined) => void;
+	user: Users | undefined;
+	setUser: (user: Users | undefined) => void;
 	updateUserFromCookie: () => void;
 	setUserSettings: (settings: any) => void;
 }
@@ -33,7 +31,7 @@ export const fetchLocationByIP = async () :Promise<Partial<Settings> | null> => 
 export const UserContext = createContext<UserContextProp | undefined>(undefined);
 
 export default function UserProvider({ children }: { children: ReactNode }) {
-	const [user, setUser] = useState<IUser | undefined>(undefined);
+	const [user, setUser] = useState<Users | undefined>(undefined);
 
 	const updateUserSettingsAPI = async (settings: Partial<Settings>) => {
 		try {
@@ -68,7 +66,7 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 					credentials: 'include',
 				});
 				if (responseUser.ok) {
-					const fetchedUser: IUser = await responseUser.json();
+					const fetchedUser: Users = await responseUser.json();
 					setUser(fetchedUser);
 					console.log(fetchedUser);
 					if (fetchedUser.settings)
