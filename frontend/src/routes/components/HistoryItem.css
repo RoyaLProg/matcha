@@ -1,0 +1,29 @@
+.HistoryItem {
+	border-left: 3px solid #a23ab0;
+	height: 60px;
+	width: 90%;
+	display: flex;
+	justify-content: space-between;
+	padding: 5px;
+	margin: 5px;
+	background: #333;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+	flex-shrink: 0;
+}
+
+.HistoryItem[aria-disabled=true] {
+	border-left: 3px solid blue;
+}
+
+.HistoryMessage {
+	align-self: center;
+}
+
+.HistoryDate {
+	align-self: end;
+	color: #888;
+	font-style: italic;
+	font-size: 10px;
+}
+

@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS history (
     "userId" INT NOT NULL,
     message TEXT NOT NULL,
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "readed" BOOLEAN DEFAULT FALSE,
+    "isReaded" BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_user_history FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE
 );
 

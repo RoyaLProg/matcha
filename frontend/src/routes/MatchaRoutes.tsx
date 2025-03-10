@@ -11,6 +11,7 @@ import FirstConnection from "./firstconnect/FirstConnection";
 import Profile from "./profile/Profile";
 import HomeDefault, { Home } from "./home/Home";
 import Settings from "./settings/Settings";
+import History from "./history/History";
 
 export function MatchaRoutes() {
 	const user = useContext(UserContext);
@@ -30,6 +31,7 @@ export function MatchaRoutes() {
 			<Route path="/verify/:token" element={<Verify />} />
 			<Route path="/profile" element={<Profile />} />
 			<Route path="/profile/settings" element={<Settings />} />
+			<Route path="/history" element={<History />} />
 			<Route path="*" element={<Navigate to={'/'}/>} />
 		</Routes>
 	)
