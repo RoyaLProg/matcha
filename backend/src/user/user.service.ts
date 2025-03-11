@@ -77,4 +77,9 @@ export default class UserService {
 		await this.database.deleteRows('action', { userId: userId, targetUserId: targetUserId });
 		await this.database.deleteRows('action', { userId: targetUserId, targetUserId: userId });
 	}
+
+	async getFameRating(userId: number) {
+		const data = await this.database.getRows("history", undefined, {userId: userId, message: "a user liked your profile"});
+		return data.length;
+	}
 }

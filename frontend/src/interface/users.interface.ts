@@ -16,6 +16,7 @@ interface Users {
 	status?: UserStatus;
 	isValidated?: boolean;
 	settings?: Settings;
+	fameRating?: number;
 }
 
 export default Users;

@@ -24,7 +24,7 @@ export default function Carrousel({pictures}: {pictures: Picture[]}) {
 			<div id="carrouselImages">
 			{ 
 				pictures.map( (picture, i) =>
-					<img src={`${import.meta.env.VITE_API_URL}/api${picture.url}`} alt={`profile ${i}`} />
+					<img key={i} src={`${import.meta.env.VITE_API_URL}/api${picture.url}`} alt={`profile ${i}`} />
 				)
 			}
 			</div>

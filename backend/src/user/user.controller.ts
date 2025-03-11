@@ -105,6 +105,7 @@ class UserController {
 	async getMe(@Request() req) : Promise<Users | null> {
 		try {
 			const user = await this.userService.findOne(req.user.id);
+			user['fameRating'] = await this.userService.getFameRating(req.user.id);
 			return user;
 		} catch (error) {
 			if (error.message === 'User not found')
@@ -128,7 +129,7 @@ class UserController {
 				fromId: req.user.id,
 				message: "a user visited your profile",	
 			});
-			user['fameRating'] = this.userService.getFameRating(id);
+			user['fameRating'] = await this.userService.getFameRating(id);
 			return user;
 		} catch (error) {
 			if (error.message === 'User not found')

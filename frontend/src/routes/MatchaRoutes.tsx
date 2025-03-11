@@ -29,7 +29,7 @@ export function MatchaRoutes() {
 			<Route path="/chat/:id" element={<Chat />} />
 			<Route path="/verify/:token" element={<Verify />} />
 			<Route path="/profile" element={<Profile />} />
-			<Route path="/profile/settings" element={<Settings />} />
+			<Route path="/settings" element={<Settings />} />
 			<Route path="/history" element={<History />} />
 			<Route path="*" element={<Navigate to={'/'}/>} />
 		</Routes>
