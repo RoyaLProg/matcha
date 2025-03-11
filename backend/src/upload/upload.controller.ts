@@ -81,14 +81,11 @@ async uploadAudio(
     @Request() req
 ) {
     const userId = req.user.id;
-	console.log(userId);
 
     const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
-	console.log("🔍 Chat récupéré :", chat);
     if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
 		throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
 	}
-	console.log("oui");
     const audioMessage: Partial<Message> = {
         chatId,
         userId,

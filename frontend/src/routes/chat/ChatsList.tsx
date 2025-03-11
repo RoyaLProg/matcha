@@ -14,7 +14,6 @@ function ChatsList() {
 		return <div>Loading...</div>;
 	if (!chats.chats || chats.chats.length === 0)
 		return <div>No chats found</div>;
-	console.log(chats);
 	return (
 		<div className="chatList">
 			<div className="menu">

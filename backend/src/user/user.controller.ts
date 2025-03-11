@@ -82,7 +82,6 @@ class UserController {
 	@Get('me')
 	@UseGuards(AuthGuard)
 	async getMe(@Request() req) : Promise<Users | null> {
-		console.log('req.user:', req.user);
 		try {
 			const user = await this.userService.findOne(req.user.id);
 			return user;
@@ -132,7 +131,6 @@ class UserController {
 			const tags = [...data.tags];
 			delete data.pictures;
 			delete data.tags;
-			console.log(tags);
 
 			files.forEach(
 				(f, i) => pictures[i].url = `/upload/pictures/${f.filename}`

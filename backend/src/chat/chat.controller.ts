@@ -13,7 +13,6 @@ class ChatController {
 	@UseGuards(AuthGuard)
 	async sendMessage(@Body() body: any) : Promise<Message> {
 		try {
-			console.log(body)
 			return await this.chatService.sendMessage(body.message);
 		}catch (err) {
 			throw new HttpException(

@@ -15,7 +15,6 @@ export default function Carrousel({pictures}: {pictures: Picture[]}) {
 	useEffect( () => {
 		const myDiv = document.getElementById('carrouselImages');
 		if (!myDiv) return ;
-		console.log('triggered');
 		myDiv.style.transform = `translate(${index * 400 * -1}px, 0)`
 	}, [index]);
 

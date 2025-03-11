@@ -51,7 +51,6 @@ class ChatService {
 	}
 
 	async sendMessage(message: Partial<Message>) : Promise<Message> {
-		console.log(message)
 		const chat = await this.database.getFirstRow('chat', [], { id: message.chatId }) as Chat;
 		if (!chat)
 			throw new Error('Chat not found');
@@ -73,7 +72,6 @@ class ChatService {
 		const allChats = [...chats1, ...chats2];
 		if (allChats.length === 0)
 			return undefined;
-		console.log(allChats)
 		for (const chat of allChats) {
 			chat.messages = await this.getMessagesByChatId(chat.id);
 			chat.user = await this.userService.findOne(chat.userId as number);

@@ -15,7 +15,6 @@ import History from "./history/History";
 
 export function MatchaRoutes() {
 	const user = useContext(UserContext);
-	console.log(user);
 	if (!user?.user?.settings)
 		return (
 			<Routes>

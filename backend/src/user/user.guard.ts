@@ -17,8 +17,6 @@ export default class UserGuard implements CanActivate {
 			const path = request.originalUrl.split('/');
 			const id = Number(path[path.length - 1]);
 
-			console.log(id, jwtDecoded);
-
 			if (!id)
 				return true;
 

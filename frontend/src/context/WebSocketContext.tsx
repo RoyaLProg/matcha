@@ -32,13 +32,11 @@ export default function WebSocketProvider({ children }: { children: ReactNode })
 	useEffect(() => {
 
 		if (user && getCookie("Auth")) {
-			console.log('Connecting to WebSocket');
 			const socketIOClient = io(`${import.meta.env.VITE_API_URL}`, {
 				withCredentials: true,
 				transports: ["websocket", "polling"],
 			});
 			socketIOClient.on("connect", () => {
-				console.log("Connected to WebSocket");
 				setSocket(socketIOClient);
 			});
 			socketIOClient.on("notification", (notification: Notification) => {

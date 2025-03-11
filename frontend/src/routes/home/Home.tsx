@@ -58,13 +58,6 @@ export function Home() {
 
 			if (!response.ok) throw new Error(`Erreur lors de l'envoi du ${status}`);
 			const data = await response.json();
-        	console.log("📩 Réponse du serveur :", data);
-        	console.log(`ℹ️ Message du serveur : ${data.message}`);
-        	if (data.chat) {
-        	    console.log("🎉 Match trouvé ! Nouveau chat créé :", data.chat);
-        	} else {
-        	    console.log("ℹ️ Aucun match trouvé. Action enregistrée.");
-        	}
 
 		} catch (error) {
 			console.error(`Erreur lors de l'envoi du ${status} :`, error);
@@ -121,7 +114,6 @@ export function Home() {
 	const currentMatch = matches[currentIndex];
 	const pictures = currentMatch.pictures || [];
 	const currentPicture = pictures.length > 0 ? (pictures[currentImageIndex]?.url ? pictures[currentImageIndex].url : pictures[0].url) : null;
-	console.log(currentMatch)
 	return (
 		<div className="home alignement">
 			<div id="container">

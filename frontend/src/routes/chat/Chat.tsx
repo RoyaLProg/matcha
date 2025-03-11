@@ -33,14 +33,11 @@ function Chat() {
 
 		if (prevRoomRef.current) {
 			socket.emit("LeaveRoom", prevRoomRef.current);
-			console.log(`Quitte la room : ${prevRoomRef.current}`);
 		}
 		socket.emit("JoinRoom", room);
-		console.log(`Rejoint la room : ${room}`);
 		prevRoomRef.current = room;
 		return () => {
 			socket.emit("LeaveRoom", room);
-			console.log(`Quitte la room lors du démontage : ${room}`);
 		};
 	}, [socket, id]);
 	// audio
@@ -140,9 +137,6 @@ function Chat() {
 	};
 
 	const sendNewMessage = () => {
-		console.log("DEBUG | Message:", messageText);
-		console.log("DEBUG | User:", user);
-		console.log("DEBUG | Current Chat:", currentChat);
 
 		if (!messageText.trim() || !sendMessage || !currentChat || !user) return;
 
@@ -158,7 +152,6 @@ function Chat() {
 		setMessageText("");
 	};
 
-	console.log('curennt', currentChat);
 	return (
 		<div className="chat">
 			<div className="menu">

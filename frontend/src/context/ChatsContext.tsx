@@ -41,7 +41,6 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 			});
 			if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
 			const data = await response.json();
-			console.log("📩 Données des chats reçues :", data);
 
 			if (!Array.isArray(data))
 				return setChats([]);
@@ -73,7 +72,6 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 			});
 		};
 		const handleReceiveMessage = async (newMessage: Message) => {
-			console.log(newMessage);
 			setChats((prevChats) => {
 				if (!prevChats) return prevChats;
 				return prevChats.map((chat) => {
@@ -90,7 +88,6 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 			});
 		};
 		const handleReceiveMessages = async (newMessages: Message[]) => {
-			console.log(newMessages);
 			setChats((prevChats) => {
 				if (!prevChats) return prevChats;
 				return prevChats.map((chat) => {
@@ -162,10 +159,8 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 
 			// 🔥 On récupère le message créé
 			const mediaMessage = await response.json();
-			console.log(mediaMessage)
 			const messageData = mediaMessage[type];
 
-			console.log(messageData);
 			// setChats((prevChats) =>
 			// 	prevChats?.map((chat) =>
 			// 		chat.id === chatId

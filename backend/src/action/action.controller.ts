@@ -16,7 +16,6 @@ class ActionController {
 	@Post('like')
 	async like(@Body() { userId, targetUserId, status }) : Promise<{ message: string, chat: null | Chat}> {
 		try {
-			console.log({ userId, targetUserId, status });
 			const actionResult = await this.actionService.handleLike({ userId, targetUserId, status });
 			await this.historyService.pushHistory({
 				userId: targetUserId as Number,
