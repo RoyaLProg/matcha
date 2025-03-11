@@ -39,6 +39,15 @@ class HistoryController {
 			throw new BadRequestException('invalid request');
 		}
 	}
+	@Get('count')
+	@UseGuards(AuthGuard)
+	async getCountUnreaded(@Req() req) {
+		try {
+			return this.historyService.getCountUnreaded(req.user.id);
+		} catch (e) {
+			throw new BadRequestException('invalid request');
+		}
+	}
 }
 
 export default HistoryController

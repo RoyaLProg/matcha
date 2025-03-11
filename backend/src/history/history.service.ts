@@ -1,15 +1,23 @@
 import { Injectable } from "@nestjs/common";
 import { Database } from "src/database/Database";
 import History from "src/interface/history.interface";
+import { SocketsService } from "src/sockets.service";
 
 @Injectable()
 class HistoryService {
 	constructor(
-		private readonly database: Database
+		private readonly database: Database,
+		private readonly socketService: SocketsService
 	){}
 
 	async pushHistory(history: History): Promise<Object> {
-		return this.database.addOne("history", history);
+		const addHistory = await this.database.addOne("history", history) as History;
+		if (history.userId) {
+			const socket = this.socketService.getSocketByUserId(history.userId.toString());
+			if (socket)
+				this.setAsReaded(addHistory.id as number, history.userId as number);
+		}
+		return addHistory;
 	}
 
 	async setAsReaded(id: number, userId: number) {
@@ -28,7 +36,11 @@ class HistoryService {
 	async getHistory(userId: number) {
 		return this.database.getRows("history", undefined, {userId: userId});
 	}
-	
+
+	async getCountUnreaded(userId: number) {
+		const history = await this.database.getRows("history", undefined, {userId: userId, isReaded: false});
+		return history.length;
+	}
 }
 
 export default HistoryService;

@@ -43,6 +43,15 @@ class SocketsService {
 		return undefined; // Si aucun socket n'est trouvé
 	}
 
+	getNotificationByUserId(userId: string, type: NotificationType, message: string) : Boolean {
+		const socket = this.getSocketByUserId(userId);
+		if (socket) {
+			socket.emit('notification', { type, message });
+			socket.emit('notificationCount', 1);
+			return true;
+		}
+		return false;
+	}
 }
 
 export { SocketsService, NotificationType };

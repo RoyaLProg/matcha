@@ -68,5 +68,28 @@
 	border-bottom: 2px black solid;
 	width: 90%;
 	color: black;
-	
+
+}
+
+#notification-container {
+	position: relative;
+	display: inline-block;
+}
+
+#notificationBadge {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	background-color: red;
+	color: white;
+	font-size: 12px;
+	font-weight: bold;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+	transform: translate(-30%, 50%);
+	display: block;
+	text-align: center;
+	line-height: 18px;
 }
