@@ -75,8 +75,6 @@ export class AuthController {
 
 		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000); // time in a year
 
-		console.log(x);
-
 		if( x < 18)
 			return 'you must be at least 18 years old to register'
 		if ( x > 80)
@@ -167,7 +165,6 @@ export class AuthController {
 				subject: "Matcha The Latte - Email Verification"
 			});
 		} catch (e) {
-			console.log(e);
 			throw new BadRequestException({other: 'could not send email'});
 		}
 
@@ -235,7 +232,6 @@ export class AuthController {
 					subject: "Matcha The Latte - Password Reset"
 				});
 			} catch (e) {
-				console.log(e);
 			}
 		}
 		return res.status(200).send({ message: 'if the user exists, an email has been sent' });

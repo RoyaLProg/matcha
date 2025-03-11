@@ -26,8 +26,6 @@ export default function Settings() {
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const tagss = getTags();
 
-	console.log(selectedTags);
-
 	useEffect(() => {
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(async (position) => {
@@ -148,7 +146,6 @@ export default function Settings() {
 			else if ( v[i - 1] === ' ' )
 				v = String(v).slice(0, i) + String(v).charAt(i).toUpperCase() + String(v).slice(i + 1);
 		}
-		console.log(v);
 		return v;
 	}
 

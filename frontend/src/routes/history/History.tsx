@@ -16,7 +16,6 @@ export default function History() {
 				if (res.ok) {
 					res.json().then((data: IHistory[]) => {
 						setHistory(data);
-						console.log(data);
 					});
 				}
 		});

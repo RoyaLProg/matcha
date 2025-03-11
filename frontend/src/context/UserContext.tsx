@@ -44,7 +44,6 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 			});
 			if (!response.ok)
 				throw new Error('Failed to update user settings');
-			console.log('User settings updated successfully');
 		} catch (error) {
 			console.error('Error updating user settings:', error);
 		}
@@ -69,7 +68,6 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 				if (responseUser.ok) {
 					const fetchedUser: Users = await responseUser.json();
 					setUser(fetchedUser);
-					console.log(fetchedUser);
 					if (fetchedUser.settings)
 						if (fetchedUser.settings?.geoloc) {
 							navigator.geolocation.getCurrentPosition(
@@ -81,7 +79,6 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 										const updatedSettings: Partial<Settings> = { latitude, longitude, country: data.countryName || 'Unknown', city: data.city || 'Unknown' };
 										setUserSettings(updatedSettings);
 										updateUserSettingsAPI(updatedSettings);
-										console.log(updatedSettings)
 									}
 								},
 								async (error) => {

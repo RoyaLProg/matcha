@@ -14,7 +14,6 @@ class HistoryController {
 		try {
 			await this.historyService.setAsReaded(id, req.user.id);
 		} catch (e) {
-			console.log(e.message);
 			throw new BadRequestException('something went wrong');
 		}
 
@@ -37,7 +36,6 @@ class HistoryController {
 		try {
 			return this.historyService.getHistory(req.user.id);
 		} catch (e) {
-			console.log(e);
 			throw new BadRequestException('invalid request');
 		}
 	}

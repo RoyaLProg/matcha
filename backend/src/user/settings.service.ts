@@ -14,7 +14,6 @@ export default class SettingsService {
 	}
 
 	async createTag(settingsId: number, tag: Tag): Promise<Tag> {
-		console.log(tag);
 		const formattedCategory = tag.category.toLowerCase().replace(/\s+/g, '_');
 		const formattedTag = tag.tag.toLowerCase().replace(/\s+/g, '_');
 		try {
