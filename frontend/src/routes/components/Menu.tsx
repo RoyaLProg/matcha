@@ -16,9 +16,9 @@ function Menu() {
 	function sortImage(a: Picture, b: Picture)
 	{
 		if (a.isProfile)
-			return 1;
-		else if (b.isProfile)
 			return -1;
+		else if (b.isProfile)
+			return 1;
 		return 0;
 	}
 
@@ -66,7 +66,7 @@ function Menu() {
 				<div aria-hidden={hidden} id="profileMenu">
 					<Link onClick={toggleHidden} to="/profile"> Profile </Link>
 					<Link onClick={() => { toggleHidden(); setCount(0); }}  to="/history"> History </Link>
-					<Link onClick={toggleHidden} to="/profile/settings"> Settings </Link>
+					<Link onClick={toggleHidden} to="/settings"> Settings </Link>
 				</div>
 				<Link to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
 			</div>

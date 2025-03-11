@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import "./Home.css"
 import Carrousel from "../components/Carrousel";
 import { UserContext } from "../../context/UserContext";
+import Picture from "../../interface/picture.interface";
 
 export function Home() {
 	const user = useContext(UserContext);
@@ -114,19 +115,38 @@ export function Home() {
 	const currentMatch = matches[currentIndex];
 	const pictures = currentMatch.pictures || [];
 	const currentPicture = pictures.length > 0 ? (pictures[currentImageIndex]?.url ? pictures[currentImageIndex].url : pictures[0].url) : null;
+	
+	function sortImage(a: Picture, b: Picture) 
+	{
+		if (a.isProfile)
+			return -1;
+		else if (b.isProfile)
+			return 1;
+		return 0;
+	}
+
 	return (
 		<div className="home alignement">
 			<div id="container">
 				<button className="dislikeButton" onClick={handleDislike}> <span className="material-symbols-outlined">thumb_down</span> </button>
 				<div className="content">
 					<div className="card">
-					<Carrousel pictures={currentMatch.pictures} />
+					<Carrousel pictures={pictures.sort(sortImage)} />
 					<div className="yourProfile">
-						<p style={{fontSize: "32px"}}>{currentMatch.user.firstName} {currentMatch.user.lastName}, {currentMatch.age} ans</p>
-						<p style={{fontSize: "20px", color: "#aaa"}}>{currentMatch.settings.country}, {currentMatch.settings.city} ({currentMatch.distance.toFixed(1)} km)</p>
-						<p style={{fontSize: "15px", textAlign: "justify"}}>{currentMatch.settings.biography || "Aucune description disponible."} </p>
-
+						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>
+							<p>
+								{currentMatch?.user?.firstName},
+								{getAge(currentMatch?.user?.birthDate ?? "")} y/o
+							</p>
+							<div id="fameRating">
+								<p>{currentMatch?.user?.fameRating ?? 0}</p>
+								<span className="material-symbols-outlined">local_fire_department</span>
+							</div>
+						</div>
+						<p style={{fontSize: "20px", color: "#aaa"}}>{currentMatch?.user?.settings?.country}, {user?.settings?.city}</p>
+						<p style={{fontSize: "15px", textAlign: "justify", textWrap: "wrap"}}>{currentMatch?.user?.settings?.biography}</p>
 					</div>
+
 						{/* <div>
 								{currentMatch.tags.map((tag) => (
 									<span key={tag.id} className="tag">

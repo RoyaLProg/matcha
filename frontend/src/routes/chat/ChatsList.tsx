@@ -13,7 +13,7 @@ function ChatsList() {
 	if (!socket || !chats)
 		return <div>Loading...</div>;
 	if (!chats.chats || chats.chats.length === 0)
-		return <div>No chats found</div>;
+		return <div style={{margin: "auto"}}>No chats found</div>;
 	return (
 		<div className="chatList">
 			<div className="menu">

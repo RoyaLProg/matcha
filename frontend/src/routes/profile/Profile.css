@@ -77,3 +77,9 @@
 	background-color: #444;
 	transform: scale(1.1);
 }
+
+#profile #fameRating {
+	display: flex;
+	place-items: center;
+	place-self: end;
+}
