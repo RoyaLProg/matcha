@@ -10,11 +10,12 @@ interface UserContextProp {
 	setUserSettings: (settings: any) => void;
 }
 
-export const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
-	const [key, value] = cookie.split('=');
-	acc[key] = decodeURIComponent(value);
-	return acc;
-}, {} as Record<string, string>);
+export const getCookie = (name) => {
+	return document.cookie
+		.split('; ')
+		.find(row => row.startsWith(name + '='))
+		?.split('=')[1];
+};
 
 export const fetchLocationByIP = async () :Promise<Partial<Settings> | null> => {
 	try {
@@ -51,7 +52,7 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 
 	const updateUserFromCookie = async () => {
 		if (typeof document === 'undefined') return;
-		const token = cookies['Auth'];
+		const token = getCookie("Auth");
 		if (token) {
 			try {
 				const decodedUser: any = jwtDecode(token);

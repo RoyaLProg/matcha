@@ -10,7 +10,7 @@ interface IForm {
 }
 
 function Login() {
-	const userConext = useContext(UserContext);
+	const userContext = useContext(UserContext);
 	const navigate = useNavigate();
 	const [values, setValues] = useState<IForm>({username: '', password: ''});
 
@@ -27,16 +27,16 @@ function Login() {
 				if (!rv.ok) {
 					rv.json().then((value) => notificationFunctions[NotificationType.Error](value['message']));
 				} else {
-					if (userConext && userConext.user === undefined) {
-						userConext.updateUserFromCookie();
+					if (userContext && userContext.user === undefined) {
 						notificationFunctions[NotificationType.Success]('Login successful');
+						userContext.updateUserFromCookie();
 						navigate('/');
 					}
 				}
 			})
 			.catch((e) => console.error('Fetch error:', e));
 	}
-	
+
 	return (
 	<div className="login">
 		<div className="loginLogo">
