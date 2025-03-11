@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpException, HttpStatus, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, Get, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import ActionService from './action.service';
 import Chat from 'src/interface/chat.interface';
 import MatchService from './match.service';
@@ -17,18 +17,27 @@ class ActionController {
 	async like(@Body() { userId, targetUserId, status }) : Promise<{ message: string, chat: null | Chat}> {
 		try {
 			const actionResult = await this.actionService.handleLike({ userId, targetUserId, status });
-			await this.historyService.pushHistory({
-				userId: targetUserId as Number,
-				message: "a user liked your profile",	
-			});
-			if (actionResult)
+			if (actionResult) {
+				await this.historyService.pushHistory({
+					fromId: userId,
+					userId: targetUserId,
+					message: "you matched with a user",
+				});
+				await this.historyService.pushHistory({
+					fromId: targetUserId,
+					userId: userId,
+					message: "you matched with a user",
+				});
 				return { message: 'Action completed successfully', chat: actionResult };
+			}
+			await this.historyService.pushHistory({
+				fromId: userId,
+				userId: targetUserId,
+				message: "a user liked your profile",
+			});
 			return { message: 'Action completed successfully', chat: null };
 		}catch (err) {
-			throw new HttpException(
-				err.message || 'Failed to handle action',
-				HttpStatus.BAD_REQUEST
-			)
+			throw new BadRequestException(err.message || 'Failed to handle action')
 		}
 	}
 

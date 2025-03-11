@@ -13,7 +13,11 @@ import HistoryService from 'src/history/history.service';
 
 @Controller('Users')
 class UserController {
-	constructor(private readonly userService: UserService, private readonly settingsService: SettingsService, private readonly historyService: HistoryService) { }
+	constructor(
+		private readonly userService: UserService,
+		private readonly settingsService: SettingsService,
+		private readonly historyService: HistoryService
+	) { }
 
 	@Post('/settings/create')
 	@UseGuards(AuthGuard)
@@ -96,7 +100,7 @@ class UserController {
 	}
 
 	@Get(':id')
-	async getUser(@Param('id') id: number) : Promise<Users> {
+	async getUser(@Param('id') id: number, @Request() req) : Promise<Users> {
 		try {
 			const user = await this.userService.findOne(id);
 			delete user.settings
@@ -104,8 +108,10 @@ class UserController {
 			delete user.email
 			await this.historyService.pushHistory({
 				userId: id as Number,
+				fromId: req.user.id,
 				message: "a user visited your profile",	
 			});
+			user['fameRating'] = this.userService.getFameRating(id);
 			return user;
 		} catch (error) {
 			if (error.message === 'User not found')
