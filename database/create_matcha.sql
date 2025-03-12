@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS Users (
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(500) NOT NULL,
     status user_status_enum DEFAULT 'offline',
+	"blockedIds" INT[] DEFAULT '{}',
     "isValidated" BOOLEAN DEFAULT FALSE
 );
 

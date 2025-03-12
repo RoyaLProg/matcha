@@ -36,7 +36,7 @@ export default class MatchService {
 
 	async getMatches(userId: number) : Promise<any> {
 		try {
-			const userExists = await this.database.getFirstRow('users', [], { id: userId });
+			const userExists = await this.database.getFirstRow('users', [], { id: userId }) as Users;
 			if (!userExists) throw new Error('User not found');
 			const userSettings = await this.database.getFirstRow('settings', [], { userId }) as Settings;
 			if (!userSettings) throw new Error('User settings not found');
@@ -48,6 +48,7 @@ export default class MatchService {
 			if (potentialUsersSetting.length === 0) throw new Error('No potential users found');
 			const potentialUsers = await Promise.all(potentialUsersSetting.map(async (settings) => {
 				if (Number(settings.userId) === userId) return null
+
 				const otherTags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
 				const distance = await this.calculateDistance(userSettings.latitude, userSettings.longitude, settings.latitude, settings.longitude);
 				const commonTagsCount = await this.findCommonTags(userTags, otherTags);
@@ -56,6 +57,9 @@ export default class MatchService {
 				if (!otherUser) return null;
 				delete otherUser.password;
 				delete otherUser.email;
+				if (userExists.blockedIds.includes(Number(settings.userId)) || otherUser.blockedIds.includes(userId)) {
+					return null; // L'un des deux a bloqué l'autre, donc on ignore cette personne
+				}
 				// Vérification de la compatibilité des orientations sexuelles
 				const isCompatible = (userSettings.sexualOrientation === 'heterosexual' && settings.gender !== userSettings.gender) ||
 						(userSettings.sexualOrientation === 'homosexual' && settings.gender === userSettings.gender) ||

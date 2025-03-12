@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Database } from 'src/database/Database';
+import { ActionStatus } from 'src/interface/action.interface';
 import Picture from 'src/interface/picture.interface';
 import Settings from 'src/interface/settings.interface';
 import Tag from 'src/interface/tags.interface';
@@ -55,5 +56,25 @@ export default class UserService {
 		if (!user)
 			throw new Error('User not found');
 		return user as Users;
+	}
+
+	async blockUser(userId: number, targetUserId: number) : Promise<void> {
+		const user = await this.database.getFirstRow('users', ['blockedIds'], { id: userId }) as Users;
+		if (!user)
+			throw new Error('User not found');
+
+		let updatedBlockedIds;
+
+		if (user.blockedIds.includes(targetUserId)) {
+			updatedBlockedIds = user.blockedIds.filter((id: number) => id !== targetUserId);
+		} else {
+			updatedBlockedIds = [...user.blockedIds, targetUserId];
+		}
+
+		await this.database.updateRows('Users', { blockedIds: updatedBlockedIds }, { id: userId });
+		await this.database.deleteRows('chat', { userId: userId, targetUserId: targetUserId });
+		await this.database.deleteRows('chat', { userId: targetUserId, targetUserId: userId });
+		await this.database.deleteRows('action', { userId: userId, targetUserId: targetUserId });
+		await this.database.deleteRows('action', { userId: targetUserId, targetUserId: userId });
 	}
 }

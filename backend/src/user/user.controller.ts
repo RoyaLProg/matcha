@@ -19,6 +19,23 @@ class UserController {
 		private readonly historyService: HistoryService
 	) { }
 
+	@Post(':id/block')
+	@UseGuards(AuthGuard)
+	async blockUser(@Param('id') id: number, @Request() req) : Promise<void> {
+		try {
+			if (req.user.id === id)
+				throw new HttpException('You cannot block yourself', HttpStatus
+					.BAD_REQUEST);
+			await this.userService.blockUser(req.user.id, id);
+		} catch (error) {
+			if (error.message === 'User not found')
+				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+			throw new HttpException(
+				'Failed to block user',
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+	}
 	@Post('/settings/create')
 	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {

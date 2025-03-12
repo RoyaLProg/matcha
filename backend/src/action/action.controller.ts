@@ -17,6 +17,7 @@ class ActionController {
 	async like(@Body() { userId, targetUserId, status }) : Promise<{ message: string, chat: null | Chat}> {
 		try {
 			const actionResult = await this.actionService.handleLike({ userId, targetUserId, status });
+
 			if (actionResult) {
 				await this.historyService.pushHistory({
 					fromId: userId,
@@ -38,6 +39,21 @@ class ActionController {
 			return { message: 'Action completed successfully', chat: null };
 		}catch (err) {
 			throw new BadRequestException(err.message || 'Failed to handle action')
+		}
+	}
+
+	@Post('unlike')
+	async unlike(@Body() { userId, targetUserId }) : Promise<{ message: string }> {
+		try {
+			const actionResult = await this.actionService.handleUnlike({ userId, targetUserId });
+			if (actionResult)
+				return { message: 'Action completed successfully' };
+			return { message: 'Action completed successfully' };
+		}catch (err) {
+			throw new HttpException(
+				err.message || 'Failed to handle action',
+				HttpStatus.BAD_REQUEST
+			)
 		}
 	}
 
