@@ -1,12 +1,16 @@
 #verify {
 	display: flex;
 	flex-direction: column;
+	place-items: center;
+	text-align: center;
 	gap: 50px;
+	margin: auto;
 }
 
 #verify a{
 	padding: 15px 30px;
 	background: #444;
+	width: fit-content;
 	border-radius: 15px;
 }
 

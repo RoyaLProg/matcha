@@ -32,15 +32,15 @@ export default function Forgot() {
 		return <ForgotWithToken token={token} />
 
 	return (
-		<div style={{flexDirection: "column"}}>
-			<h1> MATCHA LOGO HERE </h1>
+		<div style={{flexDirection: "column",margin: 'auto', width: "fit-content", textAlign: "center"}}>
+			<span className="logo"></span>
 			<h3> Forgot your password ? </h3>
 			{ message ? 
 				<p> {message} </p>
 			:
 				''
 			}
-			<label>
+			<label style={{textAlign: "start"}}>
 				Username :
 				<input defaultValue={username} onChange={(e) => setUsername(e.target.value)}/>
 			</label>
