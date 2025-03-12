@@ -43,6 +43,12 @@ BEGIN
             'minimalist', 'ambitious', 'creative'
         );
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'report_status_enum') THEN
+        CREATE TYPE report_status_enum AS ENUM ('ongoing', 'resolved', 'rejected');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'report_type_enum') THEN
+        CREATE TYPE report_type_enum AS ENUM ('offensive', 'bully', 'fake');
+    END IF;
 END $$;
 
 CREATE TABLE IF NOT EXISTS Users (
@@ -54,7 +60,7 @@ CREATE TABLE IF NOT EXISTS Users (
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(500) NOT NULL,
     status user_status_enum DEFAULT 'offline',
-	"blockedIds" INT[] DEFAULT '{}',
+	"blockedIds" INT[] DEFAULT array[]::int[],
     "isValidated" BOOLEAN DEFAULT FALSE
 );
 
@@ -137,4 +143,14 @@ CREATE TABLE IF NOT EXISTS action (
     status action_status_enum NOT NULL,
     CONSTRAINT fk_user_action FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE,
     CONSTRAINT fk_target_user_action FOREIGN KEY ("targetUserId") REFERENCES Users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS report (
+    id SERIAL PRIMARY KEY,
+    "userId" INT NOT NULL,
+    "from" INT NOT NULL,
+    status report_status_enum DEFAULT 'ongoing',
+	type report_type_enum NOT NULL,
+    CONSTRAINT fk_user_report FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_from_report FOREIGN KEY ("from") REFERENCES Users (id) ON DELETE CASCADE
 );

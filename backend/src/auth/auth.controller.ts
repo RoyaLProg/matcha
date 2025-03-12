@@ -136,8 +136,6 @@ export class AuthController {
 			password: body.password,
 			birthDate: new Date(body.birthDate).toISOString().slice(0,10),
 			email: body.email,
-			// sexualOrientation: UserSexualOrientation.Undefined,
-			// gender: UserGender.Undefined,
 			isValidated: false,
 		}
 
