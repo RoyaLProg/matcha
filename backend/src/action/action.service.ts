@@ -28,6 +28,20 @@ class ActionService {
 			throw new NotFoundException(`Invalid action status: ${status}`);
 		}
 	}
+
+	async handleUnlike({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<boolean> {
+		const userLike = await this.database.getFirstRow('action', [], { userId, targetUserId, status: ActionStatus.Like, }) as Action;
+		const targetUserLike = await this.database.getFirstRow('action', [], { userId: targetUserId, targetUserId: userId, status: ActionStatus.Like, }) as Action;
+		if (userLike || targetUserLike) {
+			if (userLike)
+				await this.database.deleteRows('action', { id: userLike.id });
+			if (targetUserLike)
+				await this.database.deleteRows('action', { id: targetUserLike.id });
+			await this.chatService.deleteChat({ userId, targetUserId });
+			return true;
+		}
+		return false;
+	}
 }
 
 export default ActionService;
