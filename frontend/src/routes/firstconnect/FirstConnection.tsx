@@ -135,16 +135,6 @@ function FirstConnection() {
 
 	return (
 		<div className="firstConnection">
-			{/* Menu avec logo et profil */}
-			<div className="menu">
-				<div className="logoMenu">
-					<span className="logo"></span>
-				</div>
-				<div className="myProfile">
-					<img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" />
-				</div>
-			</div>
-
 			{/* Contenu principal */}
 			<div className="content">
 				<h2>Complete Your Profile</h2>

@@ -96,6 +96,7 @@ class UserController {
 			if (createdSettingsId) {
 				await this.settingsService.deleteSettings(createdSettingsId);
 			}
+			console.log(error.message);
 			throw new HttpException('Failed to create settings', HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -118,20 +119,28 @@ class UserController {
 	}
 
 	@Get(':id')
+	@UseGuards(AuthGuard)
 	async getUser(@Param('id') id: number, @Request() req) : Promise<Users> {
 		try {
 			const user = await this.userService.findOne(id);
-			delete user.settings
+			delete user.settings.maxDistance
+			delete user.settings.minAgePreference
+			delete user.settings.maxAgePreference
+			delete user.settings.id
+			delete user.lastName
+			delete user.isValidated
+			delete user.blockedIds
 			delete user.password
 			delete user.email
 			await this.historyService.pushHistory({
-				userId: id as Number,
+				userId: id,
 				fromId: req.user.id,
 				message: "a user visited your profile",	
 			});
 			user['fameRating'] = await this.userService.getFameRating(id);
 			return user;
 		} catch (error) {
+			console.error(error.message);
 			if (error.message === 'User not found')
 				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
 			throw new HttpException(
