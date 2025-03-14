@@ -175,3 +175,8 @@
 	justify-items: space-around;
 }
 
+.home #fameRating {
+	display: flex;
+	place-items: center;
+	place-self: end;
+}

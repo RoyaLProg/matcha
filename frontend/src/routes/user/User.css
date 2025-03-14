@@ -1,0 +1,98 @@
+#userProfile .card {
+	color: black;
+	padding: 15px;
+	height: fit-content;
+	background-color: whitesmoke;
+	border-radius: 17px;
+	height: 750px;
+	width: 430px;
+}
+
+#userProfile {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 25px;
+	height: 100%;
+	width: 100%;
+}
+
+#userProfile .content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 25px;
+	width: 100%;
+}
+
+#userProfile .content .card .Button {
+	display: flex;
+	max-width: 400px;
+	width: 100%;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+#userProfile .content .card .Button button {
+	width: 50px;
+	height: 50px;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+#userProfile .yourProfile {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-items: space-around;
+	text-align: justify;
+	word-break: normal;
+	text-justify: inter-word;
+}
+
+#userProfile #nav {
+	display: flex;
+	justify-content: space-between;
+	width: 400px;
+}
+
+#userProfile #nav a {
+	padding: 15px 30px;
+	background-color: #555;
+	cursor: pointer;
+	margin-top: 15px;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	border-radius: 15px;
+}
+
+#userProfile #nav a:hover {
+	background-color: #444;
+	transform: scale(1.1);
+}
+
+#userProfile #nav button {
+	padding: 15px 30px;
+	background-color: #555;
+	cursor: pointer;
+	margin-top: 15px;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+	border-radius: 15px;
+}
+
+#userProfile #nav button:hover {
+	background-color: #444;
+	transform: scale(1.1);
+}
+#userProfile #fameRating {
+	display: flex;
+	place-items: center;
+	place-self: end;
+}

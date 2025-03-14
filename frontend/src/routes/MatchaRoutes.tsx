@@ -12,6 +12,7 @@ import Profile from "./profile/Profile";
 import HomeDefault, { Home } from "./home/Home";
 import Settings from "./settings/Settings";
 import History from "./history/History";
+import User from "./user/User";
 
 export function MatchaRoutes() {
 	const user = useContext(UserContext);
@@ -31,6 +32,7 @@ export function MatchaRoutes() {
 			<Route path="/profile" element={<Profile />} />
 			<Route path="/settings" element={<Settings />} />
 			<Route path="/history" element={<History />} />
+			<Route path="/user/:id" element={<User />} />
 			<Route path="*" element={<Navigate to={'/'}/>} />
 		</Routes>
 	)

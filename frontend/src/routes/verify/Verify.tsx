@@ -28,7 +28,7 @@ export default function Verify() {
 				});
 			}
 		}).catch((e) => console.error('Fetch error:', e));
-	})
+	}, [])
 	return (
 		<div id="verify">
 			{ error ? 

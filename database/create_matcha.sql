@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS message (
 CREATE TABLE IF NOT EXISTS history (
     id SERIAL PRIMARY KEY,
     "userId" INT NOT NULL,
+	"fromId" INT NOT NULL,
     message TEXT NOT NULL,
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "isReaded" BOOLEAN DEFAULT FALSE,
@@ -149,6 +150,7 @@ CREATE TABLE IF NOT EXISTS report (
     id SERIAL PRIMARY KEY,
     "userId" INT NOT NULL,
     "from" INT NOT NULL,
+	"moreInfo" VARCHAR,
     status report_status_enum DEFAULT 'ongoing',
 	type report_type_enum NOT NULL,
     CONSTRAINT fk_user_report FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE,
