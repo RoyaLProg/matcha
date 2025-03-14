@@ -206,7 +206,7 @@ export class AuthController {
 			let eat = new Date();
 			eat.setMonth(eat.getMonth() + 2);
 			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: false, expires: eat, path: '/'});
-			return res.status(200).send({ message: 'Login successful!' });
+			res.status(200).send({ message: 'Login successful!' });
 	}
 
 	@Post('forgot')
