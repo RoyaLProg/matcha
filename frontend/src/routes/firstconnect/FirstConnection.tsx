@@ -22,9 +22,10 @@ function FirstConnection() {
 	const [profilePicture, setProfilePicture] = useState<string>("");
 	const [uploadedPictures, setUploadedPictures] = useState<File[]>([]);
 	const [rangeAgeMin, setRangeAgeMin] = useState<number>(18);
-	const [rangeAgeMax, setRangeAgeMax] = useState<number>(22);
+	const [rangeAgeMax, setRangeAgeMax] = useState<number>(25);
 	const [rangeLocalisation, setRangeLocalisation] = useState<number>(10);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	const [errors, setErrors] = useState<{ [key: string]: string }>({});
 	const tagss = getTags();
 
 	useEffect(() => {
@@ -71,7 +72,7 @@ function FirstConnection() {
 			setUploadedPictures([...uploadedPictures, ...newFiles]);
 		}
 	}
-	
+
 	function handleDeleteImage(fileName: string) {
 		setUploadedPictures(
 			uploadedPictures.filter((x) => x.name != fileName)
@@ -80,12 +81,21 @@ function FirstConnection() {
 
 	async function onSubmit(event) {
 		event.preventDefault();
-		if (selectedTags.length < 7) {
-			console.log("Please select at least 7 tags");
-			return;
-		}
-		if (uploadedPictures.length < 1) {
-			console.log("Please upload at least one picture");
+		setErrors({}); // Reset des erreurs avant validation
+		let newErrors = {};
+
+		if (!formData.gender) newErrors.gender = "Gender is required.";
+		if (!formData.sexualOrientation) newErrors.sexualOrientation = "Sexual orientation is required.";
+		if (!formData.biography) newErrors.biography = "Biography cannot be empty.";
+		if (!formData.country) newErrors.country = "Country is required.";
+		if (!formData.city) newErrors.city = "City is required.";
+		if (selectedTags.length < 7) newErrors.tags = "Please select at least 7 tags.";
+		if (uploadedPictures.length < 1) newErrors.pictures = "Please upload at least one picture.";
+		if (rangeAgeMin < 18) newErrors.rangeAgeMin = "Minimum age cannot be less than 18.";
+		if (rangeAgeMax <= rangeAgeMin) newErrors.rangeAgeMax = "Maximum age must be greater than minimum age.";
+
+		if (Object.keys(newErrors).length > 0) {
+			setErrors(newErrors);
 			return;
 		}
 
@@ -130,6 +140,8 @@ function FirstConnection() {
 			user?.setUserSettings(result);
 		} catch (error) {
 			console.error("Error during submit:", error);
+			if (error.details)
+				setErrors({ api: error.details });
 		}
 	}
 
@@ -149,6 +161,7 @@ function FirstConnection() {
 							<option value={UserGender.Woman}>Woman</option>
 							<option value={UserGender.Other}>Other</option>
 						</select>
+						{errors.gender && <p className="error-message">{errors.gender}</p>}
 					</div>
 
 					{/* Orientation sexuelle */}
@@ -160,37 +173,44 @@ function FirstConnection() {
 							<option value={UserSexualOrientation.Bisexual}>Bisexual</option>
 							<option value={UserSexualOrientation.Homosexual}>Homosexual</option>
 						</select>
+						{errors.sexualOrientation && <p className="error-message">{errors.sexualOrientation}</p>}
 					</div>
 
 					{/* Biographie */}
 					<div className="form-group">
 						<label htmlFor="biography">Biography</label>
 						<textarea name="biography" value={formData.biography} onChange={handleChange} />
+						{errors.biography && <p className="error-message">{errors.biography}</p>}
 					</div>
 
 					{/* Pays */}
 					<div className="form-group">
 						<label htmlFor="country">Country</label>
 						<input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Enter your country" />
+						{errors.country && <p className="error-message">{errors.country}</p>}
 					</div>
 
 					{/* Ville */}
 					<div className="form-group">
 						<label htmlFor="city">City</label>
 						<input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Enter your city" />
+						{errors.city && <p className="error-message">{errors.city}</p>}
 					</div>
 
 					{/* Géolocalisation */}
 					<div className="form-group">
 						<label htmlFor="geoloc">Enable Geolocation</label>
 						<input type="checkbox" name="geoloc" checked={formData.geoloc} onChange={handleChange} />
+
 					</div>
 
 					{/* Plage d'âge */}
 					<div className="form-group">
 						<label>Age Range: {rangeAgeMin} - {rangeAgeMax}</label>
 						<input type="range" min="18" max="100" value={rangeAgeMin} onChange={(e) => setRangeAgeMin(Number(e.target.value))} />
-						<input type="range" min="18" max="100" value={rangeAgeMax} onChange={(e) => setRangeAgeMax(Number(e.target.value))} />
+						{errors.rangeAgeMin && <p className="error-message">{errors.rangeAgeMin}</p>}
+						<input type="range" min="25" max="100" value={rangeAgeMax} onChange={(e) => setRangeAgeMax(Number(e.target.value))} />
+						{errors.rangeAgeMax && <p className="error-message">{errors.rangeAgeMax}</p>}
 					</div>
 
 					{/* Plage de localisation */}
@@ -219,6 +239,7 @@ function FirstConnection() {
 								</div>
 							</div>
 						))}
+						{errors.tags && <p className="error-message">{errors.tags}</p>}
 					</div>
 
 					{/* Téléchargement des photos */}
@@ -250,11 +271,13 @@ function FirstConnection() {
 								</div>
 							))}
 						</div>
+						{errors.pictures && <p className="error-message">{errors.pictures}</p>}
 					</div>
 
 					{/* Bouton de soumission */}
 					<button type="submit">Save Profile</button>
 				</form>
+				{errors.api && <p className="error-message api-error">{errors.api}</p>}
 			</div>
 		</div>
 	);

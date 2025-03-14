@@ -1,7 +1,7 @@
 import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import UserService from './user.service';
-import Settings from 'src/interface/settings.interface';
+import Settings, { UserGender, UserSexualOrientation } from 'src/interface/settings.interface';
 import SettingsService from './settings.service';
 import * as fs from 'fs';
 import Picture from 'src/interface/picture.interface';
@@ -58,8 +58,27 @@ class UserController {
 		try {
 			parsedData = JSON.parse(body.data);
 			const { tags, pictures, ...settingsData } = parsedData;
+
 			if (settingsData.userId != req.user.id)
 				throw new HttpException('You do not have permission to create settings for this user', HttpStatus.FORBIDDEN);
+			if (!tags || tags.length < 7)
+				throw new HttpException({ message: "Validation error", details: "You must select at least 7 tags." }, HttpStatus.BAD_REQUEST);
+			if (!pictures || pictures.length < 1)
+				throw new HttpException({ message: "Validation error", details: "You must upload at least one picture." }, HttpStatus.BAD_REQUEST);
+			if (settingsData.minAgePreference < 18)
+				throw new HttpException({ message: "Validation error", details: "Minimum age cannot be less than 18." }, HttpStatus.BAD_REQUEST);
+			if (settingsData.maxAgePreference <= settingsData.minAgePreference)
+				throw new HttpException({ message: "Validation error", details: "Maximum age must be greater than minimum age." }, HttpStatus.BAD_REQUEST);
+
+			const sanitize = (value: any, maxLength: number = 255): string => {
+				if (typeof value !== 'string') return '';
+				return value.replace(/<[^>]+>/g, '').trim().substring(0, maxLength);
+			};
+
+			settingsData.biography = sanitize(settingsData.biography, 300);
+			settingsData.country = sanitize(settingsData.country, 100);
+			settingsData.city = sanitize(settingsData.city, 100);
+
 			const settings = await this.settingsService.createSettings(settingsData as Settings);
 			createdSettingsId = settings.id;
 			const createdTags = await Promise.all(
@@ -96,7 +115,10 @@ class UserController {
 			if (createdSettingsId) {
 				await this.settingsService.deleteSettings(createdSettingsId);
 			}
-			console.log(error.message);
+
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException('Failed to create settings', HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -135,7 +157,7 @@ class UserController {
 			await this.historyService.pushHistory({
 				userId: id,
 				fromId: req.user.id,
-				message: "a user visited your profile",	
+				message: "a user visited your profile",
 			});
 			user['fameRating'] = await this.userService.getFameRating(id);
 			return user;
