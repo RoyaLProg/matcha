@@ -5,6 +5,7 @@ import Message from 'src/interface/message.interface';
 import UserService from 'src/user/user.service';
 import ChatGateway from './chat.gateway';
 import { SocketsService } from 'src/sockets.service';
+import HistoryService from 'src/history/history.service';
 
 @Injectable()
 class ChatService {
@@ -14,6 +15,7 @@ class ChatService {
 		@Inject(forwardRef(() => ChatGateway))
 		private readonly chatGateway: ChatGateway,
 		private readonly socketService: SocketsService,
+		private readonly historyService: HistoryService,
 	) {}
 
 	async createChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<Chat> {
@@ -56,6 +58,16 @@ class ChatService {
 			throw new Error('Chat not found');
 		const newMessage = await this.database.addOne('message', { chatId: message.chatId, userId: message.userId, content: message.content});
 		this.chatGateway.emitMessage(newMessage as Message);
+		const receiverId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
+
+		await this.historyService.pushHistory({
+			userId: receiverId,
+			fromId: message.userId!,
+			message: message.content ?? '',
+			isReaded: false,
+			createdAt: new Date()
+		});
+
 		return newMessage as Message;
 	}
 
