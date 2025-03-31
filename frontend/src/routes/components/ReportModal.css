@@ -1,0 +1,49 @@
+#ReportModal[aria-hidden=true] {
+	display: none;
+}
+
+#ReportModal {
+	position: absolute;
+	display: flex;
+	background-color: rgba(0, 0, 0, 0.7);
+	height: 100dvh;
+	width: 100vw;
+	top: 0;
+	place-items: center;
+	place-content: center;
+	z-index: 2000;
+}
+
+#ReportModalContent {
+	display: flex;
+	background-color: #222;
+	border-radius: 15px;
+	width: 500px;
+	height: 700px;
+	flex-direction: column;
+	text-align: center;
+	place-items: center;
+	place-content: center;
+	justify-content: space-around;
+}
+
+#ReportExit {
+	justify-self: end;
+	width: fit-content;
+}
+
+.reportCheckbox {
+	display: flex;
+	width: 100%;
+	place-content: start;
+	place-items: center;
+}
+
+.reportCheckbox input {
+	width: 20px;
+	height: 20px;
+}
+
+#reasons {
+	width: 80%;
+}

@@ -11,8 +11,14 @@ export class Database {
 			idleTimeoutMillis: 30000,
 		});
 
+	private getValue(v: any){
+		if (Array.isArray(v))
+			return `'{${v.map((x) => {return(`'${x}'`)})}}'`;
+		return `'${v}'`;
+	}
+
 	public async addOne(table: string, columns: Object): Promise<Object> {
-		let query = `INSERT INTO ${table} (${Object.keys(columns).map((v) => {return `"${v}"`})}) VALUES (${Object.values(columns).map((v) => {return `'${v}'`})});`;
+		let query = `INSERT INTO ${table} (${Object.keys(columns).map((v) => {return `"${v}"`})}) VALUES (${Object.values(columns).map((v) => {return this.getValue(v)})});`;
 		try {
 			await Database._pool.query(query);
 			return await this.getFirstRow(table, [], columns);
@@ -98,7 +104,7 @@ export class Database {
 
 		for (let i = 0; i < keys.length; i++)
 		{
-			rv += `"${keys[i]}"='${values[i]}'`;
+			rv += `"${keys[i]}"=${this.getValue(values[i])}`;
 			if ( i != keys.length - 1 )
 				rv += ', ';
 		}

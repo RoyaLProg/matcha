@@ -108,6 +108,11 @@ export function Home() {
 		}
 	};
 
+	function getAge(value: string) {
+		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000); // time in a year
+		return Math.floor(x);
+	}
+
 	if (loading) return <p>Chargement en cours...</p>;
 	if (error) return <p>❌ Erreur : {error}</p>;
 	if (matches.length === 0) return (<p style={{margin: "auto"}}> We have no one for you D: </p>);
