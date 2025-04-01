@@ -36,12 +36,15 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 
 	const updateUserSettingsAPI = async (settings: Partial<Settings>) => {
 		try {
-			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/`, {
+			const formData = new FormData();
+			formData.append('data', JSON.stringify(settings));
+
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings`, {
 				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ data: settings }),
+				body: formData,
 				credentials: 'include',
 			});
+
 			if (!response.ok)
 				throw new Error('Failed to update user settings');
 		} catch (error) {
@@ -120,6 +123,10 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		updateUserFromCookie();
 	}, []);
+
+	useEffect(() => {
+		console.log(user);
+	}, [user]);
 
 	return (
 		<UserContext.Provider value={{ user, setUser, updateUserFromCookie, setUserSettings }}>

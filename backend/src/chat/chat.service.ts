@@ -69,7 +69,7 @@ class ChatService {
 			createdAt: new Date()
 		});
 
-
+		this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
 		return newMessage as Message;
 	}
 

@@ -59,7 +59,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			const userId = parseInt(user.userId);
 			const foundUser = await this.database.getFirstRow('users', [], { id: userId });
 			if (foundUser) {
-				await this.database.updateRows( 'users', { status: UserStatus.Offline }, { id: userId } );
+				await this.database.updateRows( 'users', { status: UserStatus.Offline, "lastconnection": new Date().toISOString() }, { id: userId } );
 			}
 		}
 	}

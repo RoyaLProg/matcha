@@ -11,6 +11,7 @@ import ChatGateway from "src/chat/chat.gateway";
 import { createReadStream } from "fs";
 import { join } from "path";
 import HistoryService from "src/history/history.service";
+import { SocketsService } from "src/sockets.service";
 
 @Controller("upload")
 class UploadController {
@@ -18,6 +19,7 @@ class UploadController {
 		private database: Database,
 		private readonly chatGateway: ChatGateway,
 		private readonly historyService: HistoryService,
+		private readonly socketService: SocketsService,
 	) {}
 
 	@Post('picture')
@@ -77,6 +79,7 @@ async uploadVideo(
 		isReaded: false,
 		createdAt: new Date()
 	});
+	this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
     return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
@@ -115,6 +118,7 @@ async uploadAudio(
 		isReaded: false,
 		createdAt: new Date()
 	});
+	this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
     return { message: 'Audio uploaded successfully!', audio: savedAudio };
 }
 
