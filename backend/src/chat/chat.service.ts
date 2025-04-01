@@ -6,6 +6,7 @@ import UserService from 'src/user/user.service';
 import ChatGateway from './chat.gateway';
 import { SocketsService } from 'src/sockets.service';
 import HistoryService from 'src/history/history.service';
+import Users from 'src/interface/users.interface';
 
 @Injectable()
 class ChatService {
@@ -58,12 +59,14 @@ class ChatService {
 			throw new Error('Chat not found');
 		const newMessage = await this.database.addOne('message', { chatId: message.chatId, userId: message.userId, content: message.content});
 		this.chatGateway.emitMessage(newMessage as Message);
-		const receiverId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
+		const senderId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
 
+		const sender = await this.database.getFirstRow('users', [], { id: senderId }) as Users;
+		const senderName = sender?.username || '';
 		await this.historyService.pushHistory({
-			userId: receiverId,
-			fromId: message.userId!,
-			message: message.content ?? '',
+			userId: message.userId!,
+			fromId: senderId,
+			message: `${senderName} sent you a message`,
 			isReaded: false,
 			createdAt: new Date()
 		});

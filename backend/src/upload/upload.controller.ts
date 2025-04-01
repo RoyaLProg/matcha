@@ -10,14 +10,16 @@ import AuthGuard from "src/auth/auth.guard";
 import ChatGateway from "src/chat/chat.gateway";
 import { createReadStream } from "fs";
 import { join } from "path";
+import HistoryService from "src/history/history.service";
 
 @Controller("upload")
 class UploadController {
 	constructor(
 		private database: Database,
-		private readonly chatGateway: ChatGateway
+		private readonly chatGateway: ChatGateway,
+		private readonly historyService: HistoryService,
 	) {}
-	
+
 	@Post('picture')
 	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {
@@ -65,7 +67,16 @@ async uploadVideo(
     };
 
     const savedVideo = await this.database.addOne('message', videoMessage);
-    this.chatGateway.emitMessage(savedVideo as Message);
+	const receiverId = chat.userId === userId ? chat.targetUserId : chat.userId;
+    const sender = await this.database.getFirstRow('users', [], { id: userId }) as Users;
+	this.chatGateway.emitMessage(savedVideo as Message);
+	await this.historyService.pushHistory({
+		userId: receiverId,
+        fromId: userId,
+        message: `${sender.username} sent you a video`,
+        isReaded: false,
+        createdAt: new Date(),
+	})
     return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
@@ -96,6 +107,15 @@ async uploadAudio(
 
     const savedAudio = await this.database.addOne('message', audioMessage);
     this.chatGateway.emitMessage(savedAudio as Message);
+	const receiverId = chat.userId === userId ? chat.targetUserId : chat.userId;
+    const sender = await this.database.getFirstRow('users', [], { id: userId }) as Users;
+	await this.historyService.pushHistory({
+		userId: receiverId,
+        fromId: userId,
+        message: `${sender.username} sent you a voice message`,
+        isReaded: false,
+        createdAt: new Date(),
+	})
     return { message: 'Audio uploaded successfully!', audio: savedAudio };
 }
 
