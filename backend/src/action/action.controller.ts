@@ -22,19 +22,19 @@ class ActionController {
 				await this.historyService.pushHistory({
 					fromId: userId,
 					userId: targetUserId,
-					message: "you matched with a user",
+					message: "you matched with a %user%",
 				});
 				await this.historyService.pushHistory({
 					fromId: targetUserId,
 					userId: userId,
-					message: "you matched with a user",
+					message: "you matched with a %user%",
 				});
 				return { message: 'Action completed successfully', chat: actionResult };
 			}
 			await this.historyService.pushHistory({
 				fromId: userId,
 				userId: targetUserId,
-				message: "a user liked your profile",
+				message: "%user% liked your profile",
 			});
 			return { message: 'Action completed successfully', chat: null };
 		}catch (err) {

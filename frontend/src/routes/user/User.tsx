@@ -20,19 +20,24 @@ export default function User() {
 		return 0;
 	}
 
+	// HACK: works fine to me
+	const willLitteralyNeverChange = '';
+
 	function getAge(value: string) {
 		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000); // time in a year
 		return Math.floor(x);
 	}
 
-	useEffect(() => {fetchUser()}, []);
+	useEffect(() => {
+		fetch(`${import.meta.env.VITE_API_URL}/api/Users/${id}`, {credentials: 'include'})
+		.then((r) => {
+			if (!r.ok)
+				return ;
+			return r.json()
+		})
+		.then((d) => setUser(d as Users)); 
+	}, [willLitteralyNeverChange]);
 
-	async function fetchUser() {
-		const data = await fetch(`${import.meta.env.VITE_API_URL}/api/Users/${id}`, {credentials: 'include'})
-		if (!data.ok)
-			return ;
-		setUser(await data.json() as Users);
-	}
 	if (!user)
 		return (<p style={{margin: "auto"}}>this user does not exist</p>);
 

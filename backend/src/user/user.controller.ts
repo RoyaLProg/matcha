@@ -1,7 +1,7 @@
 import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import UserService from './user.service';
-import Settings, { UserGender, UserSexualOrientation } from 'src/interface/settings.interface';
+import Settings from 'src/interface/settings.interface';
 import SettingsService from './settings.service';
 import * as fs from 'fs';
 import Picture from 'src/interface/picture.interface';
@@ -139,11 +139,22 @@ class UserController {
 			);
 		}
 	}
+	
+	@Get(':id/username')
+	@UseGuards(AuthGuard)
+	async getUsername(@Param('id') id: number){
+		const user = this.userService.findOne(id);
+		return (await user).username;
+	}
 
 	@Get(':id')
 	@UseGuards(AuthGuard)
-	async getUser(@Param('id') id: number, @Request() req) : Promise<Users> {
+	async getUser(@Param('id') id: number, @Request() req) : Promise<any> {
 		try {
+			console.log(id, req.user.id);
+			if (id == req.user.id) {
+				return this.getMe(req);
+			}
 			const user = await this.userService.findOne(id);
 			delete user.settings.maxDistance
 			delete user.settings.minAgePreference
@@ -157,7 +168,7 @@ class UserController {
 			await this.historyService.pushHistory({
 				userId: id,
 				fromId: req.user.id,
-				message: "a user visited your profile",
+				message: "%user% visited your profile",
 			});
 			user['fameRating'] = await this.userService.getFameRating(id);
 			return user;
