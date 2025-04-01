@@ -59,17 +59,16 @@ class ChatService {
 			throw new Error('Chat not found');
 		const newMessage = await this.database.addOne('message', { chatId: message.chatId, userId: message.userId, content: message.content});
 		this.chatGateway.emitMessage(newMessage as Message);
-		const senderId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
+		const recevidId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
 
-		const sender = await this.database.getFirstRow('users', [], { id: senderId }) as Users;
-		const senderName = sender?.username || '';
 		await this.historyService.pushHistory({
-			userId: message.userId!,
-			fromId: senderId,
-			message: `${senderName} sent you a message`,
+			userId: recevidId,
+			fromId: message.userId!,
+			message: `%user% sent you a message`,
 			isReaded: false,
 			createdAt: new Date()
 		});
+
 
 		return newMessage as Message;
 	}

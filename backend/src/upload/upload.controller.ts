@@ -66,17 +66,17 @@ async uploadVideo(
         fileUrl: `/upload/videos/${file.filename}`,
     };
 
-    const savedVideo = await this.database.addOne('message', videoMessage);
-	const receiverId = chat.userId === userId ? chat.targetUserId : chat.userId;
-    const sender = await this.database.getFirstRow('users', [], { id: userId }) as Users;
-	this.chatGateway.emitMessage(savedVideo as Message);
+    const savedVideo = await this.database.addOne('message', videoMessage) as Message;
+	this.chatGateway.emitMessage(savedVideo);
+	const recevidId = chat.userId === savedVideo.userId ? chat.targetUserId : chat.userId;
+
 	await this.historyService.pushHistory({
-		userId: receiverId,
-        fromId: userId,
-        message: `${sender.username} sent you a video`,
-        isReaded: false,
-        createdAt: new Date(),
-	})
+		userId: recevidId,
+		fromId: savedVideo.userId!,
+		message: `%user% sent you a video`,
+		isReaded: false,
+		createdAt: new Date()
+	});
     return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
@@ -105,17 +105,16 @@ async uploadAudio(
         fileUrl: `/upload/audios/${file.filename}`,
     };
 
-    const savedAudio = await this.database.addOne('message', audioMessage);
-    this.chatGateway.emitMessage(savedAudio as Message);
-	const receiverId = chat.userId === userId ? chat.targetUserId : chat.userId;
-    const sender = await this.database.getFirstRow('users', [], { id: userId }) as Users;
+    const savedAudio = await this.database.addOne('message', audioMessage) as Message;
+    this.chatGateway.emitMessage(savedAudio);
+	const recevidId = chat.userId === savedAudio.userId ? chat.targetUserId : chat.userId;
 	await this.historyService.pushHistory({
-		userId: receiverId,
-        fromId: userId,
-        message: `${sender.username} sent you a voice message`,
-        isReaded: false,
-        createdAt: new Date(),
-	})
+		userId: recevidId,
+		fromId: savedAudio.userId!,
+		message: `%user% sent you a voice message`,
+		isReaded: false,
+		createdAt: new Date()
+	});
     return { message: 'Audio uploaded successfully!', audio: savedAudio };
 }
 
