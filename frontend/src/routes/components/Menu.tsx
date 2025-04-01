@@ -61,7 +61,7 @@ function Menu() {
 			<div className="myProfile">
 				<div id="notification-container">
 					<span id="notificationBadge">{count}</span>
-					<img id="profilePicture" src={`${import.meta.env.VITE_API_URL}${user?.settings?.pictures.sort(sortImage)[0].url}`} alt="profile" onClick={toggleHidden} />
+					<img id="profilePicture" src={`${import.meta.env.VITE_API_URL}${user?.settings?.pictures.sort(sortImage)[0].url}`} alt="profile" onClick={toggleHidden} height="100%" width="100%"/>
 				</div>
 				<div aria-hidden={hidden} id="profileMenu">
 					<Link onClick={toggleHidden} to="/profile"> Profile </Link>

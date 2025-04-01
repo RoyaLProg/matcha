@@ -3,7 +3,12 @@
 	width: 70%;
 	flex-direction: column-reverse;
 	align-items: center;
-	height: 700px;
+	max-height: 700px;
 	overflow-y: scroll;
 	margin: auto;
+}
+
+.HistoryBox a {
+	text-decoration: underline;
+	cursor: pointer
 }
