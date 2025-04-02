@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS settings (
     geoloc BOOLEAN DEFAULT FALSE,
     "minAgePreference" INT DEFAULT 18,
     "maxAgePreference" INT DEFAULT 100,
+	"maxFameRating" INT DEFAULT 10,
     biography VARCHAR(255) DEFAULT '',
     gender user_gender_enum,
     "sexualOrientation" user_sexual_orientation_enum,

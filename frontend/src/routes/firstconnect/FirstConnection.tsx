@@ -2,8 +2,7 @@ import "./FirstConnection.css";
 import getTags from "../../assets/tags";
 import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../context/UserContext";
-import Settings, { UserGender, UserSexualOrientation } from "../../interface/settings.interface";
-import Picture from "../../interface/picture.interface";
+import { UserGender, UserSexualOrientation } from "../../interface/settings.interface";
 
 function FirstConnection() {
 	const user = useContext(UserContext);
@@ -24,6 +23,7 @@ function FirstConnection() {
 	const [rangeAgeMin, setRangeAgeMin] = useState<number>(18);
 	const [rangeAgeMax, setRangeAgeMax] = useState<number>(25);
 	const [rangeLocalisation, setRangeLocalisation] = useState<number>(10);
+	const [maxFameRating, setMaxFameRating] = useState<number>(15);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const [errors, setErrors] = useState<{ [key: string]: string }>({});
 	const tagss = getTags();
@@ -93,7 +93,7 @@ function FirstConnection() {
 		if (uploadedPictures.length < 1) newErrors.pictures = "Please upload at least one picture.";
 		if (rangeAgeMin < 18) newErrors.rangeAgeMin = "Minimum age cannot be less than 18.";
 		if (rangeAgeMax <= rangeAgeMin) newErrors.rangeAgeMax = "Maximum age must be greater than minimum age.";
-
+		if (maxFameRating < 15) newErrors.maxFameRating = "Minimux Max Fame Rating is 15";
 		if (Object.keys(newErrors).length > 0) {
 			setErrors(newErrors);
 			return;
@@ -119,6 +119,7 @@ function FirstConnection() {
 				maxDistance: rangeLocalisation,
 				minAgePreference: rangeAgeMin,
 				maxAgePreference: rangeAgeMax,
+				maxFameRating: maxFameRating,
 				pictures,
 				tags: formattedTags,
 			};
@@ -211,6 +212,13 @@ function FirstConnection() {
 						{errors.rangeAgeMin && <p className="error-message">{errors.rangeAgeMin}</p>}
 						<input type="range" min="25" max="100" value={rangeAgeMax} onChange={(e) => setRangeAgeMax(Number(e.target.value))} />
 						{errors.rangeAgeMax && <p className="error-message">{errors.rangeAgeMax}</p>}
+					</div>
+					{/* FameRating */}
+
+					<div className="form-group">
+						<label> Max Fame Rating: {maxFameRating}</label>
+						<input type="range" min="15" value={maxFameRating} onChange={(e) => setMaxFameRating(e.target.valueAsNumber)} />
+						{errors.maxFameRating && <p className="error-message">{errors.maxFameRating}</p>}
 					</div>
 
 					{/* Plage de localisation */}
