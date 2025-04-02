@@ -76,12 +76,20 @@ export default class MatchService {
 				if (userLikeOther.length > 0) return null;
 				const otherPictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
 				if (otherPictures.length === 0) return null;
+				const otherFameRating = await this.getFameRating(otherUser.id);
+				const userFameRating = await this.getFameRating(userId);
+				if (otherFameRating > userSettings.maxFameRating || userFameRating > settings.maxFameRating) return null;
 				return { user: otherUser, settings, tags: otherTags, pictures: otherPictures, distance, age };
 			}));
 			return potentialUsers.filter((user) => user !== null);
 		} catch (error) {
 			throw new Error(`Failed to get matches: ${error.message}`);
 		}
+	}
+
+	async getFameRating(userId: number) {
+		const data = await this.database.getRows("history", undefined, {userId: userId, message: "a user liked your profile"});
+		return data.length;
 	}
 
 }

@@ -26,6 +26,7 @@ interface ISettings {
 	geoloc: boolean;
 	minAgePreference: number;
 	maxAgePreference: number;
+	maxFameRating: number;
 	biography: string;
 	gender: UserGender;
 	sexualOrientation: UserSexualOrientation;

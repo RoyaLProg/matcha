@@ -2,7 +2,7 @@ import "./Settings.css"
 import { useContext, useEffect, useState, useRef } from "react";
 import { UserContext } from "../../context/UserContext";
 import getTags from "../../assets/tags";
-import ISettings, { UserGender, UserSexualOrientation } from "../../interface/settings.interface";
+import { UserGender, UserSexualOrientation } from "../../interface/settings.interface";
 
 export default function Settings() {
 	const user = useContext(UserContext);
@@ -16,14 +16,15 @@ export default function Settings() {
 		latitude: user?.user?.settings?.latitude,
 		longitude: user?.user?.settings?.longitude,
 	});
-	
-	const [selectedTags, setSelectedTags] = useState<string[]>(user?.user?.settings?.tags.map((v) => {return format(v.tag)}) ?? []);
-	const [profilePicture, setProfilePicture] = useState<string>("");
-	const [uploadedPictures, setUploadedPictures] = useState<File[]>([]);
 	const [rangeAgeMin, setRangeAgeMin] = useState<number>(user?.user?.settings?.minAgePreference ?? 18);
 	const [rangeAgeMax, setRangeAgeMax] = useState<number>(user?.user?.settings?.maxAgePreference ?? 22);
 	const [rangeLocalisation, setRangeLocalisation] = useState<number>(user?.user?.settings?.maxDistance ?? 0);
+	const [selectedTags, setSelectedTags] = useState<string[]>(user?.user?.settings?.tags.map((v) => {return format(v.tag)}) ?? []);
+	const [profilePicture, setProfilePicture] = useState<string>("");
+	const [uploadedPictures, setUploadedPictures] = useState<File[]>([]);
+	const [maxFameRating, setMaxFameRating] = useState<number>(user?.user?.settings?.maxFameRating ?? 15);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	const [errors, setErrors] = useState<{ [key: string]: string }>({});
 	const tagss = getTags();
 
 	useEffect(() => {
@@ -53,15 +54,13 @@ export default function Settings() {
 		}));
 	}
 
-	function handleTagClick(tag: string) {
-		if (selectedTags.includes(tag)) {
-			setSelectedTags(selectedTags.filter((t) => t !== tag));
-		} else {
-			setSelectedTags([...selectedTags, tag]);
-		}
+	function handleTagClick(tag) {
+		setSelectedTags((prev) =>
+			prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+		);
 	}
 
-	function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+	function handleFileChange(event) {
 		if (event.target.files) {
 			const files = Array.from(event.target.files);
 			const newFiles = files.filter((file) => !uploadedPictures.some((pic) => pic.name === file.name));
@@ -74,23 +73,28 @@ export default function Settings() {
 	}
 
 	function handleDeleteImage(fileName: string) {
-		setUploadedPictures(uploadedPictures.filter((file) => file.name !== fileName));
-		if (profilePicture === fileName) {
-			setProfilePicture("");
-		}
-		if (fileInputRef.current) {
-			fileInputRef.current.value = "";
-		}
+		setUploadedPictures(
+			uploadedPictures.filter((x) => x.name != fileName)
+		)
 	}
 
 	async function onSubmit(event) {
 		event.preventDefault();
-		if (selectedTags.length < 7) {
-			console.log("Please select at least 7 tags");
-			return;
-		}
-		if (uploadedPictures.length < 1) {
-			console.log("Please upload at least one picture");
+		setErrors({}); // Reset des erreurs avant validation
+		let newErrors = {};
+
+		if (!formData.gender) newErrors.gender = "Gender is required.";
+		if (!formData.sexualOrientation) newErrors.sexualOrientation = "Sexual orientation is required.";
+		if (!formData.biography) newErrors.biography = "Biography cannot be empty.";
+		if (!formData.country) newErrors.country = "Country is required.";
+		if (!formData.city) newErrors.city = "City is required.";
+		if (selectedTags.length < 7) newErrors.tags = "Please select at least 7 tags.";
+		if (uploadedPictures.length < 1) newErrors.pictures = "Please upload at least one picture.";
+		if (rangeAgeMin < 18) newErrors.rangeAgeMin = "Minimum age cannot be less than 18.";
+		if (rangeAgeMax <= rangeAgeMin) newErrors.rangeAgeMax = "Maximum age must be greater than minimum age.";
+		if (maxFameRating < 15) newErrors.maxFameRating = "Minimux Max Fame Rating is 15";
+		if (Object.keys(newErrors).length > 0) {
+			setErrors(newErrors);
 			return;
 		}
 
@@ -114,6 +118,7 @@ export default function Settings() {
 				maxDistance: rangeLocalisation,
 				minAgePreference: rangeAgeMin,
 				maxAgePreference: rangeAgeMax,
+				maxFameRating: maxFameRating,
 				pictures,
 				tags: formattedTags,
 			};
@@ -135,6 +140,8 @@ export default function Settings() {
 			user?.setUserSettings(result);
 		} catch (error) {
 			console.error("Error during submit:", error);
+			if (error.details)
+				setErrors({ api: error.details });
 		}
 	}
 
@@ -148,111 +155,85 @@ export default function Settings() {
 		}
 		return v;
 	}
-
 	return (
 		<div className="firstConnection">
+			{/* Contenu principal */}
 			<div className="content">
-				<h2>Update your profile</h2>
+				<h2>Complete Your Profile</h2>
 				<form onSubmit={onSubmit}>
-					{/* Champ pour le genre */}
+
+					{/* Genre */}
 					<div className="form-group">
 						<label htmlFor="gender">Gender</label>
-						<select onChange={handleChange} defaultValue={user?.user?.settings?.gender}>
+						<select name="gender" value={formData.gender} onChange={handleChange}>
 							<option value="">Select Gender</option>
 							<option value={UserGender.Man}>Man</option>
 							<option value={UserGender.Woman}>Woman</option>
 							<option value={UserGender.Other}>Other</option>
 						</select>
+						{errors.gender && <p className="error-message">{errors.gender}</p>}
 					</div>
 
-					{/* Champ pour les préférences sexuelles */}
+					{/* Orientation sexuelle */}
 					<div className="form-group">
 						<label htmlFor="sexualOrientation">Sexual Preferences</label>
-						<select onChange={handleChange} defaultValue={user?.user?.settings?.sexualOrientation}>
+						<select name="sexualOrientation" value={formData.sexualOrientation} onChange={handleChange}>
 							<option value="">Select Preferences</option>
 							<option value={UserSexualOrientation.Heterosexual}>Heterosexual</option>
 							<option value={UserSexualOrientation.Bisexual}>Bisexual</option>
 							<option value={UserSexualOrientation.Homosexual}>Homosexual</option>
 						</select>
+						{errors.sexualOrientation && <p className="error-message">{errors.sexualOrientation}</p>}
 					</div>
 
-					{/* Champ pour la biographie */}
+					{/* Biographie */}
 					<div className="form-group">
 						<label htmlFor="biography">Biography</label>
-						<textarea
-							placeholder="Tell us about yourself..."
-							onChange={handleChange}
-							defaultValue={user?.user?.settings?.biography}
-						/>
+						<textarea name="biography" value={formData.biography} onChange={handleChange} />
+						{errors.biography && <p className="error-message">{errors.biography}</p>}
 					</div>
 
-					{/* Champ pour le pays */}
+					{/* Pays */}
 					<div className="form-group">
 						<label htmlFor="country">Country</label>
-						<input
-							type="text"
-							placeholder="Enter your country"
-							onChange={handleChange}
-							defaultValue={user?.user?.settings?.country}
-						/>
+						<input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Enter your country" />
+						{errors.country && <p className="error-message">{errors.country}</p>}
 					</div>
 
-					{/* Champ pour la ville */}
+					{/* Ville */}
 					<div className="form-group">
 						<label htmlFor="city">City</label>
-						<input
-							type="text"
-							placeholder="Enter your city"
-							onChange={handleChange}
-							defaultValue={user?.user?.settings?.city}
-						/>
+						<input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Enter your city" />
+						{errors.city && <p className="error-message">{errors.city}</p>}
 					</div>
 
-					{/* Checkbox pour la géolocalisation */}
+					{/* Géolocalisation */}
 					<div className="form-group">
 						<label htmlFor="geoloc">Enable Geolocation</label>
-						<input
-							type="checkbox"
-							onChange={handleChange}
-							defaultChecked={user?.user?.settings?.geoloc}
-						/>
+						<input type="checkbox" name="geoloc" checked={formData.geoloc} onChange={handleChange} />
+
 					</div>
 
-					{/* Plages d'âge */}
+					{/* Plage d'âge */}
 					<div className="form-group">
-						<label htmlFor="rangeAge">Range Age: {rangeAgeMin} - {rangeAgeMax}</label>
-						<input
-							type="range"
-							min="18"
-							max="100"
-							step="1"
-							value={rangeAgeMin}
-							onChange={(e) => setRangeAgeMin(Number(e.target.value))}
-							defaultValue={user?.user?.settings?.minAgePreference}
-						/>
-						<input
-							type="range"
-							min="18"
-							max="100"
-							step="1"
-							value={rangeAgeMax}
-							onChange={(e) => setRangeAgeMax(Number(e.target.value))}
-							defaultValue={user?.user?.settings?.maxAgePreference}
-						/>
+						<label>Age Range: {rangeAgeMin} - {rangeAgeMax}</label>
+						<input type="range" min="18" max="100" value={rangeAgeMin} onChange={(e) => setRangeAgeMin(Number(e.target.value))} />
+						{errors.rangeAgeMin && <p className="error-message">{errors.rangeAgeMin}</p>}
+						<input type="range" min="25" max="100" value={rangeAgeMax} onChange={(e) => setRangeAgeMax(Number(e.target.value))} />
+						{errors.rangeAgeMax && <p className="error-message">{errors.rangeAgeMax}</p>}
+					</div>
+					{/* FameRating */}
+
+					<div className="form-group">
+						<label> Max Fame Rating: {maxFameRating}</label>
+						<input type="range" min="15" value={maxFameRating} onChange={(e) => setMaxFameRating(e.target.valueAsNumber)} />
+						{errors.maxFameRating && <p className="error-message">{errors.maxFameRating}</p>}
 					</div>
 
 					{/* Plage de localisation */}
 					<div className="form-group">
-						<label htmlFor="rangelocalisation">Range Localisation: {rangeLocalisation} km</label>
-						<input
-							type="range"
-							min="0"
-							max="100"
-							step="1"
-							value={rangeLocalisation}
-							onChange={(e) => setRangeLocalisation(Number(e.target.value))}
-							defaultValue={user?.user?.settings?.maxDistance}
-						/>
+						<label>Range Localisation: {rangeLocalisation} km</label>
+						<input type="range" min="10" max="100000000000" value={rangeLocalisation} onChange={(e) => setRangeLocalisation(Number(e.target.value))} />
 					</div>
 
 					{/* Tags et intérêts */}
@@ -261,11 +242,11 @@ export default function Settings() {
 						{Object.entries(tagss).map(([category, tagList]) => (
 							<div key={category}>
 								<h4>{category}</h4>
-								<div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+								<div className="tags-container">
 									{tagList.map((tag) => (
 										<button
 											key={tag}
-											className={`tag ${selectedTags.indexOf(tag) > -1 ? "selected" : ""}`}
+											className={`tag ${selectedTags.includes(tag) ? "selected" : ""}`}
 											onClick={() => handleTagClick(tag)}
 											type="button"
 										>
@@ -275,44 +256,45 @@ export default function Settings() {
 								</div>
 							</div>
 						))}
+						{errors.tags && <p className="error-message">{errors.tags}</p>}
 					</div>
 
 					{/* Téléchargement des photos */}
 					<div className="form-group">
 						<label htmlFor="pictures">Upload Pictures (Max 5)</label>
-						<input
-							type="file"
-							name="pictures"
-							accept="image/*"
-							multiple
-							onChange={handleFileChange}
-							ref={fileInputRef}
-						/>
+						<input type="file" name="pictures" accept="image/*" multiple onChange={handleFileChange} ref={fileInputRef} />
+
+						{/* Aperçu des images uploadées */}
 						<div className="uploaded-images">
 							{uploadedPictures.map((file, index) => (
 								<div key={index} className="image-container">
+									{/* Bouton de suppression */}
 									<button type="button" className="delete-button" onClick={() => handleDeleteImage(file.name)}>
 										<span className="material-icons-outlined">delete</span>
 									</button>
+
+									{/* Affichage de l'image */}
 									<img
 										src={URL.createObjectURL(file)}
 										alt={`Uploaded ${index}`}
 										className={`uploaded-image ${profilePicture === file.name ? "selected" : ""}`}
 										onClick={() => setProfilePicture(file.name)}
 									/>
+
+									{/* Définir comme photo de profil */}
 									<button type="button" className="set-profile-button" onClick={() => setProfilePicture(file.name)}>
 										{profilePicture === file.name ? "Profile Picture" : "Set as Profile"}
 									</button>
 								</div>
 							))}
 						</div>
+						{errors.pictures && <p className="error-message">{errors.pictures}</p>}
 					</div>
 
 					{/* Bouton de soumission */}
-					<button type="submit" className="submit-button">
-						Save Profile
-					</button>
+					<button type="submit">Save Profile</button>
 				</form>
+				{errors.api && <p className="error-message api-error">{errors.api}</p>}
 			</div>
 		</div>
 	);
