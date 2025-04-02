@@ -9,12 +9,12 @@ export default function Profile() {
 
 	const { user } = {...useContext(UserContext)};
 
-	function getAge(value: string) {	
+	function getAge(value: string) {
 		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000); // time in a year
 		return Math.floor(x);
 	}
-	
-	function sortImage(a: Picture, b: Picture) 
+
+	function sortImage(a: Picture, b: Picture)
 	{
 		if (a.isProfile)
 			return -1;
@@ -27,8 +27,18 @@ export default function Profile() {
 		<div id="profile">
 			<div className="content">
 				<div className="card">
-					<Carrousel pictures={user?.settings?.pictures.sort(sortImage) || []} />
+					<div className="carousel-wrapper">
+						<Carrousel pictures={user?.settings?.pictures.sort(sortImage) || []} />
+						<span className={`status-bubble ${user?.status === "online" ? "online" : "offline"}`}></span>
+					</div>
+
 					<div className="yourProfile">
+						{user?.status === "offline" && user?.lastconnection && (
+							<p style={{fontSize: "13px", color: "#888"}}>
+								Last connection: {new Date(user.lastconnection).toLocaleString()}
+							</p>
+						)}
+
 						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>
 							<p>
 								{user?.firstName},
