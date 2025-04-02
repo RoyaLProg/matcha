@@ -1,4 +1,4 @@
-import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request } from '@nestjs/common';
+import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request, Put } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import UserService from './user.service';
 import Settings from 'src/interface/settings.interface';
@@ -10,13 +10,15 @@ import { UploadService } from 'src/upload/upload.service';
 import AuthGuard from 'src/auth/auth.guard';
 import UserGuard from './user.guard';
 import HistoryService from 'src/history/history.service';
+import { Database } from 'src/database/Database';
 
 @Controller('Users')
 class UserController {
 	constructor(
 		private readonly userService: UserService,
 		private readonly settingsService: SettingsService,
-		private readonly historyService: HistoryService
+		private readonly historyService: HistoryService,
+		private readonly database: Database,
 	) { }
 
 	@Post(':id/block')
@@ -193,10 +195,16 @@ class UserController {
 		try {
 			const data = JSON.parse(body.data);
 
-			const pictures = [...data.pictures];
-			const tags = [...data.tags];
+			const pictures = Array.isArray(data.pictures) ? [...data.pictures] : null;
+			const tags = Array.isArray(data.tags) ? [...data.tags] : null;
+
 			delete data.pictures;
 			delete data.tags;
+
+			if (!pictures && !tags) {
+				await this.database.updateRows("settings", data, { userId: req.user.id });
+				return await this.settingsService.getSettings(req.user.id);
+			}
 
 			files.forEach(
 				(f, i) => pictures[i].url = `/upload/pictures/${f.filename}`

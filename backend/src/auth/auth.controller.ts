@@ -185,6 +185,7 @@ export class AuthController {
 
 		user.birthDate = new Date(user.birthDate).toISOString().slice(0,10);
 		user.isValidated = true;
+		user.lastconnection = new Date().toISOString();
 		this.authService.updateUser(user);
 		await this.authService.deleteToken(token);
 		return res.status(200).send({ message: 'email has been verified' });

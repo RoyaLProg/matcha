@@ -5,6 +5,8 @@ import Message from 'src/interface/message.interface';
 import UserService from 'src/user/user.service';
 import ChatGateway from './chat.gateway';
 import { SocketsService } from 'src/sockets.service';
+import HistoryService from 'src/history/history.service';
+import Users from 'src/interface/users.interface';
 
 @Injectable()
 class ChatService {
@@ -14,6 +16,7 @@ class ChatService {
 		@Inject(forwardRef(() => ChatGateway))
 		private readonly chatGateway: ChatGateway,
 		private readonly socketService: SocketsService,
+		private readonly historyService: HistoryService,
 	) {}
 
 	async createChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<Chat> {

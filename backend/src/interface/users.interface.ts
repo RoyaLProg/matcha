@@ -15,6 +15,7 @@ interface Users {
 	password?: string;
 	status?: UserStatus;
 	isValidated?: boolean;
+	lastconnection?: string;
 	blockedIds?: number[];
 	settings?: Settings;
 }

@@ -10,14 +10,18 @@ import AuthGuard from "src/auth/auth.guard";
 import ChatGateway from "src/chat/chat.gateway";
 import { createReadStream } from "fs";
 import { join } from "path";
+import HistoryService from "src/history/history.service";
+import { SocketsService } from "src/sockets.service";
 
 @Controller("upload")
 class UploadController {
 	constructor(
 		private database: Database,
-		private readonly chatGateway: ChatGateway
+		private readonly chatGateway: ChatGateway,
+		private readonly historyService: HistoryService,
+		private readonly socketService: SocketsService,
 	) {}
-	
+
 	@Post('picture')
 	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {
@@ -64,8 +68,18 @@ async uploadVideo(
         fileUrl: `/upload/videos/${file.filename}`,
     };
 
-    const savedVideo = await this.database.addOne('message', videoMessage);
-    this.chatGateway.emitMessage(savedVideo as Message);
+    const savedVideo = await this.database.addOne('message', videoMessage) as Message;
+	this.chatGateway.emitMessage(savedVideo);
+	// const recevidId = chat.userId === savedVideo.userId ? chat.targetUserId : chat.userId;
+
+	// await this.historyService.pushHistory({
+	// 	userId: recevidId,
+	// 	fromId: savedVideo.userId!,
+	// 	message: `%user% sent you a video`,
+	// 	isReaded: false,
+	// 	createdAt: new Date()
+	// });
+	// this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
     return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
@@ -94,8 +108,17 @@ async uploadAudio(
         fileUrl: `/upload/audios/${file.filename}`,
     };
 
-    const savedAudio = await this.database.addOne('message', audioMessage);
-    this.chatGateway.emitMessage(savedAudio as Message);
+    const savedAudio = await this.database.addOne('message', audioMessage) as Message;
+    this.chatGateway.emitMessage(savedAudio);
+	// const recevidId = chat.userId === savedAudio.userId ? chat.targetUserId : chat.userId;
+	// await this.historyService.pushHistory({
+	// 	userId: recevidId,
+	// 	fromId: savedAudio.userId!,
+	// 	message: `%user% sent you a voice message`,
+	// 	isReaded: false,
+	// 	createdAt: new Date()
+	// });
+	// this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
     return { message: 'Audio uploaded successfully!', audio: savedAudio };
 }
 

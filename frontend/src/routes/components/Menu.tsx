@@ -10,6 +10,7 @@ function Menu() {
 	const context = useContext(UserContext);
 	const socket = useContext(WebSocketContext);
 	const [count, setCount] = useState<number>(0);
+	const [countchat, setCountChat] = useState<number>(0);
 	const user = context?.user;
 	const [hidden, setHidden] = useState<boolean>(true);
 
@@ -48,6 +49,9 @@ function Menu() {
 		socket.on("notificationCount", (count: number) => {
 			setCount(count);
 		});
+		socket.on("chat1", () => {
+			setCountChat(countchat + 1);
+		});
 		return () => {
 			socket.off("notificationCount");
 		}
@@ -60,15 +64,19 @@ function Menu() {
 			</div>
 			<div className="myProfile">
 				<div id="notification-container">
-					<span id="notificationBadge">{count}</span>
-					<img id="profilePicture" src={`${import.meta.env.VITE_API_URL}${user?.settings?.pictures.sort(sortImage)[0].url}`} alt="profile" onClick={toggleHidden} height="100%" width="100%"/>
+					{count > 0 && <span id="notificationBadge">{count}</span>}
+					<img id="profilePicture" src={`${import.meta.env.VITE_API_URL}${user?.settings?.pictures.sort(sortImage)[0].url}`} alt="profile" onClick={toggleHidden} />
 				</div>
 				<div aria-hidden={hidden} id="profileMenu">
 					<Link onClick={toggleHidden} to="/profile"> Profile </Link>
 					<Link onClick={() => { toggleHidden(); setCount(0); }}  to="/history"> History </Link>
 					<Link onClick={toggleHidden} to="/settings"> Settings </Link>
 				</div>
-				<Link to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
+				<div id="notification-container">
+					{countchat > 0 && <span id="notificationBadge">{countchat}</span>}
+
+					<Link to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
+				</div>
 			</div>
 		</div>
 	)

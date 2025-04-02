@@ -2,8 +2,10 @@ import { forwardRef, Inject, Logger } from '@nestjs/common';
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import Message from 'src/interface/message.interface';
-import { SocketsService } from 'src/sockets.service';
+import { NotificationType, SocketsService } from 'src/sockets.service';
 import ChatService from './chat.service';
+import { Database } from 'src/database/Database';
+import Chat from 'src/interface/chat.interface';
 
 @WebSocketGateway()
 class ChatGateway {
@@ -15,6 +17,7 @@ class ChatGateway {
 		@Inject(forwardRef(() => ChatService))
 		private readonly chatService: ChatService,
 		private readonly socketService: SocketsService,
+		private readonly dataBase: Database,
 	) {}
 
 	@SubscribeMessage(`JoinRoom`)
@@ -33,9 +36,19 @@ class ChatGateway {
 		this.logger.log(`Client ${client.id} joining room ${room}`);
 	}
 
-	emitMessage(message: Message): void {
+	async emitMessage(message: Message) {
 		const room = `chat_${message.chatId}`;
 		this.server.to(room).emit('receiveMessage', message);
+		const chat = await this.dataBase.getFirstRow('chat', [], { id: message.chatId }) as Chat;
+		const socketsInRoom = await this.server.in(room).allSockets();
+		const recevidId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
+		const socket = this.socketService.getSocketByUserId(recevidId.toString());
+		if (socket.id)
+			if (!socketsInRoom.has(socket.id)) {
+				this.socketService.getNotificationByUserId(recevidId.toString(), NotificationType.Info, "Nouveau message !")
+				socket.emit('chat1');
+				this.logger.log(`Message envoyé à user ${recevidId} (socket ${socket.id}) en dehors de la room`);
+			}
 		this.logger.log(`Message émis à la room ${room}: ${JSON.stringify(message)}`);
 	}
 

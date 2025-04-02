@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS Users (
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(500) NOT NULL,
     status user_status_enum DEFAULT 'offline',
+	"lastconnection" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	"blockedIds" INT[] DEFAULT array[]::int[],
     "isValidated" BOOLEAN DEFAULT FALSE
 );
