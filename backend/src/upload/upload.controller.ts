@@ -70,16 +70,16 @@ async uploadVideo(
 
     const savedVideo = await this.database.addOne('message', videoMessage) as Message;
 	this.chatGateway.emitMessage(savedVideo);
-	const recevidId = chat.userId === savedVideo.userId ? chat.targetUserId : chat.userId;
+	// const recevidId = chat.userId === savedVideo.userId ? chat.targetUserId : chat.userId;
 
-	await this.historyService.pushHistory({
-		userId: recevidId,
-		fromId: savedVideo.userId!,
-		message: `%user% sent you a video`,
-		isReaded: false,
-		createdAt: new Date()
-	});
-	this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
+	// await this.historyService.pushHistory({
+	// 	userId: recevidId,
+	// 	fromId: savedVideo.userId!,
+	// 	message: `%user% sent you a video`,
+	// 	isReaded: false,
+	// 	createdAt: new Date()
+	// });
+	// this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
     return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
@@ -110,15 +110,15 @@ async uploadAudio(
 
     const savedAudio = await this.database.addOne('message', audioMessage) as Message;
     this.chatGateway.emitMessage(savedAudio);
-	const recevidId = chat.userId === savedAudio.userId ? chat.targetUserId : chat.userId;
-	await this.historyService.pushHistory({
-		userId: recevidId,
-		fromId: savedAudio.userId!,
-		message: `%user% sent you a voice message`,
-		isReaded: false,
-		createdAt: new Date()
-	});
-	this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
+	// const recevidId = chat.userId === savedAudio.userId ? chat.targetUserId : chat.userId;
+	// await this.historyService.pushHistory({
+	// 	userId: recevidId,
+	// 	fromId: savedAudio.userId!,
+	// 	message: `%user% sent you a voice message`,
+	// 	isReaded: false,
+	// 	createdAt: new Date()
+	// });
+	// this.socketService.getSocketByUserId(recevidId.toString())?.emit('chat1');
     return { message: 'Audio uploaded successfully!', audio: savedAudio };
 }
 
