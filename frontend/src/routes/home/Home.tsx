@@ -38,7 +38,7 @@ export function Home() {
 	useEffect(() => {
 		fetchMatches();
 	}, []);
-	
+
 	// bro is using mf chatgpt to do his work
 	const sendAction = async (targetUserId, status) => {
 		if (!user?.user?.id) {
@@ -120,8 +120,8 @@ export function Home() {
 	const currentMatch = matches[currentIndex];
 	const pictures = currentMatch.pictures || [];
 	const currentPicture = pictures.length > 0 ? (pictures[currentImageIndex]?.url ? pictures[currentImageIndex].url : pictures[0].url) : null;
-	
-	function sortImage(a: Picture, b: Picture) 
+
+	function sortImage(a: Picture, b: Picture)
 	{
 		if (a.isProfile)
 			return -1;
@@ -136,8 +136,18 @@ export function Home() {
 				<button className="dislikeButton" onClick={handleDislike}> <span className="material-symbols-outlined">thumb_down</span> </button>
 				<div className="content">
 					<div className="card">
-					<Carrousel pictures={pictures.sort(sortImage)} />
+						<div className="carousel-wrapper">
+							<Carrousel pictures={pictures.sort(sortImage)} />
+							<span className={`status-bubble ${currentMatch?.user?.status === "online" ? "online" : "offline"}`}></span>
+						</div>
+
 					<div className="yourProfile">
+						{currentMatch?.user?.status === "offline" && currentMatch?.user?.lastconnection && (
+							<p style={{fontSize: "13px", color: "#888"}}>
+								Last connection: {new Date(currentMatch.user.lastconnection).toLocaleString()}
+							</p>
+						)}
+
 						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>
 							<p>
 								{currentMatch?.user?.firstName},

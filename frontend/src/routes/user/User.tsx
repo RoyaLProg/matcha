@@ -35,7 +35,7 @@ export default function User() {
 				return ;
 			return r.json()
 		})
-		.then((d) => setUser(d as Users)); 
+		.then((d) => setUser(d as Users));
 	}, [willLitteralyNeverChange]);
 
 	if (!user)
@@ -45,9 +45,17 @@ export default function User() {
 		<div id="userProfile">
 			<div className="content">
 				<div className="card">
-					<Carrousel pictures={user?.settings?.pictures.sort(sortImage) || []} />
+					<div className="carousel-wrapper">
+						<Carrousel pictures={user?.settings?.pictures.sort(sortImage) || []} />
+						<span className={`status-bubble ${user?.status === "online" ? "online" : "offline"}`}></span>
+					</div>
 					<div className="yourProfile">
 						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>
+							{user?.status === "offline" && user?.lastconnection && (
+								<p style={{fontSize: "13px", color: "#888"}}>
+									Last connection: {new Date(user.lastconnection).toLocaleString()}
+								</p>
+							)}
 							<p>
 								{user?.firstName},
 								{getAge(user?.birthDate ?? "")} y/o

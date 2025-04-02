@@ -38,6 +38,7 @@ export default function WebSocketProvider({ children }: { children: ReactNode })
 			});
 			socketIOClient.on("connect", () => {
 				setSocket(socketIOClient);
+
 			});
 			socketIOClient.on("notification", (notification: Notification) => {
 				notificationFunctions[notification.type](notification.message);

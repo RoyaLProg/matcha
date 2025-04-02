@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import Users from '../interface/users.interface';
+import Users, { UserStatus } from '../interface/users.interface';
 import Settings from '../interface/settings.interface';
 
 interface UserContextProp {
@@ -70,7 +70,7 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 				});
 				if (responseUser.ok) {
 					const fetchedUser: Users = await responseUser.json();
-					setUser(fetchedUser);
+					setUser({ ...fetchedUser, status: UserStatus.Online });
 					if (fetchedUser.settings)
 						if (fetchedUser.settings?.geoloc) {
 							navigator.geolocation.getCurrentPosition(
