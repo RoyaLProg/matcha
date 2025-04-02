@@ -22,12 +22,12 @@ class ActionController {
 				await this.historyService.pushHistory({
 					fromId: userId,
 					userId: targetUserId,
-					message: "you matched with a %user%",
+					message: "you matched with %user%",
 				});
 				await this.historyService.pushHistory({
 					fromId: targetUserId,
 					userId: userId,
-					message: "you matched with a %user%",
+					message: "you matched with %user%",
 				});
 				return { message: 'Action completed successfully', chat: actionResult };
 			}
