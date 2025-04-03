@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Database } from 'src/database/Database';
-import { ActionStatus } from 'src/interface/action.interface';
 import Picture from 'src/interface/picture.interface';
 import Settings from 'src/interface/settings.interface';
 import Tag from 'src/interface/tags.interface';

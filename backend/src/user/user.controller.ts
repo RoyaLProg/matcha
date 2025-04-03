@@ -173,6 +173,7 @@ class UserController {
 				message: "%user% visited your profile",
 			});
 			user['fameRating'] = await this.userService.getFameRating(id);
+			user['likedYou'] = (await this.database.getRows('action', [], { userId: id, targetUserId: req.user.id, status: 'like'})).length > 0;
 			return user;
 		} catch (error) {
 			console.error(error.message);

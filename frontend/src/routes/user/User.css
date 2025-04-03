@@ -97,7 +97,6 @@
 	place-self: end;
 }
 
-
 .carousel-wrapper {
 	position: relative;
 	display: inline-block;
@@ -120,4 +119,13 @@
 
 .status-bubble.offline {
 	background-color: #F44336;
+}
+
+.status-like {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	bottom: 15px;
+	color: #44cc44;
+	left: 10px;
 }

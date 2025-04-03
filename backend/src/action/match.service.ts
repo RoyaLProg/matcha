@@ -72,14 +72,14 @@ export default class MatchService {
 				const age = await this.calculeAge(otherUser.birthDate);
 				if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;
 				const userLikeOther = await this.database.getRows('action', [], { userId: userId, targetUserId: settings.userId, status: 'like'});
-				// const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
+				const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
 				if (userLikeOther.length > 0) return null;
 				const otherPictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
 				if (otherPictures.length === 0) return null;
 				const otherFameRating = await this.getFameRating(otherUser.id);
 				const userFameRating = await this.getFameRating(userId);
 				if (otherFameRating > userSettings.maxFameRating || userFameRating > settings.maxFameRating) return null;
-				return { user: otherUser, settings, tags: otherTags, pictures: otherPictures, distance, age };
+				return { user: otherUser, settings, tags: otherTags, pictures: otherPictures, distance, age, likedYou: userLikeReverse.length > 0 };
 			}));
 			return potentialUsers.filter((user) => user !== null);
 		} catch (error) {

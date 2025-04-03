@@ -18,6 +18,7 @@ interface Users {
 	lastconnection?: string;
 	settings?: Settings;
 	fameRating?: number;
+	likedYou?: number;
 }
 
 export default Users;
