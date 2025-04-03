@@ -154,17 +154,6 @@ function Chat() {
 
 	return (
 		<div className="chat">
-			<div className="menu">
-				<Link to={"/"}>
-					<div className="logoMenu">
-						<span className="logo"></span>
-					</div>
-				</Link>
-				<div className="myProfile">
-					<Link to={"/profile"}><button><img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" /></button></Link>
-				</div>
-			</div>
-
 			<div className="content">
 				<div className="chatHeader">
 					<div className="chatPicture">

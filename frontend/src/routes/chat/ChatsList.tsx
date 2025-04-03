@@ -16,16 +16,6 @@ function ChatsList() {
 		return <div style={{margin: "auto"}}>No chats found</div>;
 	return (
 		<div className="chatList">
-			<div className="menu">
-				<Link to={"/"}>
-					<div className="logoMenu">
-						<span className="logo"></span>
-					</div>
-				</Link>
-				<div className="myProfile">
-					<Link to={"/profile"}><button> <img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" /></button></Link>
-				</div>
-			</div>
 			<div className="content">
 			{chats.chats.map((chat) => {
 					const otherUser = chat.user.id === user?.user?.id ? chat.targetUser : chat.user;
@@ -33,8 +23,8 @@ function ChatsList() {
 					return (
 						<div className="yourProfileInfo" key={chat.id}>
 							<div className="chatListPicture">
-								<Link to={`/profile?username=${otherUser.username}`}>
-									<img src={otherPictureProfile?.url || "https://www.w3schools.com/w3images/avatar2.png"} alt="profile" />
+								<Link to={`/user/${otherUser.id}`}>
+									<img src={`${import.meta.env.VITE_API_URL}/api${otherPictureProfile?.url}` || "https://www.w3schools.com/w3images/avatar2.png"} alt="profile" />
 								</Link>
 							</div>
 							<div className="chatListProfile">
@@ -42,9 +32,9 @@ function ChatsList() {
 									<span>{otherUser.firstName || "Unknown"}</span>
 								</div>
 								<p className="username">@{otherUser.username}</p>
-								<p className="lastMessage">
+								{/* <p className="lastMessage">
 									Last message: {chat.messages?.length ? chat.messages[chat.messages.length - 1].content : "No messages yet"}
-								</p>
+								</p> */}
 							</div>
 							<div className="chatButton">
 								<Link to={`/chat/${chat.id}`}>

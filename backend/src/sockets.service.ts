@@ -36,7 +36,7 @@ class SocketsService {
 
 	getSocketByUserId(userId: string): Socket | undefined {
 		for (const [socket, user] of this.socketUsers.entries()) {
-			if (user.userId === userId) {
+			if (user.userId == userId) {
 				return socket;
 			}
 		}

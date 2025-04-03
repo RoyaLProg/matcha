@@ -15,7 +15,7 @@ export function Home() {
 
 	const fetchMatches = () => {
 		setLoading(true);
-		fetch("http://localhost:3000/api/action/matches", {
+		fetch(`${import.meta.env.VITE_API_URL}/api/action/matches`, {
 			credentials: 'include',
 		})
 			.then((response) => {
@@ -47,7 +47,7 @@ export function Home() {
 		}
 
 		try {
-			const response = await fetch(`http://localhost:3000/api/action/like`, {
+			const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/like`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
