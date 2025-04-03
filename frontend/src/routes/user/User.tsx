@@ -48,6 +48,7 @@ export default function User() {
 					<div className="carousel-wrapper">
 						<Carrousel pictures={user?.settings?.pictures.sort(sortImage) || []} />
 						<span className={`status-bubble ${user?.status === "online" ? "online" : "offline"}`}></span>
+						{user.likedYou && <span className="material-symbols-outlined status-liked">thumb_up</span>}
 					</div>
 					<div className="yourProfile">
 						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>

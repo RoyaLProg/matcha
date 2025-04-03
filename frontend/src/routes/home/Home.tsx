@@ -139,6 +139,7 @@ export function Home() {
 						<div className="carousel-wrapper">
 							<Carrousel pictures={pictures.sort(sortImage)} />
 							<span className={`status-bubble ${currentMatch?.user?.status === "online" ? "online" : "offline"}`}></span>
+							{currentMatch?.user?.likedYou && <span className="material-symbols-outlined status-like">thumb_up</span>}
 						</div>
 
 					<div className="yourProfile">

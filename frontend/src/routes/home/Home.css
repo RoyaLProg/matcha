@@ -196,6 +196,14 @@
 	bottom: 10px;
 	right: 10px;
 }
+.status-like {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	bottom: 15px;
+	color: #44cc44;
+	left: 10px;
+}
 
 .status-bubble.online {
 	background-color: #4CAF50;
