@@ -124,10 +124,6 @@ export default function UserProvider({ children }: { children: ReactNode }) {
 		updateUserFromCookie();
 	}, []);
 
-	useEffect(() => {
-		console.log(user);
-	}, [user]);
-
 	return (
 		<UserContext.Provider value={{ user, setUser, updateUserFromCookie, setUserSettings }}>
 			{children}

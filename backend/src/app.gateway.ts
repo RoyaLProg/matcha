@@ -14,7 +14,7 @@ import * as cookie from 'cookie';
 
 @WebSocketGateway({
 	cors: {
-	  origin: "*", // Permet toutes les origines (évite les blocages CORS)
+	  origin: '*', // Permet toutes les origines (évite les blocages CORS)
 	  methods: ["GET", "POST"], // Autorise ces méthodes
 	  allowedHeaders: ["Authorization", "Content-Type"], // Autorise les headers
 	  credentials: true, // Si tu envoies des cookies/tokens

@@ -91,11 +91,11 @@ export default function ChatsProvider({ children } : { children: ReactNode }) {
 			setChats((prevChats) => {
 				if (!prevChats) return prevChats;
 				return prevChats.map((chat) => {
-					const messagesForChat = newMessages.filter(msg => msg.chatId === chat.id);
-					if (messagesForChat.length === 0) return chat;
+					const messagesForChat = newMessages?.filter(msg => msg.chatId === chat.id);
+					if (messagesForChat?.length === 0) return chat;
 					return {
 						...chat,
-						messages: messagesForChat.sort(
+						messages: messagesForChat?.sort(
 							(a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime()
 						),
 					};

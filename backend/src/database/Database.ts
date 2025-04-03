@@ -60,7 +60,7 @@ export class Database {
 				let col = Object.keys(rel)[0];
 				let val = Object.values(rel)[0];
 				let where = {};
-				where[`${val}`] = object[`${col}`]; 
+				where[`${val}`] = object[`${col}`];
 				object[`${keys[i]}`] = await this.getFirstRow(keys[i], [], where);
 			}
 		}

@@ -5,8 +5,7 @@ import Message from 'src/interface/message.interface';
 import UserService from 'src/user/user.service';
 import ChatGateway from './chat.gateway';
 import { SocketsService } from 'src/sockets.service';
-import HistoryService from 'src/history/history.service';
-import Users from 'src/interface/users.interface';
+
 
 @Injectable()
 class ChatService {
@@ -16,7 +15,6 @@ class ChatService {
 		@Inject(forwardRef(() => ChatGateway))
 		private readonly chatGateway: ChatGateway,
 		private readonly socketService: SocketsService,
-		private readonly historyService: HistoryService,
 	) {}
 
 	async createChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<Chat> {
@@ -79,10 +77,14 @@ class ChatService {
 			chat.messages = await this.getMessagesByChatId(chat.id);
 			chat.user = await this.userService.findOne(chat.userId as number);
 			chat.targetUser = await this.userService.findOne(chat.targetUserId as number);
-			delete chat.user.settings
+			// delete chat.user.settings
+			delete chat.user.settings.latitude
+			delete chat.user.settings.longitude
 			delete chat.user.password
 			delete chat.user.email
-			delete chat.targetUser.settings
+			// delete chat.targetUser.settings
+			delete chat.targetUser.settings.latitude
+			delete chat.targetUser.settings.longitude
 			delete chat.targetUser.password
 			delete chat.targetUser.email
 			delete chat.userId

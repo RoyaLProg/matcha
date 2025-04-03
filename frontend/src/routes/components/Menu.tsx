@@ -75,7 +75,7 @@ function Menu() {
 				<div id="notification-container">
 					{countchat > 0 && <span id="notificationBadge">{countchat}</span>}
 
-					<Link to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
+					<Link onClick={() => { setCountChat(0); }} to={"/chatlist"}><button className="chatButton"> <span className="material-symbols-outlined">chat</span> </button></Link>
 				</div>
 			</div>
 		</div>
