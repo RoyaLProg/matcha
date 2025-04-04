@@ -156,7 +156,7 @@ export class AuthController {
 			const token = await this.authService.create_token(result);
 			const message = `Welcome to Matcha the latte
 
-							Can you please click this <a href="http://localhost:5173/verify/${token.token}">link</a> to confirm your email`;
+							Can you please click this <a href="${process.env.URL}/verify/${token.token}">link</a> to confirm your email`;
 			await this.mailService.sendMail({
 				to: user.email,
 				html: message,
@@ -223,7 +223,7 @@ export class AuthController {
 				const message = `
 									Ho no !
 									You forgot your password ? do not worry !
-									Here is a one time <a href="http://localhost:5173/forgot/${token.token}">link</a> to reset your password !
+									Here is a one time <a href="${process.env.URL}/forgot/${token.token}">link</a> to reset your password !
 								`;
 				await this.mailService.sendMail({
 					to: user.email,
