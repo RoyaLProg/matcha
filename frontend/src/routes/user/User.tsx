@@ -38,6 +38,25 @@ export default function User() {
 		.then((d) => setUser(d as Users));
 	}, [willLitteralyNeverChange]);
 
+	function handleBlock() {
+		fetch(`${import.meta.env.VITE_API_URL}/api/Users/${id}/block`,
+			  {
+				  credentials: 'include',
+				  method: 'POST',
+				  headers: {"Content-Type": "application/json"}
+			  }
+		)
+	}
+
+	function handleUnblock() {
+		fetch(`${import.meta.env.VITE_API_URL}/api/Users/${id}/unblock`,
+			  {
+				  credentials: 'include',
+				  method: 'POST',
+				  headers: {"Content-Type": "application/json"}
+			  }
+		)
+	}
 	if (!user)
 		return (<p style={{margin: "auto"}}>this user does not exist</p>);
 
@@ -74,6 +93,7 @@ export default function User() {
 			<div id="nav">
 				<Link to="/">Back</Link>
 				<button onClick={() => setShow(true)}>Report</button>
+				{!user.blocked ? <button onClick={() => {handleBlock()}}>Block</button> : <button onClick={() => {handleUnblock()}}>Unblock</button>}
 			</div>
 			<ReportModal state={show} onClose={() => setShow(false)} id={(id ?? -1) as number}/>
 		</div>

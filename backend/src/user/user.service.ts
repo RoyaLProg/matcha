@@ -62,19 +62,19 @@ export default class UserService {
 		if (!user)
 			throw new Error('User not found');
 
-		let updatedBlockedIds;
-
-		if (user.blockedIds.includes(targetUserId)) {
-			updatedBlockedIds = user.blockedIds.filter((id: number) => id !== targetUserId);
-		} else {
-			updatedBlockedIds = [...user.blockedIds, targetUserId];
-		}
+		let updatedBlockedIds = [...user.blockedIds, targetUserId];
 
 		await this.database.updateRows('Users', { blockedIds: updatedBlockedIds }, { id: userId });
 		await this.database.deleteRows('chat', { userId: userId, targetUserId: targetUserId });
 		await this.database.deleteRows('chat', { userId: targetUserId, targetUserId: userId });
 		await this.database.deleteRows('action', { userId: userId, targetUserId: targetUserId });
 		await this.database.deleteRows('action', { userId: targetUserId, targetUserId: userId });
+	}
+
+	async unblockUser(userId: Users, targetUserId: number) : Promise<void> {
+		const user = (await this.database.getFirstRow('Users', [], {id: userId})) as Users;
+		const newBlockedIds = user.blockedIds.filter((v) => v != targetUserId);
+		await this.database.updateRows('Users', { blockedIds: newBlockedIds }, {id: userId});
 	}
 
 	async getFameRating(userId: number) {

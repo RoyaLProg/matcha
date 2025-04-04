@@ -1,4 +1,4 @@
-import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request, Put } from '@nestjs/common';
+import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request, Put, BadRequestException, NotFoundException } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import UserService from './user.service';
 import Settings from 'src/interface/settings.interface';
@@ -38,6 +38,21 @@ class UserController {
 			);
 		}
 	}
+
+	@Post(':id/unblock')
+	@UseGuards(AuthGuard)
+	async unblockUser(@Param('id') id: number, @Request() req): Promise<void> {
+		try {
+			if (req.user.id === id)
+				throw new BadRequestException('You connot unblock yourself');
+			await this.userService.unblockUser(req.user.id, id);
+		} catch (error) {
+			if (error.message === 'User not found')
+				throw new NotFoundException(error.message);
+			throw new BadRequestException('Failed to unblock user')
+		}
+	}
+
 	@Post('/settings/create')
 	@UseGuards(AuthGuard)
 	@UseInterceptors(FilesInterceptor('files', 5, {
@@ -153,7 +168,6 @@ class UserController {
 	@UseGuards(AuthGuard)
 	async getUser(@Param('id') id: number, @Request() req) : Promise<any> {
 		try {
-			console.log(id, req.user.id);
 			if (id == req.user.id) {
 				return this.getMe(req);
 			}
@@ -164,9 +178,9 @@ class UserController {
 			delete user.settings.id
 			delete user.lastName
 			delete user.isValidated
-			delete user.blockedIds
 			delete user.password
 			delete user.email
+			delete user.blockedIds
 			await this.historyService.pushHistory({
 				userId: id,
 				fromId: req.user.id,
@@ -174,6 +188,8 @@ class UserController {
 			});
 			user['fameRating'] = await this.userService.getFameRating(id);
 			user['likedYou'] = (await this.database.getRows('action', [], { userId: id, targetUserId: req.user.id, status: 'like'})).length > 0;
+			user['blocked'] = (await this.userService.findOne(req.user.id)).blockedIds.find((v) => v == id) !== undefined;
+			
 			return user;
 		} catch (error) {
 			console.error(error.message);

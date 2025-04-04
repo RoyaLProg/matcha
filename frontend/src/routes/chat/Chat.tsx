@@ -157,7 +157,7 @@ function Chat() {
 			<div className="content">
 				<div className="chatHeader">
 					<div className="chatPicture">
-						<Link to={"/profile"}><img src="https://www.w3schools.com/w3images/avatar2.png" alt="profile" /></Link>
+						<Link to={`/user/${currentChat?.user.id}`}><img src={`${import.meta.env.VITE_API_URL}/api${currentChat?.user.settings?.pictures?.find((v) => v.isProfile)?.url}` || "https://www.w3schools.com/w3images/avatar2.png"} alt="profile" /></Link>
 					</div>
 					<div className="chatProfile">
 						<div className="name">

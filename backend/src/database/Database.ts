@@ -1,3 +1,4 @@
+import { isNumber } from 'class-validator';
 import { Pool } from 'pg';
 
 export class Database {
@@ -13,7 +14,11 @@ export class Database {
 
 	private getValue(v: any){
 		if (Array.isArray(v))
-			return `'{${v.map((x) => {return(`'${x}'`)})}}'`;
+			return `'{${v.map((x) => {
+				if (Number.parseInt(x) == x)
+					return (`${x}`);
+				return(`'${x}'`);
+			})}}'`;
 		return `'${v}'`;
 	}
 

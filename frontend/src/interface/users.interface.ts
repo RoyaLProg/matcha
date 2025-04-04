@@ -18,7 +18,8 @@ interface Users {
 	lastconnection?: string;
 	settings?: Settings;
 	fameRating?: number;
-	likedYou?: number;
+	likedYou?: boolean;
+	blocked?: boolean;
 }
 
 export default Users;

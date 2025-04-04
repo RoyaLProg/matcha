@@ -25,7 +25,7 @@ function FirstConnection() {
 	const [rangeLocalisation, setRangeLocalisation] = useState<number>(10);
 	const [maxFameRating, setMaxFameRating] = useState<number>(15);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-	const [errors, setErrors] = useState<{ [key: string]: string }>({});
+	const [errors, setErrors] = useState<any>({});
 	const tagss = getTags();
 
 	useEffect(() => {
