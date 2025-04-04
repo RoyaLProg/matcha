@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Database } from 'src/database/Database';
 import Picture from 'src/interface/picture.interface';
 import Settings from 'src/interface/settings.interface';
@@ -24,7 +24,7 @@ export default class SettingsService {
 			}
 			return await this.database.addOne('tags_entity', { settingsId, category: formattedCategory, tag: formattedTag }) as Tag;
 		} catch (error) {
-			throw new Error(`Failed to create tag: ${error.message}`);
+			throw new BadRequestException(`Failed to create tag: ${error.message}`);
 		}
 	}
 

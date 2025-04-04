@@ -48,15 +48,15 @@ export default function User() {
 					<div className="carousel-wrapper">
 						<Carrousel pictures={user?.settings?.pictures.sort(sortImage) || []} />
 						<span className={`status-bubble ${user?.status === "online" ? "online" : "offline"}`}></span>
-						{user.likedYou && <span className="material-symbols-outlined status-liked">thumb_up</span>}
+						{user.likedYou && <span className="material-symbols-outlined status-like">thumb_up</span>}
 					</div>
 					<div className="yourProfile">
-						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>
-							{user?.status === "offline" && user?.lastconnection && (
-								<p style={{fontSize: "13px", color: "#888"}}>
-									Last connection: {new Date(user.lastconnection).toLocaleString()}
-								</p>
-							)}
+						{user?.status === "offline" && user?.lastconnection && (
+							<p style={{fontSize: "13px", color: "#888"}}>
+								Last connection: {new Date(user.lastconnection).toLocaleString()}
+							</p>
+						)}
+						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>	
 							<p>
 								{user?.firstName},
 								{getAge(user?.birthDate ?? "")} y/o
