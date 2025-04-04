@@ -59,8 +59,9 @@ function Menu() {
 
 	const disconnect = () => {
 		if (!user) return;
-		socket.emit("disconnect");
+		socket?.disconnect();
 		document.cookie = "Auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+		context.setUser(undefined);
 	};
 
 	return (
