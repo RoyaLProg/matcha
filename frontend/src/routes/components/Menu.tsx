@@ -57,6 +57,12 @@ function Menu() {
 		}
 	}, [socket]);
 
+	const disconnect = () => {
+		if (!user) return;
+		socket.emit("disconnect");
+		document.cookie = "Auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+	};
+
 	return (
 		<div id="menu">
 			<div id="logoMenu">
@@ -71,6 +77,7 @@ function Menu() {
 					<Link onClick={toggleHidden} to="/profile"> Profile </Link>
 					<Link onClick={() => { toggleHidden(); setCount(0); }}  to="/history"> History </Link>
 					<Link onClick={toggleHidden} to="/settings"> Settings </Link>
+					<Link onClick={() => {toggleHidden(); disconnect();}} to="/"> deconnection </Link>
 				</div>
 				<div id="notification-container">
 					{countchat > 0 && <span id="notificationBadge">{countchat}</span>}
