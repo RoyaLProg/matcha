@@ -1,3 +1,4 @@
 */node_modules/
 backend/uploads
 .env
+backend/package-lock.json

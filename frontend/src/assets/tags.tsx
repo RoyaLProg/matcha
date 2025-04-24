@@ -11,7 +11,6 @@ export const TagCategory = {
 export const Tags: Record<keyof typeof TagCategory, string[]> = {
 	[TagCategory.Interests]: [
 		"Cinema",
-		"Series TV",
 		"Netflix",
 		"Youtube",
 		"Books",
@@ -33,7 +32,6 @@ export const Tags: Record<keyof typeof TagCategory, string[]> = {
 		"Climbing",
 	],
 	[TagCategory.Lifestyle]: [
-		"DIY",
 		"Meditation",
 		"Gardening",
 		"Volunteering",
@@ -59,7 +57,6 @@ export const Tags: Record<keyof typeof TagCategory, string[]> = {
 	[TagCategory.Technology]: [
 		"Startups",
 		"Cryptocurrencies",
-		"AI",
 		"Robotics",
 		"Programming",
 	],

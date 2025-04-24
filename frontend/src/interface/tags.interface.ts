@@ -13,7 +13,6 @@ export enum TagCategory {
 export enum Tags {
 	// Interests
 	Cinema = 'cinema',
-	SeriesTV = 'series_tv',
 	Netflix = 'netflix',
 	Youtube = 'youtube',
 	Books = 'books',
@@ -35,7 +34,6 @@ export enum Tags {
 	Climbing = 'climbing',
 
 	// Lifestyle
-	DIY = 'diy',
 	Meditation = 'meditation',
 	Gardening = 'gardening',
 	Volunteering = 'volunteering',
@@ -61,7 +59,6 @@ export enum Tags {
 	// Technology
 	Startups = 'startups',
 	Cryptocurrencies = 'cryptocurrencies',
-	AI = 'ai',
 	Robotics = 'robotics',
 	Programming = 'programming',
 
