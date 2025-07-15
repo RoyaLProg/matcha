@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../context/UserContext";
 import Picture from "../../interface/picture.interface";
-import "./Menu.css";
 import { WebSocketContext } from "../../context/WebSocketContext";
 
 function Menu() {

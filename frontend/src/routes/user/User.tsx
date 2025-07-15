@@ -3,7 +3,6 @@ import Carrousel from "../components/Carrousel";
 import { useParams, Link } from "react-router-dom";
 import Picture from "../../interface/picture.interface";
 import { useEffect, useState } from "react";
-import './User.css'
 import ReportModal from "../components/ReportModal";
 
 export default function User() {

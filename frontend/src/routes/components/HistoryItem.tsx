@@ -1,5 +1,4 @@
 import IHistory from "../../interface/history.interface";
-import './HistoryItem.css'
 import { useState, useEffect } from "react";
 
 export default function HistoryItem({history, setHistory}: {history: IHistory, setHistory: (h:IHistory) => void}) {

@@ -1,4 +1,3 @@
-import "./Settings.css"
 import { useContext, useEffect, useState, useRef } from "react";
 import { UserContext } from "../../context/UserContext";
 import getTags from "../../assets/tags";

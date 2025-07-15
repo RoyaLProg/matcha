@@ -1,4 +1,4 @@
-import "./ReportModal.css"
+
 import { useState } from "react";
 
 export default function ReportModal({state, onClose, id}: {state: boolean, onClose: () => void, id: number}) {

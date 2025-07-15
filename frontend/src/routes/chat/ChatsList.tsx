@@ -1,5 +1,4 @@
 import { useContext } from "react";
-import "./Chat.css"
 import { Link } from "react-router-dom";
 import { ChatsContext } from "../../context/ChatsContext";
 import { WebSocketContext } from "../../context/WebSocketContext";

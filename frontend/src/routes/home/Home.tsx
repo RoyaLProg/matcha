@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { useContext, useEffect, useState } from "react";
-import "./Home.css"
 import Carrousel from "../components/Carrousel";
 import { UserContext } from "../../context/UserContext";
 import Picture from "../../interface/picture.interface";

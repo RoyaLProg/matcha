@@ -2,7 +2,7 @@ FROM node:20
 
 WORKDIR /opt/backend
 
-COPY package.json package-lock.json .
+COPY package.json .
 
 EXPOSE 3000
 

@@ -1,6 +1,5 @@
 import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import "./Verify.css"
 
 export default function Verify() {
 	let { token } = useParams();

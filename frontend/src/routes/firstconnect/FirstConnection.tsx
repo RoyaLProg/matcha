@@ -1,4 +1,4 @@
-import "./FirstConnection.css";
+
 import getTags from "../../assets/tags";
 import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../context/UserContext";

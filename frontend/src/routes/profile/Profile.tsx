@@ -1,5 +1,4 @@
 import { useContext } from "react";
-import "./Profile.css"
 import { Link } from "react-router-dom";
 import { UserContext } from "../../context/UserContext";
 import Carrousel from "../components/Carrousel";

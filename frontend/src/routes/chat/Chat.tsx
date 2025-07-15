@@ -1,5 +1,4 @@
 import { useContext, useRef, useState, useEffect } from "react";
-import "./Chat.css"
 import { Link, useParams } from "react-router-dom";
 import { ChatsContext } from "../../context/ChatsContext";
 import { UserContext } from "../../context/UserContext";

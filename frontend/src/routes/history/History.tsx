@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import IHistory from "../../interface/history.interface";
 import HistoryItem from "../components/HistoryItem";
-import './History.css'
+
 
 export default function History() {
 	const [history, setHistory] = useState<IHistory[]>([]);

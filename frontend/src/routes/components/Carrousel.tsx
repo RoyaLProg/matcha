@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import Picture from "../../interface/picture.interface";
-import "./carrousel.css"
 
 export default function Carrousel({pictures}: {pictures: Picture[]}) {
 	const [index, setIndex] = useState<number>(0);

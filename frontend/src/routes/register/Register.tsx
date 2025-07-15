@@ -1,4 +1,3 @@
-import "./Register.css"
 import { Link, useNavigate } from "react-router-dom";
 import { notificationFunctions, NotificationType } from "../../context/WebSocketContext";
 import { useState } from "react";
