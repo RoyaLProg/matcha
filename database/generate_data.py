@@ -54,7 +54,7 @@ def create_user():
     username = create_unique_username()+str(random.randint(0, 1000))
 
     cursor.execute("""
-        INSERT INTO Users ("firstName", "lastName", email, "birthDate", username, password, "isValidated")
+        INSERT INTO Users ("firstName", "lastName", email, "birthday", username, password, "isValidated")
         VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;
     """, (first_name, last_name, email, birth_date, username, hashed_password, True))
     return cursor.fetchone()[0]

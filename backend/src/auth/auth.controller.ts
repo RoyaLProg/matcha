@@ -69,7 +69,7 @@ export class AuthController {
 		return null;
 	}
 
-	checkBirthDate(value: string): string | null {
+	checkbirthday(value: string): string | null {
 		if (!value || !value.length)
 			return 'you must provide your birthday'
 
@@ -113,9 +113,9 @@ export class AuthController {
 		x = this.checkEmail(user.email);
 		if (x)
 			error['email'] = x;
-		x = this.checkBirthDate(user.birthDate);
+		x = this.checkbirthday(user.birthday);
 		if (x)
-			error['birthDate'] = x;
+			error['birthday'] = x;
 		x = this.checkLastName(user.lastName);
 		if (x)
 			error['lastName'] = x;
@@ -134,7 +134,7 @@ export class AuthController {
 			lastName: body.lastName,
 			username: body.username,
 			password: body.password,
-			birthDate: new Date(body.birthDate).toISOString().slice(0,10),
+			birthday: new Date(body.birthday).toISOString().slice(0,10),
 			email: body.email,
 			isValidated: false,
 		}
@@ -156,7 +156,7 @@ export class AuthController {
 			const token = await this.authService.create_token(result);
 			const message = `Welcome to Matcha the latte
 
-							Can you please click this <a href="${process.env.URL}/verify/${token.token}">link</a> to confirm your email`;
+							Can you please click this <a href="${process.env.URL}/confirm-email?token=${token.token}">link</a> to confirm your email`;
 			await this.mailService.sendMail({
 				to: user.email,
 				html: message,
@@ -183,7 +183,7 @@ export class AuthController {
 		if (user.isValidated === true)
 			throw new BadRequestException('user is already validated');
 
-		user.birthDate = new Date(user.birthDate).toISOString().slice(0,10);
+		user.birthday = new Date(user.birthday).toISOString().slice(0,10);
 		user.isValidated = true;
 		user.lastconnection = new Date().toISOString();
 		this.authService.updateUser(user);
@@ -250,7 +250,7 @@ export class AuthController {
 			throw new BadRequestException('password does not comply with requirements');
 
 		let user = Authtoken['users'];
-		user.birthDate = new Date(user.birthDate).toISOString().slice(0,10);
+		user.birthday = new Date(user.birthday).toISOString().slice(0,10);
 
 		const hash = sha256.create();
 		user.password = hash.update(body.password).hex();

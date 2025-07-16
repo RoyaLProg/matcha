@@ -151,7 +151,7 @@ export function Home() {
 						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>
 							<p>
 								{currentMatch?.user?.firstName},
-								{getAge(currentMatch?.user?.birthDate ?? "")} y/o
+								{getAge(currentMatch?.user?.birthday ?? "")} y/o
 							</p>
 							<div id="fameRating">
 								<p>{currentMatch?.user?.fameRating ?? 0}</p>

@@ -77,7 +77,7 @@ export default function User() {
 						<div style={{fontSize: "32px", display: "flex", justifyContent: "space-between", width: "100%"}}>	
 							<p>
 								{user?.firstName},
-								{getAge(user?.birthDate ?? "")} y/o
+								{getAge(user?.birthday ?? "")} y/o
 							</p>
 							<div id="fameRating">
 								<p>{user?.fameRating ?? 0}</p>

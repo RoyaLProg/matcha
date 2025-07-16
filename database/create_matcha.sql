@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS Users (
     "firstName" VARCHAR(255) NOT NULL,
     "lastName" VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    "birthDate" DATE NOT NULL,
+    "birthday" DATE NOT NULL,
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(500) NOT NULL,
     status user_status_enum DEFAULT 'offline',

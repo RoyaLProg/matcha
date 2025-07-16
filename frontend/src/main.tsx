@@ -7,13 +7,5 @@ import WebSocketProvider from './context/WebSocketContext.tsx'
 import ChatsProvider from './context/ChatsContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
-	<StrictMode>
-		<UserProvider>
-			<WebSocketProvider>
-				<ChatsProvider>
-					<App />
-				</ChatsProvider>
-			</WebSocketProvider>
-		</UserProvider>
-	</StrictMode>,
+		<App />
 )

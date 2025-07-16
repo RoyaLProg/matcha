@@ -10,7 +10,7 @@ interface Users {
 	firstName: string;
 	lastName: string;
 	email?: string;
-	birthDate?: string;
+	birthday?: string;
 	username: string;
 	password?: string;
 	status?: UserStatus;

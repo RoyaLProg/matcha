@@ -20,9 +20,9 @@ export default class MatchService {
 		return R * c;
 	}
 
-	private async calculeAge(birthDate: string) : Promise<number> {
+	private async calculeAge(birthday: string) : Promise<number> {
 		const today = new Date();
-		const birth = new Date(birthDate);
+		const birth = new Date(birthday);
 		let age = today.getFullYear() - birth.getFullYear();
 		const monthDiff = today.getMonth() - birth.getMonth();
 		if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate()))
@@ -69,7 +69,7 @@ export default class MatchService {
 						(settings.sexualOrientation === 'homosexual' && userSettings.gender === settings.gender) ||
 						(settings.sexualOrientation === 'bisexual' && userSettings.sexualOrientation === 'bisexual');
 				if (!isCompatible || !otherIsCompatible) return null;
-				const age = await this.calculeAge(otherUser.birthDate);
+				const age = await this.calculeAge(otherUser.birthday);
 				if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;
 				const userLikeOther = await this.database.getRows('action', [], { userId: userId, targetUserId: settings.userId, status: 'like'});
 				const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
