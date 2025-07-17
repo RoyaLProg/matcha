@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import ProfileCard from '../components/ProfileCard';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HomePage = () => {
+  const { user, updateUser } = useAuth();
   const [sortBy, setSortBy] = useState('age');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -16,6 +18,17 @@ const HomePage = () => {
 
   const [profiles, setProfiles] = useState<any[]>([]);
 const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.settings) return;
+
+    setFilters({
+      ageRange: [user?.settings.minAgePreference, user?.settings.maxAgePreference],
+      fameRange: [0, user?.settings.maxFameRating], // ou [min, max] si tu stockes les deux
+      distance: user?.settings.maxDistance,
+      tags: user?.settings.tags?.map(tag => tag.tag) || [],
+    });
+  }, [user?.settings]);
 
 useEffect(() => {
   const fetchProfiles = async () => {
@@ -63,51 +76,41 @@ useEffect(() => {
   fetchProfiles();
 }, []);
 
+  const sendAction = async (targetUserId: string, status: 'like' | 'dislike') => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
+          targetUserId,
+          status,
+        }),
+      });
 
-
-  // Mock profiles data
-  // const profiles = [
-  //   {
-  //     id: '1',
-  //     name: 'Emma',
-  //     age: 28,
-  //     location: 'San Francisco, CA',
-  //     bio: 'Love hiking, yoga, and good coffee. Looking for someone to explore the city with!',
-  //     tags: ['hiking', 'yoga', 'coffee', 'adventure'],
-  //     photos: ['https://images.unsplash.com/photo-1494790108755-2616b332c1b0'],
-  //     isOnline: true,
-  //     fameRating: 4.2,
-  //   },
-  //   {
-  //     id: '2',
-  //     name: 'Alex',
-  //     age: 32,
-  //     location: 'Los Angeles, CA',
-  //     bio: 'Photographer and travel enthusiast. Always planning the next adventure.',
-  //     tags: ['photography', 'travel', 'art', 'music'],
-  //     photos: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'],
-  //     isOnline: false,
-  //     fameRating: 4.8,
-  //   },
-  //   {
-  //     id: '3',
-  //     name: 'Maya',
-  //     age: 26,
-  //     location: 'Seattle, WA',
-  //     bio: 'Bookworm, dog lover, and aspiring chef. Let\'s cook together!',
-  //     tags: ['books', 'cooking', 'dogs', 'movies'],
-  //     photos: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80'],
-  //     isOnline: true,
-  //     fameRating: 4.5,
-  //   },
-  // ];
+      if (!response.ok) throw new Error(`Erreur lors de l'envoi du ${status}`);
+      const data = await response.json();
+      console.log(`Action ${status} envoyée avec succès`, data);
+    } catch (error) {
+      console.error(`Erreur lors de l'envoi du ${status} :`, error);
+    }
+  };
 
   const handleLike = (id: string) => {
-    console.log('Liked profile:', id);
+    sendAction(id, "like");
   };
 
   const handlePass = (id: string) => {
-    console.log('Passed profile:', id);
+    sendAction(id, "dislike");
+  };
+
+  const toggleTag = (tag: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag],
+    }));
   };
 
   return (
@@ -171,6 +174,9 @@ useEffect(() => {
                     min="18"
                     max="65"
                     value={filters.ageRange[0]}
+                    onChange={(e) =>
+                      setFilters({ ...filters, ageRange: [Number(e.target.value), filters.ageRange[1]] })
+                    }
                     className="flex-1 accent-blue-500"
                   />
                   <span className="text-sm text-gray-600 font-medium">{filters.ageRange[0]}-{filters.ageRange[1]}</span>
@@ -186,6 +192,9 @@ useEffect(() => {
                     max="5"
                     step="0.1"
                     value={filters.fameRange[0]}
+                    onChange={(e) =>
+                      setFilters({ ...filters, fameRange: [Number(e.target.value), filters.fameRange[1]] })
+                    }
                     className="flex-1 accent-blue-500"
                   />
                   <span className="text-sm text-gray-600 font-medium">{filters.fameRange[0]}+</span>
@@ -198,8 +207,9 @@ useEffect(() => {
                   <input
                     type="range"
                     min="1"
-                    max="100"
+                    max="2000"
                     value={filters.distance}
+                    onChange={(e) => setFilters({ ...filters, distance: Number(e.target.value) })}
                     className="flex-1 accent-blue-500"
                   />
                   <span className="text-sm text-gray-600 font-medium">{filters.distance} mi</span>
@@ -212,6 +222,7 @@ useEffect(() => {
                   {['hiking', 'yoga', 'coffee', 'travel', 'art', 'music'].map((tag) => (
                     <button
                       key={tag}
+                      onClick={() => toggleTag(tag)}
                       className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors font-medium"
                     >
                       #{tag}
