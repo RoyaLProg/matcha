@@ -1,6 +1,12 @@
-
 import React from 'react';
 import { Heart, X, MapPin, Star } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface ProfileCardProps {
   profile: {
@@ -21,16 +27,56 @@ interface ProfileCardProps {
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onPass }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-      {/* Photo */}
+      {/* Photo Carousel */}
       <div className="relative h-80 bg-gradient-to-br from-blue-200 to-sky-200">
-        <div className="absolute inset-0 bg-gray-300 rounded-t-2xl"></div>
-        {profile.isOnline && (
-          <div className="absolute top-4 left-4 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+        {profile.photos.length > 0 ? (
+          <Carousel className="w-full h-full">
+            <CarouselContent>
+              {profile.photos.map((photo, index) => (
+                <CarouselItem key={index}>
+                  <img
+                    src={photo}
+                    alt={`${profile.name}'s photo ${index + 1}`}
+                    className="w-full h-80 object-cover"
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {profile.photos.length > 1 && (
+              <>
+                <CarouselPrevious className="left-2" />
+                <CarouselNext className="right-2" />
+              </>
+            )}
+          </Carousel>
+        ) : (
+          <div className="absolute inset-0 bg-gray-300 rounded-t-2xl flex items-center justify-center">
+            <span className="text-gray-500 text-lg">No photo</span>
+          </div>
         )}
-        <div className="absolute top-4 right-4 flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+        
+        {/* Online Status */}
+        {profile.isOnline && (
+          <div className="absolute top-4 left-4 w-3 h-3 bg-green-400 rounded-full border-2 border-white z-10"></div>
+        )}
+        
+        {/* Fame Rating */}
+        <div className="absolute top-4 right-4 flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full z-10">
           <Star className="w-4 h-4 text-yellow-500" />
           <span className="text-sm font-medium">{profile.fameRating}</span>
         </div>
+        
+        {/* Photo indicator dots */}
+        {profile.photos.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
+            {profile.photos.map((_, index) => (
+              <div
+                key={index}
+                className="w-2 h-2 rounded-full bg-white/60"
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Content */}

@@ -49,9 +49,9 @@ export default class MatchService {
 			if (userPictures.length === 0) throw new Error('User has no pictures');
 			const potentialUsersSetting = await this.database.getRows('settings', []) as Settings[];
 			if (potentialUsersSetting.length === 0) throw new Error('No potential users found');
+		
 			const potentialUsers = await Promise.all(potentialUsersSetting.map(async (settings) => {
 				if (Number(settings.userId) === userId) return null
-
 				const otherTags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
 				const distance = await this.calculateDistance(userSettings.latitude, userSettings.longitude, settings.latitude, settings.longitude);
 				const commonTagsCount = await this.findCommonTags(userTags, otherTags);
@@ -66,11 +66,11 @@ export default class MatchService {
 				// Vérification de la compatibilité des orientations sexuelles
 				const isCompatible = (userSettings.sexualOrientation === 'heterosexual' && settings.gender !== userSettings.gender) ||
 						(userSettings.sexualOrientation === 'homosexual' && settings.gender === userSettings.gender) ||
-						(userSettings.sexualOrientation === 'bisexual' && settings.sexualOrientation === 'bisexual');
+						1;
 
 				const otherIsCompatible = (settings.sexualOrientation === 'heterosexual' && userSettings.gender !== settings.gender) ||
 						(settings.sexualOrientation === 'homosexual' && userSettings.gender === settings.gender) ||
-						(settings.sexualOrientation === 'bisexual' && userSettings.sexualOrientation === 'bisexual');
+						1;
 				if (!isCompatible || !otherIsCompatible) return null;
 				const age = await this.calculeAge(otherUser.birthday);
 				if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import ProfileCard from '../components/ProfileCard';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
@@ -14,42 +14,93 @@ const HomePage = () => {
     tags: [] as string[],
   });
 
+  const [profiles, setProfiles] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  const fetchProfiles = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/action/matches`, {
+        credentials: 'include',
+      });
+      const data = await res.json();
+
+      const mappedProfiles = await Promise.all(data.map(async (profile: any) => {
+        const { user, settings, tags, pictures, age, distance } = profile;
+
+        // Reverse geocoding
+        let location = '';
+        try {
+          const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${settings.latitude}&longitude=${settings.longitude}&localityLanguage=en`);
+          const geoData = await geores.json();
+          location = `${geoData.city || geoData.locality || geoData.principalSubdivision}, ${geoData.countryName}`;
+        } catch (e) {
+          location = 'Unknown location';
+        }
+
+        return {
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          age: age,
+          location: location,
+          bio: settings.biography,
+          tags: tags.map((tag: any) => tag.tag),
+          photos: pictures.map((pic: any) => pic.url),
+          isOnline: user.status === 'online',
+          fameRating: settings.maxFameRating,
+          distance: distance.toFixed(1),
+        };
+      }));
+
+      setProfiles(mappedProfiles);
+      setLoading(false);
+    } catch (err) {
+      console.error("Erreur chargement profils:", err);
+      setLoading(false);
+    }
+  };
+
+  fetchProfiles();
+}, []);
+
+
+
   // Mock profiles data
-  const profiles = [
-    {
-      id: '1',
-      name: 'Emma',
-      age: 28,
-      location: 'San Francisco, CA',
-      bio: 'Love hiking, yoga, and good coffee. Looking for someone to explore the city with!',
-      tags: ['hiking', 'yoga', 'coffee', 'adventure'],
-      photos: ['https://images.unsplash.com/photo-1494790108755-2616b332c1b0'],
-      isOnline: true,
-      fameRating: 4.2,
-    },
-    {
-      id: '2',
-      name: 'Alex',
-      age: 32,
-      location: 'Los Angeles, CA',
-      bio: 'Photographer and travel enthusiast. Always planning the next adventure.',
-      tags: ['photography', 'travel', 'art', 'music'],
-      photos: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'],
-      isOnline: false,
-      fameRating: 4.8,
-    },
-    {
-      id: '3',
-      name: 'Maya',
-      age: 26,
-      location: 'Seattle, WA',
-      bio: 'Bookworm, dog lover, and aspiring chef. Let\'s cook together!',
-      tags: ['books', 'cooking', 'dogs', 'movies'],
-      photos: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80'],
-      isOnline: true,
-      fameRating: 4.5,
-    },
-  ];
+  // const profiles = [
+  //   {
+  //     id: '1',
+  //     name: 'Emma',
+  //     age: 28,
+  //     location: 'San Francisco, CA',
+  //     bio: 'Love hiking, yoga, and good coffee. Looking for someone to explore the city with!',
+  //     tags: ['hiking', 'yoga', 'coffee', 'adventure'],
+  //     photos: ['https://images.unsplash.com/photo-1494790108755-2616b332c1b0'],
+  //     isOnline: true,
+  //     fameRating: 4.2,
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Alex',
+  //     age: 32,
+  //     location: 'Los Angeles, CA',
+  //     bio: 'Photographer and travel enthusiast. Always planning the next adventure.',
+  //     tags: ['photography', 'travel', 'art', 'music'],
+  //     photos: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'],
+  //     isOnline: false,
+  //     fameRating: 4.8,
+  //   },
+  //   {
+  //     id: '3',
+  //     name: 'Maya',
+  //     age: 26,
+  //     location: 'Seattle, WA',
+  //     bio: 'Bookworm, dog lover, and aspiring chef. Let\'s cook together!',
+  //     tags: ['books', 'cooking', 'dogs', 'movies'],
+  //     photos: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80'],
+  //     isOnline: true,
+  //     fameRating: 4.5,
+  //   },
+  // ];
 
   const handleLike = (id: string) => {
     console.log('Liked profile:', id);
