@@ -70,7 +70,7 @@ const EmailConfirmation = () => {
                 <p className="text-gray-600 mb-6">{message}</p>
                 <div className="space-y-4">
                   <Link
-                    to="/auth"
+                    to="/"
                     className="block w-full py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 text-center"
                   >
                     Se connecter
@@ -94,7 +94,7 @@ const EmailConfirmation = () => {
                 <p className="text-gray-600 mb-6">{message}</p>
                 <div className="space-y-4">
                   <Link
-                    to="/auth"
+                    to="/"
                     className="block w-full py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 text-center"
                   >
                     Essayer de se connecter

@@ -220,7 +220,7 @@ const ResetPassword = () => {
 
           <div className="mt-6 text-center">
             <Link
-              to="/auth"
+              to="/"
               className="inline-flex items-center space-x-2 text-blue-500 hover:text-blue-600 font-medium"
             >
               <ArrowLeft className="w-4 h-4" />

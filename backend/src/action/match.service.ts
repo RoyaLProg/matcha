@@ -31,7 +31,10 @@ export default class MatchService {
 	}
 
 	private async findCommonTags(userTags: Tag[], otherUserTags: Tag[]) : Promise<number> {
-		return userTags.filter((tag) => otherUserTags.find((t) => t.category === tag.category && t.tag === tag.tag)).length;
+		return userTags.filter((tag) =>
+  otherUserTags.some((t) => t.tag === tag.tag)
+).length;
+
 	}
 
 	async getMatches(userId: number) : Promise<any> {

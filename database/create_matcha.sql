@@ -27,20 +27,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'action_status_enum') THEN
         CREATE TYPE action_status_enum AS ENUM ('like', 'dislike');
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tag_category_enum') THEN
-        CREATE TYPE tag_category_enum AS ENUM (
-            'interests', 'sports', 'lifestyle', 'gastronomy', 'culture', 'technology', 'personality'
-        );
-    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tags_enum') THEN
         CREATE TYPE tags_enum AS ENUM (
-            'cinema', 'series_tv', 'netflix', 'youtube', 'books', 'podcasts', 'music', 'video_games',
-            'travel', 'photography', 'football', 'basketball', 'swimming', 'tennis', 'yoga', 'running',
-            'cycling', 'hiking', 'climbing', 'diy', 'meditation', 'gardening', 'volunteering', 'gaming',
-            'writing', 'vegetarian', 'vegan', 'street_food', 'sushi', 'pastry', 'wine', 'barbecue',
-            'sci_fi', 'fantasy', 'documentaries', 'anime', 'history', 'mythology', 'startups',
-            'cryptocurrencies', 'ai', 'robotics', 'programming', 'adventurous', 'introvert', 'extrovert',
-            'minimalist', 'ambitious', 'creative'
+          'artist', 'gamer', 'traveler', 'foodie', 'fitness', 'music',
+          'photography', 'books', 'movies', 'nature', 'yoga', 'cooking',
+          'dancing', 'hiking', 'tech', 'fashion', 'sports', 'wine',
+          'coffee', 'cats', 'dogs', 'beach', 'mountains', 'adventure'
         );
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'report_status_enum') THEN
@@ -60,16 +52,16 @@ CREATE TABLE IF NOT EXISTS Users (
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(500) NOT NULL,
     status user_status_enum DEFAULT 'offline',
-	"lastconnection" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	"blockedIds" INT[] DEFAULT array[]::int[],
-    "isValidated" BOOLEAN DEFAULT FALSE
+    "lastconnection" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "blockedIds" INT[] DEFAULT array[]::int[],
+    "isValidated" BOOLEAN DEFAULT FALSE,
+    "profilePicture" VARCHAR(255) DEFAULT ''
 );
+
 
 CREATE TABLE IF NOT EXISTS settings (
     id SERIAL PRIMARY KEY,
     "userId" INT UNIQUE NOT NULL,
-    country VARCHAR(255) DEFAULT '',
-    city VARCHAR(255) DEFAULT '',
     latitude FLOAT NULL,
     longitude FLOAT NULL,
     "maxDistance" FLOAT DEFAULT 50,
@@ -94,7 +86,6 @@ CREATE TABLE IF NOT EXISTS picture (
 CREATE TABLE IF NOT EXISTS tags_entity (
     id SERIAL PRIMARY KEY,
     "settingsId" INT NOT NULL,
-    category tag_category_enum NOT NULL,
     tag tags_enum NOT NULL,
     CONSTRAINT fk_settings_tags FOREIGN KEY ("settingsId") REFERENCES settings (id) ON DELETE CASCADE
 );

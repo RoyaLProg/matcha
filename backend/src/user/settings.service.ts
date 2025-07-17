@@ -13,20 +13,26 @@ export default class SettingsService {
 		return settings as Settings;
 	}
 
-	async createTag(settingsId: number, tag: Tag): Promise<Tag> {
-		const formattedCategory = tag.category.toLowerCase().replace(/\s+/g, '_');
-		const formattedTag = tag.tag.toLowerCase().replace(/\s+/g, '_');
-		try {
-			const existingPictures = await this.database.getFirstRow('tags_entity', [], { settingsId, category: formattedCategory, tag: formattedTag });
-			if (existingPictures) {
-				console.warn(`Tag ${formattedTag} already exists for category ${formattedCategory} in settings with id ${settingsId}.`);
-				return existingPictures as Tag;
-			}
-			return await this.database.addOne('tags_entity', { settingsId, category: formattedCategory, tag: formattedTag }) as Tag;
-		} catch (error) {
-			throw new BadRequestException(`Failed to create tag: ${error.message}`);
-		}
+	async createTag(settingsId: number, tag: string): Promise<Tag> {
+	  const formattedTag = tag.toLowerCase().replace(/#/g, '').replace(/\s+/g, '_'); // enlève # et espace
+	  try {
+	    // Vérifie si le tag existe déjà pour ces settings
+	    const existingTag = await this.database.getFirstRow('tags_entity', [], { settingsId, tag: formattedTag });
+	    if (existingTag) {
+	      console.warn(`Tag "${formattedTag}" already exists for settingsId ${settingsId}.`);
+	      return existingTag as Tag;
+	    }
+
+	    // Ajoute le tag
+	    return await this.database.addOne('tags_entity', {
+	      settingsId,
+	      tag: formattedTag,
+	    }) as Tag;
+	  } catch (error) {
+	    throw new BadRequestException(`Failed to create tag: ${error.message}`);
+	  }
 	}
+
 
 	async createPicture(settingsId: number, picture: Picture): Promise<Picture | null> {
 		try {
@@ -49,7 +55,9 @@ export default class SettingsService {
 			await this.database.deleteRows("picture", { settingsId: settingsId });
 			pictures.forEach((p) => this.createPicture(settingsId, p));
 			await this.database.deleteRows("tags_entity", { settingsId: settingsId });
-			tags.forEach((t) => this.createTag(settingsId, t));
+			(tags as Tag[]).forEach(t => this.createTag(settingsId, t.tag));
+
+
 		}
 		catch (error) {
 			throw new Error(`Failed to update settings: ${error.message}`);

@@ -11,6 +11,7 @@ import AuthGuard from 'src/auth/auth.guard';
 import UserGuard from './user.guard';
 import HistoryService from 'src/history/history.service';
 import { Database } from 'src/database/Database';
+import Tag from 'src/interface/tags.interface';
 
 @Controller('Users')
 class UserController {
@@ -54,91 +55,109 @@ class UserController {
 	}
 
 	@Post('/settings/create')
-	@UseGuards(AuthGuard)
-	@UseInterceptors(FilesInterceptor('files', 5, {
-		storage: UploadService.fileStorage('pictures'),
-		fileFilter: UploadService.fileFilter(/image\/jpeg|image\/png|image\/gif/),
-	}))
-	async createSettings(@UploadedFiles() files: Express.Multer.File[], @Body() body: any, @Request() req): Promise<Settings> {
-		const invalidFiles = files.filter((file) => !['image/jpeg', 'image/png', 'image/gif'].includes(file.mimetype));
-		if (invalidFiles.length > 0) {
-			files.forEach((file) => {
-				const filePath = `./upload/pictures/${file.filename}`;
-				fs.unlinkSync(filePath);
-			});
-			throw new HttpException(`Unsupported file type. Allowed types: .png, .jpg, .jpeg, .gif`, HttpStatus.BAD_REQUEST);
-		}
-		let createdSettingsId: number | null = null;
-		const createdTagsIds: number[] = [];
-		const createdPicturesIds: number[] = [];
-		let parsedData: Settings;
-		try {
-			parsedData = JSON.parse(body.data);
-			const { tags, pictures, ...settingsData } = parsedData;
+@UseGuards(AuthGuard)
+@UseInterceptors(FilesInterceptor('files', 5, {
+  storage: UploadService.fileStorage('pictures'),
+  fileFilter: UploadService.fileFilter(/image\/jpeg|image\/png|image\/gif/),
+}))
+async createSettings(
+  @UploadedFiles() files: Express.Multer.File[],
+  @Body() body: any,
+  @Request() req
+): Promise<Settings> {
+  const invalidFiles = files.filter(file => !['image/jpeg', 'image/png', 'image/gif'].includes(file.mimetype));
+  if (invalidFiles.length > 0) {
+    files.forEach(file => {
+      const filePath = `./upload/pictures/${file.filename}`;
+      fs.unlinkSync(filePath);
+    });
+    throw new HttpException(`Unsupported file type. Allowed types: .png, .jpg, .jpeg, .gif`, HttpStatus.BAD_REQUEST);
+  }
 
-			if (settingsData.userId != req.user.id)
-				throw new HttpException('You do not have permission to create settings for this user', HttpStatus.FORBIDDEN);
-			if (!tags || tags.length < 7)
-				throw new HttpException({ message: "Validation error", details: "You must select at least 7 tags." }, HttpStatus.BAD_REQUEST);
-			if (!pictures || pictures.length < 1)
-				throw new HttpException({ message: "Validation error", details: "You must upload at least one picture." }, HttpStatus.BAD_REQUEST);
-			if (settingsData.minAgePreference < 18)
-				throw new HttpException({ message: "Validation error", details: "Minimum age cannot be less than 18." }, HttpStatus.BAD_REQUEST);
-			if (settingsData.maxAgePreference <= settingsData.minAgePreference)
-				throw new HttpException({ message: "Validation error", details: "Maximum age must be greater than minimum age." }, HttpStatus.BAD_REQUEST);
+  let createdSettingsId: number | null = null;
+  const createdTagsIds: number[] = [];
+  const createdPicturesIds: number[] = [];
+  let parsedData: Settings;
 
-			const sanitize = (value: any, maxLength: number = 255): string => {
-				if (typeof value !== 'string') return '';
-				return value.replace(/<[^>]+>/g, '').trim().substring(0, maxLength);
-			};
+  try {
+    parsedData = JSON.parse(body.data);
+    const { tags, pictures, ...settingsData } = parsedData;
 
-			settingsData.biography = sanitize(settingsData.biography, 300);
-			settingsData.country = sanitize(settingsData.country, 100);
-			settingsData.city = sanitize(settingsData.city, 100);
+    if (settingsData.userId != req.user.id)
+      throw new HttpException('You do not have permission to create settings for this user', HttpStatus.FORBIDDEN);
 
-			const settings = await this.settingsService.createSettings(settingsData as Settings);
-			createdSettingsId = settings.id;
-			const createdTags = await Promise.all(
-				tags.map((tag) => this.settingsService.createTag(settings.id, tag))
-			);
-			createdTagsIds.push(...createdTags.map((tag) => tag.id));
+    if (!tags || tags.length < 7)
+      throw new HttpException({ message: "Validation error", details: "You must select at least 7 tags." }, HttpStatus.BAD_REQUEST);
 
-			const createdPictures: Picture[] = [];
-			for (const [index, file] of files.entries()) {
-				const isProfileFromRequest = pictures && pictures[index] ? pictures[index].isProfile : false;
-				const picture = {
-					url: `/upload/pictures/${file.filename}`,
-					isProfile: isProfileFromRequest,
-				}
-				const createdPicture = await this.settingsService.createPicture(settings.id, picture);
-				if (createdPicture) createdPictures.push(createdPicture);
-			}
-			createdPicturesIds.push(...createdPictures.map((picture) => picture.id));
+    if (!pictures || pictures.length < 1)
+      throw new HttpException({ message: "Validation error", details: "You must upload at least one picture." }, HttpStatus.BAD_REQUEST);
 
-			settings.pictures = createdPictures;
-			settings.tags = createdTags;
-			return settings;
-		} catch (error) {
-			files.forEach((file) => {
-				const filePath = `./uploads/pictures/${file.filename}`;
-				if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-			});
-			if (createdPicturesIds.length > 0) {
-				await Promise.all(createdPicturesIds.map((id) => this.settingsService.deletePicture(id)));
-			}
-			if (createdTagsIds.length > 0) {
-				await Promise.all(createdTagsIds.map((id) => this.settingsService.deleteTag(id)));
-			}
-			if (createdSettingsId) {
-				await this.settingsService.deleteSettings(createdSettingsId);
-			}
+    if (settingsData.minAgePreference < 18)
+      throw new HttpException({ message: "Validation error", details: "Minimum age cannot be less than 18." }, HttpStatus.BAD_REQUEST);
 
-			if (error instanceof HttpException) {
-				throw error;
-			}
-			throw new HttpException('Failed to create settings', HttpStatus.BAD_REQUEST);
-		}
-	}
+    if (settingsData.maxAgePreference <= settingsData.minAgePreference)
+      throw new HttpException({ message: "Validation error", details: "Maximum age must be greater than minimum age." }, HttpStatus.BAD_REQUEST);
+
+    const sanitize = (value: any, maxLength: number = 255): string => {
+      if (typeof value !== 'string') return '';
+      return value.replace(/<[^>]+>/g, '').trim().substring(0, maxLength);
+    };
+
+    settingsData.biography = sanitize(settingsData.biography, 300);
+    const settings = await this.settingsService.createSettings(settingsData as Settings);
+    createdSettingsId = settings.id;
+
+    // Nettoyage et création des tags
+    const cleanedTags: string[] = (tags as Tag[]).map((t) =>
+	  t.tag.toLowerCase().replace(/#/g, '').replace(/\s+/g, '_')
+	);
+
+
+
+    const createdTags = await Promise.all(
+      cleanedTags.map(tag =>
+        this.settingsService.createTag(settings.id, tag)
+      )
+    );
+    createdTagsIds.push(...createdTags.map(tag => tag.id));
+
+    // Création des photos
+    const createdPictures: Picture[] = [];
+    for (const [index, file] of files.entries()) {
+      const isProfileFromRequest = pictures && pictures[index] ? pictures[index].isProfile : false;
+      const picture = {
+        url: `/upload/pictures/${file.filename}`,
+        isProfile: isProfileFromRequest,
+      };
+      const createdPicture = await this.settingsService.createPicture(settings.id, picture);
+      if (createdPicture) createdPictures.push(createdPicture);
+    }
+    createdPicturesIds.push(...createdPictures.map(pic => pic.id));
+
+    settings.pictures = createdPictures;
+    settings.tags = createdTags;
+    return settings;
+
+  } catch (error) {
+    // Cleanup fichiers
+    files.forEach(file => {
+      const filePath = `./uploads/pictures/${file.filename}`;
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    });
+    if (createdPicturesIds.length > 0)
+      await Promise.all(createdPicturesIds.map(id => this.settingsService.deletePicture(id)));
+
+    if (createdTagsIds.length > 0)
+      await Promise.all(createdTagsIds.map(id => this.settingsService.deleteTag(id)));
+
+    if (createdSettingsId)
+      await this.settingsService.deleteSettings(createdSettingsId);
+
+    if (error instanceof HttpException) throw error;
+    throw new HttpException('Failed to create settings', HttpStatus.BAD_REQUEST);
+  }
+}
+
 
 	@Get('me')
 	@UseGuards(AuthGuard)

@@ -7,9 +7,22 @@ import { Textarea } from '../components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { useToast } from '../hooks/use-toast';
 
+function dataURLtoBlob(dataUrl: string): Blob {
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+}
+
+
 const FirstConnection = () => {
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { updateUser, user } = useAuth();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -88,55 +101,109 @@ const FirstConnection = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.gender || !formData.sexualPreference || !formData.biography.trim()) {
-      toast({
-        title: "Please complete all required fields",
-        description: "Gender, preferences, and biography are required.",
-        variant: "destructive",
-      });
-      return;
+  e.preventDefault();
+
+  if (!formData.gender || !formData.sexualPreference || !formData.biography.trim()) {
+    toast({
+      title: "Please complete all required fields",
+      description: "Gender, preferences, and biography are required.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  if (photos.length === 0) {
+    toast({
+      title: "Profile photo required",
+      description: "Please upload at least one photo to continue.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  if (formData.tags.length < 7) {
+    toast({
+      title: "Not enough tags",
+      description: "Please select at least 7 tags.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    let latitude = formData.latitude;
+    let longitude = formData.longitude;
+
+
+    // Fallback géolocalisation via IP si désactivée
+    if (!formData.allowLocation) {
+      const res = await fetch('http://ip-api.com/json/');
+      const loc = await res.json();
+      if (loc && loc.status === 'success') {
+        latitude = loc.lat;
+        longitude = loc.lon;
+      }
     }
 
-    if (photos.length === 0) {
-      toast({
-        title: "Profile photo required",
-        description: "Please upload at least one photo to continue.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Construction du payload
+    const form = new FormData();
 
-    setIsLoading(true);
+    photos.forEach((photo, index) => {
+      const blob = dataURLtoBlob(photo);
+      form.append('files', blob, `photo${index}.png`);
+    });
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      updateUser({
-        profilePicture: photos[profilePicIndex],
-        // Store all profile data
-        ...formData,
-        profileCompleted: true,
-      });
+    const payload = {
+      userId: user.id,
+      gender: formData.gender,
+      sexualOrientation: formData.sexualPreference,
+      biography: formData.biography,
+      minAgePreference: 18,
+      maxAgePreference: 100,
+      latitude,
+      longitude,
+      tags: formData.tags.map(t => t.replace('#', '').toLowerCase()),
+      pictures: photos.map((_, i) => ({
+        isProfile: i === profilePicIndex,
+      })),
+    };
 
-      toast({
-        title: "Profile completed! 🎉",
-        description: "Welcome to Matcha! Let's find your perfect match.",
-      });
+    form.append("data", JSON.stringify(payload));
 
-      navigate('/home');
-    } catch (error) {
-      toast({
-        title: "Something went wrong",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/create`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+
+    if (!response.ok) throw new Error("Request failed");
+
+    // ✅ Update context
+    updateUser({
+      profilePicture: photos[profilePicIndex],
+      settings: { ...formData, latitude, longitude, city, country },
+      profileCompleted: true,
+    });
+
+    toast({
+      title: "Profile completed! 🎉",
+      description: "Welcome to Matcha! Let's find your perfect match.",
+    });
+
+    navigate('/home');
+  } catch (error) {
+    toast({
+      title: "Something went wrong",
+      description: "Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 py-8 px-4">
@@ -166,16 +233,16 @@ const FirstConnection = () => {
               className="flex gap-6"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="male" id="male" />
-                <label htmlFor="male" className="text-sm font-medium">Male</label>
+                <RadioGroupItem value="man" id="man" />
+                <label htmlFor="man" className="text-sm font-medium">man</label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="female" id="female" />
-                <label htmlFor="female" className="text-sm font-medium">Female</label>
+                <RadioGroupItem value="woman" id="woman" />
+                <label htmlFor="woman" className="text-sm font-medium">woman</label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="other" id="other" />
-                <label htmlFor="other" className="text-sm font-medium">Other</label>
+                <label htmlFor="other" className="text-sm font-medium">other</label>
               </div>
             </RadioGroup>
           </div>
@@ -191,16 +258,16 @@ const FirstConnection = () => {
               className="flex gap-6"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="male" id="pref-male" />
-                <label htmlFor="pref-male" className="text-sm font-medium">Men</label>
+                <RadioGroupItem value="heterosexual" id="pref-heterosexual" />
+                <label htmlFor="pref-heterosexual" className="text-sm font-medium">heterosexual</label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="female" id="pref-female" />
-                <label htmlFor="pref-female" className="text-sm font-medium">Women</label>
+                <RadioGroupItem value="bisexual" id="pref-bisexual" />
+                <label htmlFor="pref-bisexual" className="text-sm font-medium">bisexual</label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="both" id="pref-both" />
-                <label htmlFor="pref-both" className="text-sm font-medium">Both</label>
+                <RadioGroupItem value="homosexual" id="pref-homosexual" />
+                <label htmlFor="pref-homosexual" className="text-sm font-medium">homosexual</label>
               </div>
             </RadioGroup>
           </div>

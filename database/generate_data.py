@@ -56,7 +56,7 @@ def create_user():
     username = create_unique_username() + str(random.randint(0, 1000))
 
     cursor.execute("""
-        INSERT INTO Users ("firstName", "lastName", email, "birthDate", username, password, "isValidated")
+        INSERT INTO Users ("firstName", "lastName", email, "birthday", username, password, "isValidated")
         VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;
     """, (first_name, last_name, email, birth_date, username, hashed_password, True))
 
@@ -73,9 +73,9 @@ def create_settings(user_id, gender):
     sexual_orientation = random.choice(sexual_orientations)
 
     cursor.execute("""
-        INSERT INTO settings ("userId", country, city, latitude, longitude, "maxDistance", biography, gender, "sexualOrientation")
+        INSERT INTO settings ("userId", latitude, longitude, "maxDistance", biography, gender, "sexualOrientation")
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
-    """, (user_id, country, city, latitude, longitude, max_distance, biography, gender, sexual_orientation))
+    """, (user_id, latitude, longitude, max_distance, biography, gender, sexual_orientation))
 
 def create_picture(user_id, gender):
     if gender == "man":

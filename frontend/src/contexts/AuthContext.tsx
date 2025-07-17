@@ -57,7 +57,7 @@ function clearAuthCookie() {
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
 async function updateUserFromCookie(): Promise<User | null> {
   if (typeof document === 'undefined') return null;
@@ -113,23 +113,14 @@ async function updateUserFromCookie(): Promise<User | null> {
 
 
 useEffect(() => {
-  const savedUser = localStorage.getItem('matcha_user');
-
-  if (savedUser) {
-    const parsedUser = JSON.parse(savedUser);
-    setUser(parsedUser);
-    setIsLoggedIn(true);
-    setIsLoadingUser(false);
-  } else {
+  
     const init = async () => {
       const user = await updateUserFromCookie();
-      if (user) {
-        localStorage.setItem('matcha_user', JSON.stringify(user));
-      }
+      
       setIsLoadingUser(false);
     };
     init();
-  }
+  
 }, []);
 
 
