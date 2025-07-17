@@ -183,7 +183,7 @@ const FirstConnection = () => {
     // ✅ Update context
     updateUser({
       profilePicture: photos[profilePicIndex],
-      settings: { ...formData, latitude, longitude, city, country },
+      settings: { ...formData, latitude, longitude },
       profileCompleted: true,
     });
 

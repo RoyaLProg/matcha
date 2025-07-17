@@ -95,7 +95,10 @@ async function updateUserFromCookie(): Promise<User | null> {
     }
 
     const u = await res.json();
-    const user = { ...u, profileCompleted: false };
+    let complete = false;
+    if (u?.settings)
+      complete = true;
+    const user = { ...u, profileCompleted: complete };
     setUser(user);
     setIsLoggedIn(true);
     setIsLoadingUser(false); // 👈 et ici

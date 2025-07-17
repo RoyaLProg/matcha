@@ -81,6 +81,7 @@ async createSettings(
 
   try {
     parsedData = JSON.parse(body.data);
+	console.log(parsedData);
     const { tags, pictures, ...settingsData } = parsedData;
 
     if (settingsData.userId != req.user.id)
@@ -104,21 +105,24 @@ async createSettings(
     };
 
     settingsData.biography = sanitize(settingsData.biography, 300);
+	console.log(settingsData)
     const settings = await this.settingsService.createSettings(settingsData as Settings);
     createdSettingsId = settings.id;
-
+console.log("one")
     // Nettoyage et création des tags
-    const cleanedTags: string[] = (tags as Tag[]).map((t) =>
-	  t.tag.toLowerCase().replace(/#/g, '').replace(/\s+/g, '_')
-	);
 
 
+console.log("two")
 
     const createdTags = await Promise.all(
-      cleanedTags.map(tag =>
-        this.settingsService.createTag(settings.id, tag)
-      )
-    );
+  (tags as Tag[]).map(tagObj =>
+    this.settingsService.createTag(settings.id, (tagObj as any).tag ?? tagObj)
+  )
+);
+
+
+
+	console.log("three")
     createdTagsIds.push(...createdTags.map(tag => tag.id));
 
     // Création des photos
@@ -132,6 +136,7 @@ async createSettings(
       const createdPicture = await this.settingsService.createPicture(settings.id, picture);
       if (createdPicture) createdPictures.push(createdPicture);
     }
+	console.log("four")
     createdPicturesIds.push(...createdPictures.map(pic => pic.id));
 
     settings.pictures = createdPictures;
