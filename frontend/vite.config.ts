@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: true,
     port: 8080,
-    allowedHosts: ['f2r4s11.clusters.42paris.fr'],
+    allowedHosts: ['f2r5s11.clusters.42paris.fr'],
   },
   plugins: [
     react(),

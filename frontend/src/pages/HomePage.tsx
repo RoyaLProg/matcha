@@ -21,7 +21,7 @@ const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.settings) return;
-
+    console.log(user);
     setFilters({
       ageRange: [user?.settings.minAgePreference, user?.settings.maxAgePreference],
       fameRange: [0, user?.settings.maxFameRating], // ou [min, max] si tu stockes les deux
@@ -30,49 +30,49 @@ const [loading, setLoading] = useState(true);
     });
   }, [user?.settings]);
 
-useEffect(() => {
   const fetchProfiles = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/action/matches`, {
-        credentials: 'include',
-      });
-      const data = await res.json();
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/action/matches`, {
+      credentials: 'include',
+    });
+    const data = await res.json();
 
-      const mappedProfiles = await Promise.all(data.map(async (profile: any) => {
-        const { user, settings, tags, pictures, age, distance } = profile;
+    const mappedProfiles = await Promise.all(data.map(async (profile: any) => {
+      const { user, settings, tags, pictures, age, distance } = profile;
 
-        // Reverse geocoding
-        let location = '';
-        try {
-          const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${settings.latitude}&longitude=${settings.longitude}&localityLanguage=en`);
-          const geoData = await geores.json();
-          location = `${geoData.city || geoData.locality || geoData.principalSubdivision}, ${geoData.countryName}`;
-        } catch (e) {
-          location = 'Unknown location';
-        }
+      // Reverse geocoding
+      let location = '';
+      try {
+        const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${settings.latitude}&longitude=${settings.longitude}&localityLanguage=en`);
+        const geoData = await geores.json();
+        location = `${geoData.city || geoData.locality || geoData.principalSubdivision}, ${geoData.countryName}`;
+      } catch (e) {
+        location = 'Unknown location';
+      }
 
-        return {
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          age: age,
-          location: location,
-          bio: settings.biography,
-          tags: tags.map((tag: any) => tag.tag),
-          photos: pictures.map((pic: any) => pic.url),
-          isOnline: user.status === 'online',
-          fameRating: settings.maxFameRating,
-          distance: distance.toFixed(1),
-        };
-      }));
+      return {
+        id: user.id,
+        name: `${user.firstName} ${user.lastName}`,
+        age: age,
+        location: location,
+        bio: settings.biography,
+        tags: tags.map((tag: any) => tag.tag),
+        photos: pictures.map((pic: any) => pic.url),
+        isOnline: user.status === 'online',
+        fameRating: settings.maxFameRating,
+        distance: distance.toFixed(1),
+      };
+    }));
 
-      setProfiles(mappedProfiles);
-      setLoading(false);
-    } catch (err) {
-      console.error("Erreur chargement profils:", err);
-      setLoading(false);
-    }
-  };
+    setProfiles(mappedProfiles);
+    setLoading(false);
+  } catch (err) {
+    console.error("Erreur chargement profils:", err);
+    setLoading(false);
+  }
+};
 
+useEffect(() => {
   fetchProfiles();
 }, []);
 
@@ -91,6 +91,7 @@ useEffect(() => {
       if (!response.ok) throw new Error(`Erreur lors de l'envoi du ${status}`);
       const data = await response.json();
       console.log(`Action ${status} envoyée avec succès`, data);
+      setProfiles(prev => prev.filter(profile => profile.id !== targetUserId));
     } catch (error) {
       console.error(`Erreur lors de l'envoi du ${status} :`, error);
     }
@@ -112,6 +113,47 @@ useEffect(() => {
         : [...prev.tags, tag],
     }));
   };
+
+  const sendFiltersToBackend = async () => {
+    try {
+      // cree la route filter 
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/filter`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ageRange: filters.ageRange,
+          fameRange: filters.fameRange,
+          distance: filters.distance,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur lors de l'envoi des filtres");
+
+      fetchProfiles();
+    } catch (error) {
+      console.error("Erreur filtre :", error);
+    }
+  };
+
+const sortProfiles = (profiles: any[]) => {
+  return [...profiles].sort((a, b) => {
+    switch (sortBy) {
+      case "age":
+        return a.age - b.age;
+      case "distance":
+        return a.distance - b.distance;
+      case "fame":
+        return b.fameRating - a.fameRating; // tri décroissant
+      case "recent":
+        // Suppose que tu as un champ comme lastConnection ou status === 'online'
+        return a.isOnline === b.isOnline ? 0 : a.isOnline ? -1 : 1;
+      default:
+        return 0;
+    }
+  });
+};
 
   return (
     <Layout>
@@ -168,18 +210,31 @@ useEffect(() => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Age Range</label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="range"
-                    min="18"
-                    max="65"
-                    value={filters.ageRange[0]}
-                    onChange={(e) =>
-                      setFilters({ ...filters, ageRange: [Number(e.target.value), filters.ageRange[1]] })
-                    }
-                    className="flex-1 accent-blue-500"
-                  />
-                  <span className="text-sm text-gray-600 font-medium">{filters.ageRange[0]}-{filters.ageRange[1]}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 w-8">Min:</span>
+                    <input
+                      type="range"
+                      min="18"
+                      max="65"
+                      value={filters.ageRange[0]}
+                      onChange={(e) => setFilters({...filters, ageRange: [parseInt(e.target.value), filters.ageRange[1]]})}
+                      className="flex-1 accent-blue-500"
+                    />
+                    <span className="text-sm text-gray-600 font-medium w-8">{filters.ageRange[0]}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 w-8">Max:</span>
+                    <input
+                      type="range"
+                      min="18"
+                      max="65"
+                      value={filters.ageRange[1]}
+                      onChange={(e) => setFilters({...filters, ageRange: [filters.ageRange[0], parseInt(e.target.value)]})}
+                      className="flex-1 accent-blue-500"
+                    />
+                    <span className="text-sm text-gray-600 font-medium w-8">{filters.ageRange[1]}</span>
+                  </div>
                 </div>
               </div>
               
@@ -229,14 +284,24 @@ useEffect(() => {
                     </button>
                   ))}
                 </div>
+                <div className="col-span-full flex justify-end mt-4">
+                  <button
+                    onClick={sendFiltersToBackend}
+                    className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs hover:bg-blue-200 transition-colors font-medium"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
               </div>
+              
             </div>
           </div>
         )}
 
         {/* Profile Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {profiles.map((profile) => (
+
+          {sortProfiles(profiles).map((profile) => (
             <ProfileCard
               key={profile.id}
               profile={profile}

@@ -104,15 +104,13 @@ async createSettings(
       return value.replace(/<[^>]+>/g, '').trim().substring(0, maxLength);
     };
 
+
     settingsData.biography = sanitize(settingsData.biography, 300);
+	settingsData.maxAgePreference = 80;
+	settingsData.minAgePreference = 18;
 	console.log(settingsData)
     const settings = await this.settingsService.createSettings(settingsData as Settings);
     createdSettingsId = settings.id;
-console.log("one")
-    // Nettoyage et création des tags
-
-
-console.log("two")
 
     const createdTags = await Promise.all(
   (tags as Tag[]).map(tagObj =>
@@ -120,9 +118,6 @@ console.log("two")
   )
 );
 
-
-
-	console.log("three")
     createdTagsIds.push(...createdTags.map(tag => tag.id));
 
     // Création des photos
@@ -136,7 +131,6 @@ console.log("two")
       const createdPicture = await this.settingsService.createPicture(settings.id, picture);
       if (createdPicture) createdPictures.push(createdPicture);
     }
-	console.log("four")
     createdPicturesIds.push(...createdPictures.map(pic => pic.id));
 
     settings.pictures = createdPictures;
