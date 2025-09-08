@@ -81,14 +81,12 @@ const Auth = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Clear error when user starts typing
     if (error) setError('');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-sky-500 rounded-full mb-4 shadow-lg">
             <Heart className="w-8 h-8 text-white" />
@@ -101,9 +99,7 @@ const Auth = () => {
           </p>
         </div>
 
-        {/* Form */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-blue-100">
-          {/* Error Alert */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -263,7 +259,6 @@ const Auth = () => {
             </button>
           </form>
 
-          {/* Social Authentication */}
           <div className="mt-6">
             <OmniAuth onSocialLogin={handleSocialLogin} />
           </div>

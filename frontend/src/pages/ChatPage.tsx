@@ -1,48 +1,101 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { useChat } from '../contexts/ChatContext';
 import { Send, MoreVertical, Heart, Phone, Video, Image, ArrowLeft } from 'lucide-react';
 import VideoChat from '../components/VideoChat';
+import { ChatContext } from '../contexts/ChatContext';
+import { UserContext } from '../contexts/UserContext';
+import { MessageType } from '../interface/message.interface';
+import { WebSocketContext } from '../contexts/WebSocketContext';
+import { CallContext } from '../contexts/CallContext';
 
 const ChatPage = () => {
-  const { userId } = useParams();
-  const { conversations, messages, sendMessage, markAsRead } = useChat();
+  const { id } = useParams();
+  const chatsCtx = useContext(ChatContext);
+  const userCtx = useContext(UserContext);
   const [message, setMessage] = useState('');
   const [showVideoChat, setShowVideoChat] = useState(false);
+  const [blocked, setBlocked] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socket = useContext(WebSocketContext);
+  const callCtx = useContext(CallContext);
 
-  // Find the conversation for this user
-  const conversation = conversations.find(conv => conv.user.id === userId);
-  const conversationMessages = conversation ? messages[conversation.id] || [] : [];
+  const chat = useMemo(() => {
+    const chatId = Number(id);
+    return (chatsCtx?.chats ?? []).find(c => c.id === chatId);
+  }, [chatsCtx?.chats, id]);
+
+  const otherUser = useMemo(() => {
+    if (!chat || !userCtx?.user) return undefined;
+    return chat.user?.id === userCtx.user.id ? chat.targetUser : chat.user;
+  }, [chat, userCtx?.user]);
 
   useEffect(() => {
-    if (conversation) {
-      markAsRead(conversation.id);
-    }
-  }, [conversation, markAsRead]);
+  }, [chat?.id]);
+
+  useEffect(() => {
+    if (!socket || !id) return;
+    const room = `chat_${id}`;
+    socket.emit('JoinRoom', room);
+    return () => {
+      socket.emit('LeaveRoom', room);
+    };
+  }, [socket, id]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!otherUser?.id) return;
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Users/${otherUser.id}`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (typeof data?.blocked === 'boolean') setBlocked(!!data.blocked);
+      } catch {}
+    })();
+  }, [otherUser?.id]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [conversationMessages]);
+  }, [chat?.messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const toSecuredMediaUrl = (path: string | null | undefined) => {
+    if (!path) return '';
+    const p = path.startsWith('/api/') ? path : (path.startsWith('/upload/') ? '/api' + path : path);
+    return `${import.meta.env.VITE_API_URL}${p}`;
+  };
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !conversation) return;
+    if (!message.trim() || !chat || !userCtx?.user || !chatsCtx?.sendMessage) return;
 
-    sendMessage(conversation.id, message);
+    const newMessage = {
+      chatId: chat.id!,
+      userId: userCtx.user.id,
+      type: MessageType.Text,
+      content: message,
+      fileUrl: null,
+      createdAt: new Date(),
+    };
+    chatsCtx.sendMessage(newMessage as any);
     setMessage('');
+  };
+
+  const normalize = (url?: string) => {
+    if (!url) return undefined as any;
+    if (/^https?:/i.test(url)) return url;
+    if (url.startsWith('/api/')) return `${import.meta.env.VITE_API_URL}${url}`;
+    return `${import.meta.env.VITE_API_URL}/api${url}`;
   };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  if (!conversation) {
+  if (!chat || !otherUser) {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -51,7 +104,7 @@ const ChatPage = () => {
             <p className="text-gray-600 mb-6">This conversation doesn't exist or you don't have access to it.</p>
             <Link
               to="/chat"
-              className="inline-block px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:from-pink-600 hover:to-rose-600 transition-all"
+              className="inline-block px-6 py-3 bg-gradient-to-r from-blue-500 to-sky-500 text-white rounded-lg hover:from-blue-600 hover:to-sky-600 transition-all"
             >
               Back to Messages
             </Link>
@@ -65,7 +118,6 @@ const ChatPage = () => {
     <Layout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden h-[600px] flex flex-col">
-          {/* Chat Header */}
           <div className="bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -77,30 +129,31 @@ const ChatPage = () => {
                 </Link>
                 <div className="relative">
                   <img
-                    src={conversation.user.avatar}
-                    alt={conversation.user.name}
+                    src={otherUser?.settings?.pictures?.length ? normalize(otherUser.settings.pictures.find((p:any)=>p.isProfile)?.url) : 'https://www.w3schools.com/w3images/avatar2.png'}
+                    alt={otherUser?.username ?? 'User'}
                     className="w-12 h-12 rounded-full object-cover"
                   />
-                  {conversation.user.isOnline && (
+                  {(otherUser as any)?.status === 'online' && (
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
                   )}
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">{conversation.user.name}</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{otherUser?.firstName ?? otherUser?.username}</h2>
                   <p className="text-sm text-gray-500">
-                    {conversation.user.isOnline ? 'Active now' : 'Last seen recently'}
+                    {(otherUser as any)?.status === 'online' ? 'Active now' : 'Last seen recently'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => {
+                  if (chat && otherUser && callCtx) callCtx.startCall({ type: 'audio', chatId: chat.id!, toUserId: otherUser.id });
+                }}>
                   <Phone className="w-5 h-5" />
                 </button>
-                <button 
-                  onClick={() => setShowVideoChat(true)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
+                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => {
+                  if (chat && otherUser && callCtx) callCtx.startCall({ type: 'video', chatId: chat.id!, toUserId: otherUser.id });
+                }}>
                   <Video className="w-5 h-5" />
                 </button>
                 <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
@@ -110,27 +163,36 @@ const ChatPage = () => {
             </div>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            {conversationMessages.map((msg) => (
+            {(chat.messages ?? []).map((msg, idx) => (
               <div
-                key={msg.id}
-                className={`flex ${msg.senderId === 'current-user' ? 'justify-end' : 'justify-start'}`}
+                key={idx}
+                className={`flex ${msg.userId === userCtx?.user?.id ? 'justify-end' : 'justify-start'}`}
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                    msg.senderId === 'current-user'
-                      ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white'
+                    msg.userId === userCtx?.user?.id
+                      ? 'bg-gradient-to-r from-blue-500 to-sky-500 text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}
                 >
-                  <p className="text-sm">{msg.content}</p>
+                  {msg.type === MessageType.Text && <p className="text-sm">{msg.content}</p>}
+                  {msg.type === MessageType.Audio && msg.fileUrl && (
+                    <audio controls>
+                      <source src={toSecuredMediaUrl(msg.fileUrl)} type="audio/webm" />
+                    </audio>
+                  )}
+                  {msg.type === MessageType.Video && msg.fileUrl && (
+                    <video controls width="200">
+                      <source src={toSecuredMediaUrl(msg.fileUrl)} type="video/webm" />
+                    </video>
+                  )}
                   <p
                     className={`text-xs mt-1 ${
-                      msg.senderId === 'current-user' ? 'text-pink-100' : 'text-gray-500'
+                      msg.userId === userCtx?.user?.id ? 'text-blue-100' : 'text-gray-500'
                     }`}
                   >
-                    {formatTime(msg.timestamp)}
+                    {msg.createdAt ? formatTime(new Date(msg.createdAt)) : ''}
                   </p>
                 </div>
               </div>
@@ -138,8 +200,10 @@ const ChatPage = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Message Input */}
           <div className="border-t border-gray-200 px-6 py-4">
+            {blocked && (
+              <div className="mb-2 text-sm text-red-500">Messaging disabled: you have blocked this user or they blocked you.</div>
+            )}
             <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
               <button
                 type="button"
@@ -154,14 +218,15 @@ const ChatPage = () => {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type a message..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  disabled={blocked}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={!message.trim()}
-                className="p-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-all"
+                className="p-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-all"
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -169,22 +234,21 @@ const ChatPage = () => {
           </div>
         </div>
 
-        {/* Match Info */}
-        <div className="mt-6 bg-pink-50 rounded-2xl p-6">
-          <div className="flex items-center justify-center space-x-2 text-pink-600">
+        <div className="mt-6 bg-blue-50 rounded-2xl p-6">
+          <div className="flex items-center justify-center space-x-2 text-blue-600">
             <Heart className="w-5 h-5 fill-current" />
             <span className="font-medium">
-              You and {conversation.user.name} liked each other! Start the conversation.
+              You and {otherUser?.firstName ?? otherUser?.username} liked each other! Start the conversation.
             </span>
           </div>
         </div>
 
-        {/* Video Chat */}
         <VideoChat
           isOpen={showVideoChat}
           onClose={() => setShowVideoChat(false)}
-          recipientName={conversation.user.name}
-          recipientAvatar={conversation.user.avatar}
+          recipientName={otherUser?.firstName ?? otherUser?.username ?? 'User'}
+          recipientAvatar={otherUser?.settings?.pictures?.length ? `${import.meta.env.VITE_API_URL}/api${otherUser.settings.pictures.find((p:any)=>p.isProfile)?.url}` : undefined}
+          chatId={chat.id}
         />
       </div>
     </Layout>

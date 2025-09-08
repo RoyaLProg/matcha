@@ -23,7 +23,7 @@ const ResetPassword = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username }), // ou { email: formData.email } selon ton champ
+        body: JSON.stringify({ username }),
       });
 
       const data = await response.json();
@@ -31,7 +31,7 @@ const ResetPassword = () => {
       if (!response.ok) {
       } else {
         setMessage(data.message);
-        setStep("reset"); // si tu as une étape suivante à afficher
+        setStep("reset");
       }
     } catch (error) {
       console.error("Erreur de réinitialisation:", error);
@@ -41,7 +41,7 @@ const ResetPassword = () => {
   };
 
   function checkPassword(value: string): boolean {
-    const hasSpecialChar = /[_\-*@!]/.test(value);
+    const hasSpecialChar = /[^A-Za-z0-9_\s]/.test(value);
     const hasDigit = /[0-9]/.test(value);
     const hasLowercase = /[a-z]/.test(value);
     const hasUppercase = /[A-Z]/.test(value);
@@ -50,7 +50,7 @@ const ResetPassword = () => {
 
   function validate(password: string, confirm: string, setMessage: (msg: string) => void): boolean {
     if (!checkPassword(password)) {
-      setMessage('Password must include at least one uppercase letter, one lowercase letter, one number, and one special character (_-*@!)');
+      setMessage('Password must include at least one uppercase letter, one lowercase letter, one number, and one special character');
       return false;
     }
 
@@ -85,15 +85,11 @@ const ResetPassword = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        // toast.error(data.message || "Erreur lors de la réinitialisation du mot de passe");
       } else {
-        // toast.success(data.message || "Mot de passe réinitialisé !");
         setMessage("Mot de passe réinitialisé ! Vous pouvez maintenant vous connecter.");
-        // navigate('/login');
       }
     } catch (error) {
       console.error("Erreur de réinitialisation:", error);
-      // toast.error("Erreur réseau");
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +105,6 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-400 to-sky-400 rounded-full mb-4">
             <Heart className="w-8 h-8 text-white" />
@@ -122,7 +117,6 @@ const ResetPassword = () => {
           </p>
         </div>
 
-        {/* Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
           {step === 'request' ? (
             <form onSubmit={handleRequestReset} className="space-y-6">

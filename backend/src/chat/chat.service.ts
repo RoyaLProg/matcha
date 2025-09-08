@@ -55,7 +55,17 @@ class ChatService {
 		const chat = await this.database.getFirstRow('chat', [], { id: message.chatId }) as Chat;
 		if (!chat)
 			throw new Error('Chat not found');
-		const newMessage = await this.database.addOne('message', { chatId: message.chatId, userId: message.userId, content: message.content});
+		const sender = await this.database.getFirstRow('users', [], { id: message.userId });
+		const receiverId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
+		const receiver = await this.database.getFirstRow('users', [], { id: receiverId });
+		if ((Array.isArray(sender?.blockedIds) && sender.blockedIds.includes(receiverId)) || (Array.isArray(receiver?.blockedIds) && receiver.blockedIds.includes(message.userId))) {
+			throw new Error('User blocked');
+		}
+		let sanitized: string | null = null;
+		if (typeof message.content === 'string') {
+			sanitized = message.content.replace(/<[^>]*>/g, '').slice(0, 5000);
+		}
+		const newMessage = await this.database.addOne('message', { chatId: message.chatId, userId: message.userId, content: sanitized});
 		this.chatGateway.emitMessage(newMessage as Message);
 		return newMessage as Message;
 	}
@@ -77,12 +87,10 @@ class ChatService {
 			chat.messages = await this.getMessagesByChatId(chat.id);
 			chat.user = await this.userService.findOne(chat.userId as number);
 			chat.targetUser = await this.userService.findOne(chat.targetUserId as number);
-			// delete chat.user.settings
 			delete chat.user.settings.latitude
 			delete chat.user.settings.longitude
 			delete chat.user.password
 			delete chat.user.email
-			// delete chat.targetUser.settings
 			delete chat.targetUser.settings.latitude
 			delete chat.targetUser.settings.longitude
 			delete chat.targetUser.password

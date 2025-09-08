@@ -1,12 +1,40 @@
 
-import React from 'react';
+import React, { useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { useChat } from '../contexts/ChatContext';
 import { MessageCircle, Clock } from 'lucide-react';
+import { ChatContext } from '../contexts/ChatContext';
+import { UserContext } from '../contexts/UserContext';
 
 const ChatListPage = () => {
-  const { conversations, getUnreadCount } = useChat();
+  const chatsCtx = useContext(ChatContext);
+  const userCtx = useContext(UserContext);
+
+  const normalize = (url?: string) => {
+    if (!url) return undefined;
+    if (/^https?:/i.test(url)) return url;
+    if (url.startsWith('/api/')) return `${import.meta.env.VITE_API_URL}${url}`;
+    return `${import.meta.env.VITE_API_URL}/api${url}`;
+  };
+
+  const items = useMemo(() => {
+    const list = chatsCtx?.chats ?? [];
+    const meId = userCtx?.user?.id;
+    return list.map(chat => {
+      const other = meId && chat.user?.id === meId ? chat.targetUser : chat.user;
+      const last = (chat.messages ?? []).slice().sort((a, b) => new Date(b.createdAt ?? '').getTime() - new Date(a.createdAt ?? '').getTime())[0];
+      const avatarUrl = other?.settings?.pictures?.find(p => p.isProfile)?.url;
+      const fullAvatar = normalize(avatarUrl);
+      return {
+        id: chat.id!,
+        name: other ? `${other.firstName ?? other.username ?? 'User'}` : 'User',
+        avatar: fullAvatar,
+        isOnline: (other as any)?.status === 'online',
+        lastMessage: last ? { content: last.content ?? (last.fileUrl ? '[media]' : ''), createdAt: new Date(last.createdAt ?? '') } : undefined,
+        unreadCount: 0,
+      };
+    });
+  }, [chatsCtx?.chats, userCtx?.user?.id]);
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -29,15 +57,15 @@ const ChatListPage = () => {
             <h1 className="text-2xl font-bold text-white flex items-center">
               <MessageCircle className="w-6 h-6 mr-2" />
               Messages
-              {getUnreadCount() > 0 && (
+              {0 > 0 && (
                 <span className="ml-2 bg-white text-blue-600 text-sm px-2 py-1 rounded-full font-semibold">
-                  {getUnreadCount()}
+                  {0}
                 </span>
               )}
             </h1>
           </div>
 
-          {conversations.length === 0 ? (
+          {items.length === 0 ? (
             <div className="p-12 text-center">
               <MessageCircle className="w-16 h-16 text-blue-200 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-gray-700 mb-2">No conversations yet</h2>
@@ -51,19 +79,25 @@ const ChatListPage = () => {
             </div>
           ) : (
             <div className="divide-y divide-blue-50">
-              {conversations.map((conversation) => (
+              {items.map((conversation) => (
                 <Link
                   key={conversation.id}
-                  to={`/chat/${conversation.user.id}`}
+                  to={`/chat/${conversation.id}`}
                   className="flex items-center p-6 hover:bg-blue-50 transition-all duration-200 group"
                 >
                   <div className="relative">
-                    <img
-                      src={conversation.user.avatar}
-                      alt={conversation.user.name}
-                      className="w-12 h-12 rounded-full object-cover shadow-lg"
-                    />
-                    {conversation.user.isOnline && (
+                    {conversation.avatar ? (
+                      <img
+                        src={conversation.avatar}
+                        alt={conversation.name}
+                        className="w-12 h-12 rounded-full object-cover shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shadow-lg font-semibold">
+                        {conversation.name[0]?.toUpperCase() ?? 'U'}
+                      </div>
+                    )}
+                    {conversation.isOnline && (
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
                     )}
                   </div>
@@ -71,12 +105,12 @@ const ChatListPage = () => {
                   <div className="ml-4 flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors">
-                        {conversation.user.name}
+                        {conversation.name}
                       </h3>
-                      {conversation.lastMessage && (
+                      {conversation.lastMessage && conversation.lastMessage.createdAt && (
                         <div className="flex items-center text-gray-500 text-sm">
                           <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(conversation.lastMessage.timestamp)}
+                          {formatTime(conversation.lastMessage.createdAt)}
                         </div>
                       )}
                     </div>
@@ -84,8 +118,7 @@ const ChatListPage = () => {
                     <div className="flex items-center justify-between mt-1">
                       {conversation.lastMessage ? (
                         <p className="text-gray-600 text-sm truncate">
-                          {conversation.lastMessage.senderId === 'current-user' ? 'You: ' : ''}
-                          {conversation.lastMessage.content}
+                          {conversation.lastMessage.content || '[media]'}
                         </p>
                       ) : (
                         <p className="text-gray-400 text-sm italic">Start a conversation...</p>

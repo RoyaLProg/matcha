@@ -14,16 +14,16 @@ export default class SettingsService {
 	}
 
 	async createTag(settingsId: number, tag: string): Promise<Tag> {
-	  const formattedTag = tag.toLowerCase().replace(/#/g, '').replace(/\s+/g, '_'); // enlève # et espace
+	  if (typeof tag !== 'string' || tag.trim().length === 0) {
+	    throw new BadRequestException('Invalid tag payload');
+	  }
+	  const formattedTag = tag.toLowerCase().replace(/#/g, '').replace(/\s+/g, '_');
 	  try {
-	    // Vérifie si le tag existe déjà pour ces settings
-	    const existingTag = await this.database.getFirstRow('tags_entity', [], { settingsId, tag: formattedTag });
-	    if (existingTag) {
-	      console.warn(`Tag "${formattedTag}" already exists for settingsId ${settingsId}.`);
-	      return existingTag as Tag;
-	    }
+    const existingTag = await this.database.getFirstRow('tags_entity', [], { settingsId, tag: formattedTag });
+    if (existingTag) {
+      return existingTag as Tag;
+    }
 
-	    // Ajoute le tag
 	    return await this.database.addOne('tags_entity', {
 	      settingsId,
 	      tag: formattedTag,
@@ -36,11 +36,10 @@ export default class SettingsService {
 
 	async createPicture(settingsId: number, picture: Picture): Promise<Picture | null> {
 		try {
-			const existingPictures = await this.database.getRows('picture', ['id'], { settingsId });
-			if (existingPictures.length >= 5) {
-				console.warn(`User with settingsId ${settingsId} already has the maximum number of pictures.`);
-				return null;
-			}
+      const existingPictures = await this.database.getRows('picture', ['id'], { settingsId });
+      if (existingPictures.length >= 5) {
+        return null;
+      }
 			return await this.database.addOne('picture', { settingsId, url: picture.url, isProfile: picture.isProfile }) as Picture;
 		} catch (error) {
 			throw new Error(`Failed to create picture: ${error.message}`);
@@ -48,14 +47,36 @@ export default class SettingsService {
 	}
 
 
-	async updateSettings(settings: Partial<Settings>, pictures: Picture[], tags: Tag[], id: number) : Promise<void> {
+	async updateSettings(settings: Partial<Settings>, pictures: Picture[] | null, tags: Tag[] | string[] | any[] | null, id: number) : Promise<void> {
 		try {
 			const settingsId = (await this.database.getFirstRow("settings", ["id"], {userId: id}))['id'];
 			await this.database.updateRows("settings", settings, { userId: id });
-			await this.database.deleteRows("picture", { settingsId: settingsId });
-			pictures.forEach((p) => this.createPicture(settingsId, p));
-			await this.database.deleteRows("tags_entity", { settingsId: settingsId });
-			(tags as Tag[]).forEach(t => this.createTag(settingsId, t.tag));
+			if (Array.isArray(pictures)) {
+				let normalized = pictures.slice(0, 5).map((p) => ({
+					url: p.url ?? '',
+					isProfile: !!p.isProfile,
+				}));
+				if (normalized.length > 0) {
+					const firstProfileIdx = normalized.findIndex((p) => p.isProfile === true);
+					if (firstProfileIdx < 0) {
+						normalized[0].isProfile = true;
+					} else {
+						normalized = normalized.map((p, idx) => ({ ...p, isProfile: idx === firstProfileIdx }));
+					}
+				}
+				await this.database.deleteRows("picture", { settingsId: settingsId });
+				for (const p of normalized) await this.createPicture(settingsId, p);
+			}
+
+			if (Array.isArray(tags)) {
+				await this.database.deleteRows("tags_entity", { settingsId: settingsId });
+				const normalizedTags: string[] = (tags as any[])
+					.map((t) => (typeof t === 'string' ? t : (t && typeof t.tag === 'string' ? t.tag : '')))
+					.filter((t) => typeof t === 'string' && t.trim().length > 0);
+				for (const t of normalizedTags) {
+					await this.createTag(settingsId, t);
+				}
+			}
 
 
 		}

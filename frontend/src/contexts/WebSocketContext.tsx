@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { toast, ToastContainer } from "react-toastify";
 import { io, Socket } from "socket.io-client";
-import { getCookie, UserContext } from './UserContext';
+import { UserContext } from '../contexts/UserContext';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const WebSocketContext = createContext<Socket | undefined>(undefined);
@@ -31,7 +31,8 @@ export default function WebSocketProvider({ children }: { children: ReactNode })
 
 	useEffect(() => {
 
-		if (user && getCookie("Auth")) {
+
+		if (user) {
 			const socketIOClient = io(`${import.meta.env.VITE_API_URL}`, {
 				withCredentials: true,
 				transports: ["websocket", "polling"],

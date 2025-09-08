@@ -3,8 +3,11 @@ import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import ProfileCard from '../components/ProfileCard';
 import { Search, Filter, MapPin, Star, Users } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { ALL_TAGS } from '@/constants/tags';
 
 const SearchPage = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     ageMin: 18,
@@ -15,42 +18,87 @@ const SearchPage = () => {
     location: '',
     tags: [] as string[],
   });
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [sortBy, setSortBy] = useState<'age-asc'|'age-desc'|'distance-asc'|'distance-desc'|'fame-asc'|'fame-desc'>('distance-asc');
+  const [loading, setLoading] = useState(false);
 
-  const availableTags = [
-    'hiking', 'yoga', 'coffee', 'travel', 'art', 'music', 'photography',
-    'cooking', 'reading', 'fitness', 'dancing', 'movies', 'gaming', 'sports'
-  ];
+  const availableTags = ALL_TAGS;
 
-  const mockResults = [
-    {
-      id: '1',
-      name: 'Sarah',
-      age: 29,
-      location: 'Oakland, CA',
-      bio: 'Artist and coffee enthusiast. Love exploring new places and meeting creative people.',
-      tags: ['art', 'coffee', 'travel', 'photography'],
-      photos: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80'],
-      isOnline: true,
-      fameRating: 4.5,
-    },
-    {
-      id: '2',
-      name: 'Mike',
-      age: 31,
-      location: 'Berkeley, CA',
-      bio: 'Outdoor enthusiast and photographer. Always planning the next adventure.',
-      tags: ['hiking', 'photography', 'travel', 'fitness'],
-      photos: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'],
-      isOnline: false,
-      fameRating: 4.2,
-    },
-  ];
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching with:', { searchQuery, filters });
-    setSearchResults(mockResults);
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.append('query', searchQuery.trim());
+      if (filters.ageMin) params.append('ageMin', String(filters.ageMin));
+      if (filters.ageMax) params.append('ageMax', String(filters.ageMax));
+      if (filters.fameMin) params.append('fameMin', String(filters.fameMin));
+      if (filters.fameMax) params.append('fameMax', String(filters.fameMax));
+      if (filters.distance) params.append('distance', String(filters.distance));
+      if (filters.tags.length) params.append('tags', filters.tags.join(','));
+      if (filters.location.trim()) {
+        try {
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(filters.location)}&limit=1`);
+          const arr = await geo.json();
+          if (Array.isArray(arr) && arr.length) {
+            const { lat, lon } = arr[0];
+            params.append('lat', String(lat));
+            params.append('lng', String(lon));
+          }
+        } catch {}
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/search?${params.toString()}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to search');
+      const data = await res.json();
+
+      const myTags = ((user as any)?.settings?.tags ?? []).map((t: any) => t.tag?.toLowerCase?.() ?? String(t).toLowerCase());
+      let mapped = await Promise.all(
+        (data as any[]).map(async (profile: any) => {
+          const { user: u, settings, tags, pictures, age, distance } = profile;
+          let location = '';
+          try {
+            if (settings?.latitude != null && settings?.longitude != null) {
+              const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${settings.latitude}&longitude=${settings.longitude}&localityLanguage=en`);
+              const geoData = await geores.json();
+              location = `${geoData.city || geoData.locality || geoData.principalSubdivision || ''}${geoData.countryName ? ', ' + geoData.countryName : ''}`;
+            }
+          } catch {}
+
+          const otherTags = (tags || []).map((t: any) => t.tag?.toLowerCase?.() ?? String(t).toLowerCase());
+          const tagMatch = myTags.length ? otherTags.filter((t) => myTags.includes(t)).length : 0;
+          return {
+            id: String(u.id),
+            name: `${u.firstName} ${u.lastName}`,
+            age: age,
+            location: location || `${settings?.city ?? ''}${settings?.country ? ', ' + settings.country : ''}`,
+            bio: settings?.biography ?? '',
+            tags: (tags || []).map((t: any) => t.tag),
+            photos: (pictures || []).map((p: any) => {
+              const url = p.url as string;
+              if (!url) return undefined;
+              if (/^https?:/i.test(url)) return url;
+              if (url.startsWith('/api/')) return `${import.meta.env.VITE_API_URL}${url}`;
+              return `${import.meta.env.VITE_API_URL}/api${url}`;
+            }).filter(Boolean),
+            isOnline: u.status === 'online',
+            fameRating: (profile as any)?.fameRating ?? 0,
+            distance: distance,
+            tagMatch,
+          };
+        })
+      );
+      mapped = mapped.filter(p => (typeof filters.fameMax === 'number' ? p.fameRating <= filters.fameMax : true));
+      setSearchResults(mapped);
+      
+    } catch (err) {
+      console.error('Search error:', err);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFilterChange = (key: string, value: any) => {
@@ -66,27 +114,57 @@ const SearchPage = () => {
     }));
   };
 
-  const handleLike = (id: string) => {
-    console.log('Liked profile:', id);
+  const handleLike = async (id: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: id, status: 'like' }),
+      });
+      if (!response.ok) throw new Error('Failed to like');
+      setSearchResults(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      console.error('Like error:', e);
+    }
   };
 
-  const handlePass = (id: string) => {
-    console.log('Passed profile:', id);
+  const handlePass = async (id: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: id, status: 'dislike' }),
+      });
+      if (!response.ok) throw new Error('Failed to pass');
+      setSearchResults(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      console.error('Pass error:', e);
+    }
   };
+
+  const sortedResults = [...searchResults].sort((a, b) => {
+    switch (sortBy) {
+      case 'age-asc': return (a.age ?? 0) - (b.age ?? 0);
+      case 'age-desc': return (b.age ?? 0) - (a.age ?? 0);
+      case 'distance-asc': return (a.distance ?? Infinity) - (b.distance ?? Infinity);
+      case 'distance-desc': return (b.distance ?? -Infinity) - (a.distance ?? -Infinity);
+      case 'fame-asc': return (a.fameRating ?? 0) - (b.fameRating ?? 0);
+      case 'fame-desc': return (b.fameRating ?? 0) - (a.fameRating ?? 0);
+      case 'tags-desc': return (b.tagMatch ?? 0) - (a.tagMatch ?? 0);
+      default: return 0;
+    }
+  });
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Advanced Search</h1>
           <p className="text-gray-600">Find people who match your specific criteria</p>
         </div>
 
-        {/* Search Form */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <form onSubmit={handleSearch} className="space-y-6">
-            {/* Search Query */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Search
@@ -98,14 +176,12 @@ const SearchPage = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, interests, or location..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
-            {/* Filters Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Age Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Users className="w-4 h-4 inline mr-1" />
@@ -118,7 +194,7 @@ const SearchPage = () => {
                     onChange={(e) => handleFilterChange('ageMin', parseInt(e.target.value))}
                     min="18"
                     max="100"
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <span className="text-gray-500">to</span>
                   <input
@@ -127,12 +203,11 @@ const SearchPage = () => {
                     onChange={(e) => handleFilterChange('ageMax', parseInt(e.target.value))}
                     min="18"
                     max="100"
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
-              {/* Fame Rating */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Star className="w-4 h-4 inline mr-1" />
@@ -154,7 +229,6 @@ const SearchPage = () => {
                 </div>
               </div>
 
-              {/* Distance */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="w-4 h-4 inline mr-1" />
@@ -176,7 +250,6 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Location */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Location
@@ -186,11 +259,10 @@ const SearchPage = () => {
                 value={filters.location}
                 onChange={(e) => handleFilterChange('location', e.target.value)}
                 placeholder="Enter city, state, or zip code"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            {/* Tags */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Interests
@@ -203,7 +275,7 @@ const SearchPage = () => {
                     onClick={() => toggleTag(tag)}
                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                       filters.tags.includes(tag)
-                        ? 'bg-pink-500 text-white'
+                        ? 'bg-blue-500 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -213,10 +285,9 @@ const SearchPage = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold rounded-xl transition-all"
+              className="w-full flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white font-semibold rounded-xl transition-all"
             >
               <Search className="w-5 h-5" />
               <span>Search</span>
@@ -224,21 +295,35 @@ const SearchPage = () => {
           </form>
         </div>
 
-        {/* Results */}
-        {searchResults.length > 0 && (
+        {loading && (
+          <div className="text-center text-gray-600">Searching…</div>
+        )}
+        {!loading && searchResults.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 Search Results ({searchResults.length})
               </h2>
-              <button className="flex items-center space-x-1 text-pink-600 hover:text-pink-700">
-                <Filter className="w-4 h-4" />
-                <span>Refine Search</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">Sort by</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="distance-asc">Distance ↑</option>
+                  <option value="distance-desc">Distance ↓</option>
+                  <option value="age-asc">Age ↑</option>
+                  <option value="age-desc">Age ↓</option>
+                  <option value="fame-desc">Fame ↓</option>
+                  <option value="fame-asc">Fame ↑</option>
+                  <option value="tags-desc">Tags match ↓</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {searchResults.map((profile) => (
+              {sortedResults.map((profile) => (
                 <ProfileCard
                   key={profile.id}
                   profile={profile}

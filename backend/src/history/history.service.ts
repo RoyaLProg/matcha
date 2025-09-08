@@ -11,13 +11,19 @@ class HistoryService {
 	){}
 
 	async pushHistory(history: History): Promise<Object> {
-		const addHistory = await this.database.addOne("history", history) as History;
-		if (history.userId) {
-			const socket = this.socketService.getSocketByUserId(history.userId.toString());
-			if (socket)
-				this.setAsReaded(addHistory.id as number, history.userId as number);
+		try {
+			if (history?.userId && history?.fromId) {
+				const me = await this.database.getFirstRow('users', [], { id: history.userId });
+				const from = await this.database.getFirstRow('users', [], { id: history.fromId });
+				if ((Array.isArray(from?.blockedIds) && from.blockedIds.includes(history.userId as number)) || (Array.isArray(me?.blockedIds) && me.blockedIds.includes(history.fromId as number))) {
+					return { skipped: true };
+				}
+			}
+			const addHistory = await this.database.addOne("history", history) as History;
+			return addHistory;
+		} catch (e) {
+			return { skipped: true };
 		}
-		return addHistory;
 	}
 
 	async setAsReaded(id: number, userId: number) {

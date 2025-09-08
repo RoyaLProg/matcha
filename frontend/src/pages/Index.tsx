@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50">
-      {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
@@ -43,13 +42,11 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Decorative Elements */}
         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-300 rounded-full opacity-60"></div>
         <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-sky-300 rounded-full opacity-40"></div>
         <div className="absolute bottom-1/4 left-1/3 w-4 h-4 bg-blue-200 rounded-full opacity-50"></div>
       </div>
 
-      {/* Features Section */}
       <div className="py-20 bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -95,7 +92,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Success Stories */}
       <div className="py-20 bg-gradient-to-br from-blue-50 to-sky-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -147,7 +143,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
       <div className="py-20 bg-gradient-to-r from-blue-500 to-sky-500">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">

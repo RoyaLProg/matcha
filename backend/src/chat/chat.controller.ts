@@ -11,9 +11,20 @@ class ChatController {
 
 	@Post('sendmessage')
 	@UseGuards(AuthGuard)
-	async sendMessage(@Body() body: any) : Promise<Message> {
+	async sendMessage(@Body() body: any, @Request() req) : Promise<Message> {
 		try {
-			return await this.chatService.sendMessage(body.message);
+			const raw = body?.message ?? {};
+			const chatId = Number(raw.chatId);
+			const content = typeof raw.content === 'string' ? raw.content : null;
+			if (!chatId || (!content && content !== null))
+				throw new HttpException('Invalid message payload', HttpStatus.BAD_REQUEST);
+
+			const userId = Number(req.user.id);
+			const allowed = await this.chatService.getUserIdChat(userId, chatId);
+			if (!allowed)
+				throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+
+			return await this.chatService.sendMessage({ chatId, userId, content });
 		}catch (err) {
 			throw new HttpException(
 				err.message || 'Failed to send message',

@@ -7,7 +7,7 @@ import Users from 'src/interface/users.interface';
 
 @Injectable()
 export default class MatchService {
-	constructor(private database: Database) {}
+    constructor(private database: Database) {}
 
 	private async calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) : Promise<number> {
 		const R = 6378;
@@ -30,11 +30,113 @@ export default class MatchService {
 		return age;
 	}
 
-	private async findCommonTags(userTags: Tag[], otherUserTags: Tag[]) : Promise<number> {
-		return userTags.filter((tag) =>
-  otherUserTags.some((t) => t.tag === tag.tag)
-).length;
+    private async findCommonTags(userTags: Tag[], otherUserTags: Tag[]) : Promise<number> {
+        return userTags.filter((tag) => otherUserTags.some((t) => t.tag === tag.tag)).length;
+    }
 
+    private jaccardSimilarity(userTags: Tag[], otherUserTags: Tag[]): number {
+        try {
+            const a = new Set((userTags || []).map((t) => t.tag));
+            const b = new Set((otherUserTags || []).map((t) => t.tag));
+            if (a.size === 0 && b.size === 0) return 0;
+            let inter = 0;
+            for (const t of a) if (b.has(t)) inter++;
+            const union = new Set<string>([...a, ...b]).size || 1;
+            return inter / union;
+        } catch {
+            return 0;
+        }
+    }
+
+    private clamp01(n: number): number {
+        if (!Number.isFinite(n)) return 0;
+        if (n < 0) return 0;
+        if (n > 1) return 1;
+        return n;
+    }
+
+    private computeCompatibility(args: {
+        mySettings: Settings,
+        myAge: number,
+        myTags: Tag[],
+        otherSettings: Settings,
+        otherAge: number,
+        otherTags: Tag[],
+        distanceKm: number,
+        otherFame: number,
+        myFame: number,
+        likedYou: boolean,
+    }) {
+        const {
+            mySettings, myAge, myTags,
+            otherSettings, otherAge, otherTags,
+            distanceKm, otherFame, myFame, likedYou,
+        } = args;
+
+        // Weights (sum to 1). LikedYou adds a small bonus treated after weighting
+        const W_TAGS = 0.40;
+        const W_DISTANCE = 0.25;
+        const W_AGE = 0.25;
+        const W_FAME = 0.10;
+        const BONUS_LIKED = 0.05; // capped later
+
+        // Tags similarity via Jaccard
+        const tagSim = this.jaccardSimilarity(myTags, otherTags); // 0..1
+
+        // Distance: closer is better, normalized to my/max pref
+        const maxDist = Math.max(1, Number(mySettings.maxDistance || 1));
+        const distScore = this.clamp01(1 - (distanceKm / maxDist));
+
+        // Age fit: closeness to each other's preferred ranges
+        const myMin = Number(mySettings.minAgePreference ?? 18);
+        const myMax = Number(mySettings.maxAgePreference ?? 65);
+        const otherMin = Number(otherSettings.minAgePreference ?? 18);
+        const otherMax = Number(otherSettings.maxAgePreference ?? 65);
+        const myMid = (myMin + myMax) / 2;
+        const otherMid = (otherMin + otherMax) / 2;
+        const myHalf = Math.max(1, (myMax - myMin) / 2);
+        const otherHalf = Math.max(1, (otherMax - otherMin) / 2);
+        const fitOtherToMe = this.clamp01(1 - Math.abs(otherAge - myMid) / myHalf);
+        const fitMeToOther = this.clamp01(1 - Math.abs(myAge - otherMid) / otherHalf);
+        const ageScore = (fitOtherToMe + fitMeToOther) / 2;
+
+        // Fame fit: prefer closer fame within my allowed cap
+        const fameCap = Math.max(1, Number(mySettings.maxFameRating ?? 5));
+        const fameDiff = Math.abs((otherFame || 0) - (myFame || 0));
+        const fameScore = this.clamp01(1 - (fameDiff / fameCap));
+
+        const base = (tagSim * W_TAGS) + (distScore * W_DISTANCE) + (ageScore * W_AGE) + (fameScore * W_FAME);
+        const finalScore = Math.min(1, base + (likedYou ? BONUS_LIKED : 0));
+
+        const breakdown = {
+            tags: Math.round(tagSim * W_TAGS * 100),
+            distance: Math.round(distScore * W_DISTANCE * 100),
+            age: Math.round(ageScore * W_AGE * 100),
+            fame: Math.round(fameScore * W_FAME * 100),
+            likedBonus: likedYou ? Math.round(BONUS_LIKED * 100) : 0,
+        };
+        const percentage = Math.max(0, Math.min(100, Math.round(finalScore * 100)));
+        return { percentage, breakdown };
+    }
+
+	private isOrientationCompatible(my: Settings, other: Settings): boolean {
+		const mine = (my.sexualOrientation ?? 'bisexual') as any;
+		const theirs = (other.sexualOrientation ?? 'bisexual') as any;
+
+		const sameGender = my.gender === other.gender;
+		const differentGender = my.gender !== other.gender;
+
+		const meOk =
+			mine === 'bisexual' ? true :
+			mine === 'heterosexual' ? differentGender :
+			mine === 'homosexual' ? sameGender : true;
+
+		const otherOk =
+			theirs === 'bisexual' ? true :
+			theirs === 'heterosexual' ? differentGender :
+			theirs === 'homosexual' ? sameGender : true;
+
+		return meOk && otherOk;
 	}
 
 	async getMatches(userId: number) : Promise<any> {
@@ -45,46 +147,80 @@ export default class MatchService {
 			if (!userSettings) throw new Error('User settings not found');
 			const userTags = await this.database.getRows('tags_entity', [], { settingsId: userSettings.id }) as Tag[];
 			const userPictures = await this.database.getRows('picture', [], { settingsId: userSettings.id }) as Picture[];
-			if (userTags.length === 0) throw new Error('User has no tags');
-			if (userPictures.length === 0) throw new Error('User has no pictures');
+			if (!Array.isArray(userTags) || userTags.length === 0) return [];
+			if (!Array.isArray(userPictures) || userPictures.length === 0) return [];
 			const potentialUsersSetting = await this.database.getRows('settings', []) as Settings[];
-			if (potentialUsersSetting.length === 0) throw new Error('No potential users found');
+			if (!Array.isArray(potentialUsersSetting) || potentialUsersSetting.length === 0) return [];
 		
-			const potentialUsers = await Promise.all(potentialUsersSetting.map(async (settings) => {
-				if (Number(settings.userId) === userId) return null
-				const otherTags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
-				const distance = await this.calculateDistance(userSettings.latitude, userSettings.longitude, settings.latitude, settings.longitude);
-				const commonTagsCount = await this.findCommonTags(userTags, otherTags);
-				if (commonTagsCount === 0 || distance > userSettings.maxDistance || distance > settings.maxDistance) return null;
-				const otherUser = await this.database.getFirstRow('users', [], { id: settings.userId }) as Users;
-				if (!otherUser) return null;
-				delete otherUser.password;
-				delete otherUser.email;
-				if (userExists.blockedIds.includes(Number(settings.userId)) || otherUser.blockedIds.includes(userId)) {
-					return null; // L'un des deux a bloqué l'autre, donc on ignore cette personne
-				}
-				// Vérification de la compatibilité des orientations sexuelles
-				const isCompatible = (userSettings.sexualOrientation === 'heterosexual' && settings.gender !== userSettings.gender) ||
-						(userSettings.sexualOrientation === 'homosexual' && settings.gender === userSettings.gender) ||
-						1;
-
-				const otherIsCompatible = (settings.sexualOrientation === 'heterosexual' && userSettings.gender !== settings.gender) ||
-						(settings.sexualOrientation === 'homosexual' && userSettings.gender === settings.gender) ||
-						1;
-				if (!isCompatible || !otherIsCompatible) return null;
-				const age = await this.calculeAge(otherUser.birthday);
-				if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;
-				const userLikeOther = await this.database.getRows('action', [], { userId: userId, targetUserId: settings.userId, status: 'like'});
-				const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
-				if (userLikeOther.length > 0) return null;
-				const otherPictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
-				if (otherPictures.length === 0) return null;
-				const otherFameRating = await this.getFameRating(otherUser.id);
-				const userFameRating = await this.getFameRating(userId);
-				if (otherFameRating > userSettings.maxFameRating || userFameRating > settings.maxFameRating) return null;
-				return { user: otherUser, settings, tags: otherTags, pictures: otherPictures, distance, age, likedYou: userLikeReverse.length > 0 };
-			}));
-			return potentialUsers.filter((user) => user !== null);
+            const myAge = await this.calculeAge(userExists.birthday);
+            const potentialUsers = await Promise.all(potentialUsersSetting.map(async (settings) => {
+                if (Number(settings.userId) === userId) return null
+                const otherTags = await this.database.getRows('tags_entity', [], { settingsId: settings.id }) as Tag[];
+                const distance = await this.calculateDistance(userSettings.latitude, userSettings.longitude, settings.latitude, settings.longitude);
+                const commonTagsCount = await this.findCommonTags(userTags, otherTags);
+                if (commonTagsCount === 0 || distance > userSettings.maxDistance || distance > settings.maxDistance) return null;
+                const otherUser = await this.database.getFirstRow('users', [], { id: settings.userId }) as Users;
+                if (!otherUser) return null;
+                delete otherUser.password;
+                delete otherUser.email;
+                const myBlocked = Array.isArray(userExists.blockedIds) ? userExists.blockedIds : [];
+                const theirBlocked = Array.isArray(otherUser.blockedIds) ? otherUser.blockedIds : [];
+                if (myBlocked.includes(Number(settings.userId)) || theirBlocked.includes(userId)) {
+                    return null;
+                }
+                if (!this.isOrientationCompatible(userSettings, settings)) return null;
+                const age = await this.calculeAge(otherUser.birthday);
+                if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;
+                const userLikeOther = await this.database.getRows('action', [], { userId: userId, targetUserId: settings.userId, status: 'like'});
+                const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
+                if (userLikeOther.length > 0) return null;
+                const otherPictures = await this.database.getRows('picture', [], { settingsId: settings.id }) as Picture[];
+                if (otherPictures.length === 0) return null;
+                const otherFameRating = await this.getFameRating(otherUser.id);
+                const userFameRating = await this.getFameRating(userId);
+                if (otherFameRating > userSettings.maxFameRating || userFameRating > settings.maxFameRating) return null;
+                const compatibility = this.computeCompatibility({
+                    mySettings: userSettings,
+                    myAge,
+                    myTags: userTags,
+                    otherSettings: settings,
+                    otherAge: age,
+                    otherTags,
+                    distanceKm: distance,
+                    otherFame: otherFameRating,
+                    myFame: userFameRating,
+                    likedYou: userLikeReverse.length > 0,
+                });
+                return {
+                    user: otherUser,
+                    settings,
+                    tags: otherTags,
+                    pictures: otherPictures,
+                    distance,
+                    age,
+                    likedYou: userLikeReverse.length > 0,
+                    commonTagsCount,
+                    fameRating: otherFameRating,
+                    compatibility,
+                };
+            }));
+			const areaThresholdKm = 10;
+			return potentialUsers
+				.filter((u: any) => u !== null)
+				.sort((a: any, b: any) => {
+					const aSame = Number(a.distance !== undefined && a.distance <= areaThresholdKm);
+					const bSame = Number(b.distance !== undefined && b.distance <= areaThresholdKm);
+					if (aSame !== bSame) return bSame - aSame;
+					const da = typeof a.distance === 'number' ? a.distance : Number.POSITIVE_INFINITY;
+					const db = typeof b.distance === 'number' ? b.distance : Number.POSITIVE_INFINITY;
+					if (da !== db) return da - db;
+					const ta = a.commonTagsCount ?? 0;
+					const tb = b.commonTagsCount ?? 0;
+					if (ta !== tb) return tb - ta;
+					const fa = a.fameRating ?? 0;
+					const fb = b.fameRating ?? 0;
+					return fb - fa;
+				});
 		} catch (error) {
 			throw new Error(`Failed to get matches: ${error.message}`);
 		}

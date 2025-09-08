@@ -1,47 +1,84 @@
-import React, { useState } from 'react';
-import { Github, Mail, Chrome } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
 
 interface OmniAuthProps {
   onSocialLogin: (provider: string) => Promise<void>;
 }
 
 const OmniAuth: React.FC<OmniAuthProps> = ({ onSocialLogin }) => {
-  const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSocialLogin = async (provider: string) => {
-    setIsLoading(provider);
-    try {
-      await onSocialLogin(provider);
-    } catch (error) {
-      console.error(`${provider} login error:`, error);
-    } finally {
-      setIsLoading(null);
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    if (!clientId) {
+      setError('Google client ID non configuré');
+      return;
     }
-  };
+    const loadScript = () => new Promise<void>((resolve, reject) => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Google script'));
+      document.head.appendChild(script);
+    });
 
-  const socialProviders = [
-    {
-      name: 'Google',
-      key: 'google',
-      icon: Chrome,
-      color: 'from-red-500 to-orange-500',
-      hoverColor: 'from-red-600 to-orange-600'
-    },
-    {
-      name: 'Facebook',
-      key: 'facebook',
-      icon: Mail,
-      color: 'from-blue-600 to-blue-700',
-      hoverColor: 'from-blue-700 to-blue-800'
-    },
-    {
-      name: 'GitHub',
-      key: 'github',
-      icon: Github,
-      color: 'from-gray-800 to-gray-900',
-      hoverColor: 'from-gray-900 to-black'
-    }
-  ];
+    let cancelled = false;
+    (async () => {
+      try {
+        await loadScript();
+        if (cancelled) return;
+
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (resp: any) => {
+            const idToken = resp?.credential;
+            if (!idToken) return;
+            try {
+              const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ idToken }),
+              });
+              if (!res.ok) throw new Error(`auth failed ${res.status}`);
+              await onSocialLogin('google');
+            } catch (e) {
+              setError('Échec de la connexion Google');
+              console.error(e);
+            }
+          },
+          ux_mode: 'popup',
+          auto_select: false,
+        });
+
+        if (containerRef.current) {
+          window.google.accounts.id.renderButton(containerRef.current, {
+            theme: 'outline',
+            size: 'large',
+            shape: 'pill',
+            width: 320,
+            text: 'continue_with',
+            logo_alignment: 'left',
+          });
+        }
+      } catch (e) {
+        setError('Impossible de charger Google Sign-In');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [onSocialLogin]);
 
   return (
     <div className="space-y-3">
@@ -55,19 +92,11 @@ const OmniAuth: React.FC<OmniAuthProps> = ({ onSocialLogin }) => {
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {socialProviders.map(({ name, key, icon: Icon, color, hoverColor }) => (
-          <button
-            key={key}
-            onClick={() => handleSocialLogin(key)}
-            disabled={isLoading === key}
-            className={`w-full flex items-center justify-center space-x-2 py-3 px-4 border border-gray-300 rounded-xl text-white font-medium transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r ${color} hover:${hoverColor}`}
-          >
-            <Icon className="w-5 h-5" />
-            <span>
-              {isLoading === key ? 'Connexion...' : `Continuer avec ${name}`}
-            </span>
-          </button>
-        ))}
+        {error ? (
+          <div className="text-center text-red-500 text-sm">{error}</div>
+        ) : (
+          <div ref={containerRef} className="flex justify-center" />
+        )}
       </div>
     </div>
   );

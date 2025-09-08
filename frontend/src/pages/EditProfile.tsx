@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
-import PhotoGallery from '../components/PhotoGallery';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, Camera, X, Plus } from 'lucide-react';
+import { Save, X, Plus } from 'lucide-react';
+import type ISettings from '@/interface/settings.interface';
+import { UserGender, UserSexualOrientation } from '@/interface/settings.interface';
+import { useToast } from '@/hooks/use-toast';
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
+  const { toast } = useToast();
+  const AVAILABLE_TAGS = useMemo(() => [
+    'artist','gamer','traveler','foodie','fitness','music','photography','books','movies','nature','yoga','cooking','dancing','hiking','tech','fashion','sports','wine','coffee','cats','dogs','beach','mountains','adventure'
+  ], []);
+
+  type LocalPhoto = { id?: number; url: string; isProfile?: boolean; isNew?: boolean; file?: File };
+
   const [formData, setFormData] = useState({
     bio: '',
-    gender: '',
-    lookingFor: '',
+    gender: UserGender.Undefined as UserGender,
+    lookingFor: UserSexualOrientation.Undefined as UserSexualOrientation,
     tags: [] as string[],
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
   });
-  const [photos, setPhotos] = useState<Array<{id: string, url: string}>>([]);
-  const [newTag, setNewTag] = useState('');
+  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -21,31 +32,113 @@ const EditProfile = () => {
       [e.target.name]: e.target.value,
     });
   };
-
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newTag.trim()) {
-      e.preventDefault();
-      if (!formData.tags.includes(newTag.trim())) {
-        setFormData({
-          ...formData,
-          tags: [...formData.tags, newTag.trim()],
-        });
-      }
-      setNewTag('');
-    }
+  const toggleTag = (tag: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.includes(tag) ? prev.tags.filter(t => t !== tag) : [...prev.tags, tag]
+    }));
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
+  const removePhoto = (url: string) => {
+    setPhotos((prev) => prev.filter(p => p.url !== url));
+  };
+
+  const setProfilePhoto = (url: string) => {
+    setPhotos((prev) => prev.map(p => ({ ...p, isProfile: p.url === url })));
+  };
+
+  const onAddFiles = (files: FileList | null) => {
+    if (!files) return;
+    const list = Array.from(files);
+    const remaining = Math.max(0, 5 - photos.length);
+    const toAdd = list.slice(0, remaining);
+    const newLocal = toAdd.map((f) => ({ url: URL.createObjectURL(f), isNew: true, file: f } as LocalPhoto));
+    setPhotos((prev) => [...prev, ...newLocal]);
+    setNewFiles((prev) => [...prev, ...toAdd]);
+  };
+
+  useEffect(() => {
+    if (!user?.settings) return;
+    const s = user.settings as unknown as ISettings;
+    const normalize = (url?: string) => {
+      if (!url) return '';
+      if (/^https?:/i.test(url) || url.startsWith('blob:')) return url;
+      if (url.startsWith('/api/')) return `${import.meta.env.VITE_API_URL}${url}`;
+      return `${import.meta.env.VITE_API_URL}/api${url}`;
+    };
     setFormData({
-      ...formData,
-      tags: formData.tags.filter(tag => tag !== tagToRemove),
+      bio: s.biography ?? '',
+      gender: s.gender ?? UserGender.Undefined,
+      lookingFor: s.sexualOrientation ?? UserSexualOrientation.Undefined,
+      tags: (s.tags ?? []).map((t: any) => t.tag),
+      latitude: s.latitude,
+      longitude: s.longitude,
     });
-  };
+    const pics = (s.pictures ?? []).map((p: any) => ({ id: p.id, url: normalize(p.url), isProfile: p.isProfile })) as LocalPhoto[];
+    setPhotos(pics);
+  }, [user?.settings]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Profile updated:', formData);
-    // Here you would typically make an API call to update the profile
+    (async () => {
+      try {
+        const keptExisting = photos.filter(p => !p.isNew).map(p => {
+          let u = p.url.replace(`${import.meta.env.VITE_API_URL}`, '');
+          u = u.replace(/^\/api/, '');
+          return { url: u, isProfile: !!p.isProfile };
+        });
+        const newOnes = photos.filter(p => p.isNew && p.file);
+        const picturesPayload = [
+          ...keptExisting,
+          ...newOnes.map(p => ({ url: '', isProfile: !!p.isProfile })),
+        ];
+        const tagsPayload = formData.tags.map(t => ({ tag: t }));
+        const genderMap: any = formData.gender;
+        const orientationMap: any = formData.lookingFor;
+        const data: any = {
+          biography: formData.bio,
+          gender: genderMap,
+          sexualOrientation: orientationMap,
+          pictures: picturesPayload,
+          tags: tagsPayload,
+        };
+        if (typeof formData.latitude === 'number' && isFinite(formData.latitude)) data.latitude = formData.latitude;
+        if (typeof formData.longitude === 'number' && isFinite(formData.longitude)) data.longitude = formData.longitude;
+
+        const fd = new FormData();
+        fd.append('data', JSON.stringify(data));
+        newOnes.forEach((p) => {
+          if (p.file) fd.append('files', p.file);
+        });
+
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings`, {
+          method: 'PATCH',
+          credentials: 'include',
+          body: fd,
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = payload?.message || 'Failed to update profile';
+          throw new Error(msg);
+        }
+
+        try {
+          const meRes = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          if (meRes.ok) {
+            const me = await meRes.json();
+            updateUser({ settings: me.settings, profileCompleted: !!me.settings });
+          }
+        } catch {}
+
+        toast({ title: 'Profil mis à jour', description: 'Tes modifications ont été enregistrées.' });
+      } catch (err) {
+        console.error(err);
+        toast({ title: 'Échec de la mise à jour', description: (err as Error).message, variant: 'destructive' });
+      }
+    })();
   };
 
   return (
@@ -55,17 +148,30 @@ const EditProfile = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Profile</h1>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Photo Gallery Section */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Photos</h2>
-              <PhotoGallery
-                photos={photos}
-                onPhotosChange={setPhotos}
-                maxPhotos={5}
-              />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {photos.map((p, idx) => (
+                  <div key={p.url} className="relative group">
+                    <img src={p.url} alt={`photo-${idx}`} className="w-full h-40 object-cover rounded-xl border" />
+                    <button type="button" onClick={() => removePhoto(p.url)} className="absolute top-2 right-2 bg-white/90 rounded-full p-1 shadow hover:bg-white">
+                      <X className="w-4 h-4 text-gray-700" />
+                    </button>
+                    <label className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 rounded text-xs cursor-pointer shadow">
+                      <input type="radio" name="profilePhoto" checked={!!p.isProfile} onChange={() => setProfilePhoto(p.url)} className="mr-1" />
+                      Profile
+                    </label>
+                  </div>
+                ))}
+                {photos.length < 5 && (
+                  <label className="flex items-center justify-center h-40 border-2 border-dashed rounded-xl text-gray-500 cursor-pointer hover:bg-gray-50">
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => onAddFiles(e.target.files)} />
+                    <div className="flex items-center space-x-2"><Plus className="w-4 h-4" /><span>Add photos</span></div>
+                  </label>
+                )}
+              </div>
             </div>
 
-            {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
@@ -73,12 +179,11 @@ const EditProfile = () => {
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="non-binary">Non-binary</option>
+                  <option value="man">Man</option>
+                  <option value="woman">Woman</option>
                   <option value="other">Other</option>
                 </select>
               </div>
@@ -89,17 +194,51 @@ const EditProfile = () => {
                   name="lookingFor"
                   value={formData.lookingFor}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select Preference</option>
-                  <option value="men">Men</option>
-                  <option value="women">Women</option>
-                  <option value="everyone">Everyone</option>
+                  <option value="heterosexual">Heterosexual</option>
+                  <option value="bisexual">Bisexual</option>
+                  <option value="homosexual">Homosexual</option>
                 </select>
               </div>
             </div>
 
-            {/* Bio */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={formData.latitude ?? ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value === '' ? undefined : Number(e.target.value) }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={formData.longitude ?? ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value === '' ? undefined : Number(e.target.value) }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!navigator.geolocation) return alert('Geolocation not supported');
+                  navigator.geolocation.getCurrentPosition((pos) => {
+                    setFormData(prev => ({ ...prev, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
+                  }, () => alert('Permission denied'));
+                }}
+                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200"
+              >Use my current location</button>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
               <textarea
@@ -108,43 +247,29 @@ const EditProfile = () => {
                 onChange={handleInputChange}
                 rows={4}
                 placeholder="Tell us about yourself..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
             </div>
 
-            {/* Tags/Interests */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Interests</label>
-              <div className="mb-4">
-                <input
-                  type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={handleAddTag}
-                  placeholder="Add an interest and press Enter"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
-              </div>
               <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 bg-pink-100 text-pink-600 rounded-full text-sm"
-                  >
-                    #{tag}
+                {AVAILABLE_TAGS.map(tag => {
+                  const active = formData.tags.includes(tag);
+                  return (
                     <button
+                      key={tag}
                       type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-2 text-pink-400 hover:text-pink-600"
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1 rounded-full text-sm border ${active ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}
                     >
-                      <X className="w-4 h-4" />
+                      #{tag}
                     </button>
-                  </span>
-                ))}
+                  )
+                })}
               </div>
             </div>
 
-            {/* Submit Button */}
             <div className="pt-6">
               <button
                 type="submit"

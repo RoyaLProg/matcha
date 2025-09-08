@@ -40,7 +40,7 @@ class SocketsService {
 				return socket;
 			}
 		}
-		return undefined; // Si aucun socket n'est trouvé
+		return undefined;
 	}
 
 	getNotificationByUserId(userId: string, type: NotificationType, message: string) : Boolean {

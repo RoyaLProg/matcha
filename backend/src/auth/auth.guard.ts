@@ -11,9 +11,10 @@ export default class AuthGuard implements CanActivate {
 
 	validateRequest(request: Request): boolean {
 		const jwt = request.cookies['Auth'];
+		if (!jwt) return false;
 		try {
-			this.jwtService.verify(jwt, {secret: process.env.JWT_SECRET});
-			request['user'] = this.jwtService.decode(jwt);
+			const payload = this.jwtService.verify(jwt, {secret: process.env.JWT_SECRET});
+			request['user'] = payload;
 		} catch (e) {
 			return false;
 		}

@@ -12,7 +12,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requireProfileComplete = true 
 }) => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, isLoadingUser } = useAuth();
+
+  if (isLoadingUser) return null;
 
   if (!isLoggedIn || !user) {
     return <Navigate to="/" replace />;
@@ -23,7 +25,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
 if (!requireProfileComplete && user.profileCompleted) {
-  // Il veut aller sur /first-connection mais il a déjà fini son profil => va sur /home
   return <Navigate to="/home" replace />;
 }
 

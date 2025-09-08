@@ -8,9 +8,16 @@ import { Database } from 'src/database/Database';
 import Chat from 'src/interface/chat.interface';
 import UserService from 'src/user/user.service';
 
-const joiningUsers = new Map<string, boolean>(); //
+const joiningUsers = new Map<string, boolean>();
 
-@WebSocketGateway()
+@WebSocketGateway({
+    cors: {
+        origin: process.env.URL || 'http://localhost:8080',
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Authorization", "Content-Type"],
+        credentials: true,
+    },
+})
 class ChatGateway {
 	@WebSocketServer()
 	server: Server;
@@ -34,7 +41,6 @@ class ChatGateway {
 		  joiningUsers.set(client.id, true);
 
 		  try {
-			// Quitte toutes les rooms sauf la room personnelle
 			for (const joinedRoom of client.rooms) {
 			  if (joinedRoom !== client.id) {
 				client.leave(joinedRoom);
@@ -52,6 +58,14 @@ class ChatGateway {
 			const hasAccess = await this.chatService.getUserIdChat(Number(userId), Number(id));
 			if (!hasAccess) return;
 
+			const chat = await this.dataBase.getFirstRow('chat', [], { id: Number(id) }) as Chat;
+			const me = await this.dataBase.getFirstRow('users', [], { id: Number(userId) });
+			const otherId = chat.userId === Number(userId) ? chat.targetUserId : chat.userId;
+			const other = await this.dataBase.getFirstRow('users', [], { id: otherId });
+			if ((Array.isArray(me?.blockedIds) && me.blockedIds.includes(otherId)) || (Array.isArray(other?.blockedIds) && other.blockedIds.includes(Number(userId)))) {
+				return;
+			}
+
 			await client.join(room);
 
 			const messages = await this.chatService.getMessagesByChatId(Number(id));
@@ -61,7 +75,7 @@ class ChatGateway {
 		  } catch (error) {
 			this.logger.error(`Error while client ${client.id} joined room ${room}`, error);
 		  } finally {
-			joiningUsers.delete(client.id); // Libère le "lock"
+			joiningUsers.delete(client.id);
 		  }
 	}
 
@@ -71,22 +85,80 @@ class ChatGateway {
 		const chat = await this.dataBase.getFirstRow('chat', [], { id: message.chatId }) as Chat;
 		const socketsInRoom = await this.server.in(room).fetchSockets();
 		const recevidId = chat.userId === message.userId ? chat.targetUserId : chat.userId;
-		console.log (recevidId);
 		const socket = this.socketService.getSocketByUserId(recevidId.toString());
-		console.log(socket?.id);
 		if (socket?.id) {
 			const isSocketInRoom = socketsInRoom.some(s => s.id === socket.id);
 			if (!isSocketInRoom) {
-				this.socketService.getNotificationByUserId(
-					recevidId.toString(),
-					NotificationType.Info,
-					`Nouveau message de ${(await this.userService.findOne(message.userId)).username}`
-				);
-				socket.emit('chat1');
+					this.socketService.getNotificationByUserId(
+						recevidId.toString(),
+						NotificationType.Info,
+						`Nouveau message de ${(await this.userService.findOne(message.userId)).username}`
+					);
 				this.logger.log(`Message envoyé à user ${recevidId} (socket ${socket.id}) en dehors de la room`);
 			}
 		}
 		this.logger.log(`Message émis à la room ${room}: ${JSON.stringify(message)}`);
+	}
+
+	@SubscribeMessage('webrtc-offer')
+	async handleWebRTCOffer(client: Socket, payload: any) {
+		try {
+			const userId = this.socketService.getUserId(client);
+			const chatId = Number(payload.chatId);
+			if (!await this.chatService.getUserIdChat(Number(userId), chatId)) return;
+			const chat = await this.dataBase.getFirstRow('chat', [], { id: chatId }) as Chat;
+			const recevidId = chat.userId === Number(userId) ? chat.targetUserId : chat.userId;
+			this.socketService.getSocketByUserId(recevidId.toString())?.emit('webrtc-offer', {
+				chatId,
+				offer: payload.offer,
+				type: payload.type,
+				fromUserId: Number(userId)
+			});
+		} catch (e) {}
+	}
+
+	@SubscribeMessage('webrtc-answer')
+	async handleWebRTCAnswer(client: Socket, payload: any) {
+		try {
+			const userId = this.socketService.getUserId(client);
+			const chatId = Number(payload.chatId);
+			if (!await this.chatService.getUserIdChat(Number(userId), chatId)) return;
+			const chat = await this.dataBase.getFirstRow('chat', [], { id: chatId }) as Chat;
+			const recevidId = chat.userId === Number(userId) ? chat.targetUserId : chat.userId;
+			this.socketService.getSocketByUserId(recevidId.toString())?.emit('webrtc-answer', {
+				chatId,
+				answer: payload.answer,
+				fromUserId: Number(userId)
+			});
+		} catch (e) {}
+	}
+
+	@SubscribeMessage('webrtc-ice-candidate')
+	async handleWebRTCIceCandidate(client: Socket, payload: any) {
+		try {
+			const userId = this.socketService.getUserId(client);
+			const chatId = Number(payload.chatId);
+			if (!await this.chatService.getUserIdChat(Number(userId), chatId)) return;
+			const chat = await this.dataBase.getFirstRow('chat', [], { id: chatId }) as Chat;
+			const recevidId = chat.userId === Number(userId) ? chat.targetUserId : chat.userId;
+			this.socketService.getSocketByUserId(recevidId.toString())?.emit('webrtc-ice-candidate', {
+				chatId,
+				candidate: payload.candidate,
+				fromUserId: Number(userId)
+			});
+		} catch (e) {}
+	}
+
+	@SubscribeMessage('webrtc-hangup')
+	async handleWebRTCHangup(client: Socket, payload: any) {
+		try {
+			const userId = this.socketService.getUserId(client);
+			const chatId = Number(payload.chatId);
+			if (!await this.chatService.getUserIdChat(Number(userId), chatId)) return;
+			const chat = await this.dataBase.getFirstRow('chat', [], { id: chatId }) as Chat;
+			const recevidId = chat.userId === Number(userId) ? chat.targetUserId : chat.userId;
+			this.socketService.getSocketByUserId(recevidId.toString())?.emit('webrtc-hangup', { chatId, fromUserId: Number(userId) });
+		} catch (e) {}
 	}
 
 	@SubscribeMessage(`LeaveRoom`)

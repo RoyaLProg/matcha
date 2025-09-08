@@ -32,6 +32,8 @@ const FirstConnection = () => {
     tags: [] as string[],
     location: '',
     allowLocation: false,
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
   });
   
   const [photos, setPhotos] = useState<string[]>([]);
@@ -79,10 +81,13 @@ const FirstConnection = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          const { latitude, longitude } = position.coords;
           setFormData(prev => ({
             ...prev,
-            location: `${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)}`,
-            allowLocation: true
+            location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+            latitude,
+            longitude,
+            allowLocation: true,
           }));
           toast({
             title: "Location detected",
@@ -137,7 +142,6 @@ const FirstConnection = () => {
     let longitude = formData.longitude;
 
 
-    // Fallback géolocalisation via IP si désactivée
     if (!formData.allowLocation) {
       const res = await fetch('http://ip-api.com/json/');
       const loc = await res.json();
@@ -147,7 +151,14 @@ const FirstConnection = () => {
       }
     }
 
-    // Construction du payload
+    if ((latitude === undefined || longitude === undefined) && formData.location) {
+      const m = formData.location.split(',').map(s => parseFloat(s.trim()));
+      if (m.length === 2 && isFinite(m[0]) && isFinite(m[1])) {
+        latitude = m[0];
+        longitude = m[1];
+      }
+    }
+
     const form = new FormData();
 
     photos.forEach((photo, index) => {
@@ -180,7 +191,6 @@ const FirstConnection = () => {
 
     if (!response.ok) throw new Error("Request failed");
 
-    // ✅ Update context
     updateUser({
       profilePicture: photos[profilePicIndex],
       settings: { ...formData, latitude, longitude },
@@ -208,7 +218,6 @@ const FirstConnection = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-400 to-sky-400 rounded-full mb-4">
             <Heart className="w-8 h-8 text-white" />
@@ -222,7 +231,6 @@ const FirstConnection = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
-          {/* Gender */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-4">
               Gender <span className="text-blue-500">*</span>
@@ -247,7 +255,6 @@ const FirstConnection = () => {
             </RadioGroup>
           </div>
 
-          {/* Sexual Preference */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-4">
               Interested in <span className="text-blue-500">*</span>
@@ -272,7 +279,6 @@ const FirstConnection = () => {
             </RadioGroup>
           </div>
 
-          {/* Biography */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Biography <span className="text-blue-500">*</span>
@@ -289,7 +295,6 @@ const FirstConnection = () => {
             </p>
           </div>
 
-          {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-4">
               Interests & Tags
@@ -317,7 +322,6 @@ const FirstConnection = () => {
             )}
           </div>
 
-          {/* Photos */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-4">
               Photos <span className="text-blue-500">*</span>
@@ -373,7 +377,6 @@ const FirstConnection = () => {
             </div>
           </div>
 
-          {/* Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-4">
               Location

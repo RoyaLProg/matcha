@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Request, Body, Param, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Controller, UseGuards, Post, Request, Body, Param, NotFoundException, BadRequestException, Get } from '@nestjs/common';
 import AuthGuard from 'src/auth/auth.guard';
 import IReport from 'src/interface/report.interface';
 import UserService from 'src/user/user.service';
@@ -25,11 +25,26 @@ class ReportController {
 				type: body.type,
 				moreInfo: body.moreInfo
 			}
-			console.log(report);
 			return this.reportService.addReport(report);
 		} catch (e) {
 			throw new BadRequestException('something went wrong');
 		}	
+	}
+
+	@Get('mine')
+	@UseGuards(AuthGuard)
+	async listMine(@Request() req: any) {
+		try {
+			return await this.reportService.getReportsSentBy(req.user.id);
+		} catch (e) { throw new BadRequestException('something went wrong'); }
+	}
+
+	@Get('received')
+	@UseGuards(AuthGuard)
+	async listReceived(@Request() req: any) {
+		try {
+			return await this.reportService.getReportsReceivedBy(req.user.id);
+		} catch (e) { throw new BadRequestException('something went wrong'); }
 	}
 
 }

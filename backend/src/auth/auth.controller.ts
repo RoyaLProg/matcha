@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { TokenType } from 'src/interface/auth.interface';
 import AuthGuard from './auth.guard';
+import { OAuth2Client } from 'google-auth-library';
 
 type MyOmit<T, K extends PropertyKey> =
     { [P in keyof T as Exclude<P, K>]: T[P] }
@@ -33,19 +34,28 @@ export class AuthController {
 		if (value.length < 8 || value.length > 255)
 			return ('password must be between 8 and 255 charaters long');
 
-		const i1 = new RegExp(/[_\-\*@!]/).test(value);
+		const i1 = new RegExp(/[^A-Za-z0-9_\s]/).test(value);
 		const i2 = new RegExp(/[0-9]/).test(value);
 		const i3 = new RegExp(/[a-z]/).test(value);
 		const i4 = new RegExp(/[A-Z]/).test(value);
 
 		if (!i1)
-			return ('password must contain at least a special charater (_-*@!)');
+			return ('password must contain at least one special character');
 		if (!i2)
 			return ('password must contain at least a number');
 		if (!i3)
 			return ('password must contain at least a lowercase charater');
 		if (!i4)
 			return ('password must contain at least a uppercase charater');
+
+		const weakWords = [
+			'password','qwerty','letmein','welcome','dragon','football','monkey','iloveyou','admin','login','princess','solo','starwars','sunshine','flower','shadow','superman','baseball','master','hello','freedom','whatever','qazwsx','trustno1','passw0rd','default','matcha'
+		];
+		const lower = value.toLowerCase();
+		for (const w of weakWords) {
+			if (lower === w || lower.includes(w))
+				return ('password is too common');
+		}
 		return null;
 	}
 
@@ -73,7 +83,7 @@ export class AuthController {
 		if (!value || !value.length)
 			return 'you must provide your birthday'
 
-		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000); // time in a year
+		let x = new Date(new Date().getTime() - new Date(value).getTime()).getTime() / (31556952000);
 
 		if( x < 18)
 			return 'you must be at least 18 years old to register'
@@ -127,8 +137,8 @@ export class AuthController {
 		return error;
 	}
 
-	@Post('register')
-	async register(@Body() body,@Res() res: Response) {
+  @Post('register')
+  async register(@Body() body,@Res() res: Response) {
 		const user: Users = {
 			firstName: body.firstName,
 			lastName: body.lastName,
@@ -143,8 +153,7 @@ export class AuthController {
 		if (errors)
 			throw new BadRequestException(errors);
 
-		const hash = sha256.create();
-		user.password = hash.update(user.password).hex();
+		user.password = await this.authService.hashPassword(user.password);
 		let result: Users;
 
 		try {
@@ -169,16 +178,19 @@ export class AuthController {
 		return res.status(201).send({ message: 'account has been created, please confirm you email !' });
 	}
 
-	@Delete('verify/:token')
-	async verify(@Param('token') token: string, @Res() res: Response) {
+  @Delete('verify/:token')
+  async verify(@Param('token') token: string, @Res() res: Response) {
 		if (! token.length)
 			throw new BadRequestException('token is empty');
 
-		const Authtoken = await this.authService.getToken(token) as Object;
+		const Authtoken = await this.authService.getToken(token) as any;
 		if (!Authtoken)
 			throw new BadRequestException('token is invalid');
 		if (Authtoken['type'] !== TokenType.CREATE)
 			throw new BadRequestException('token is invalid');
+		const createdAt = new Date(Authtoken['createdAt'] ?? 0).getTime();
+		if (!createdAt || Date.now() - createdAt > 60 * 60 * 1000)
+			throw new BadRequestException('token expired');
 		let user = Authtoken['users'];
 		if (user.isValidated === true)
 			throw new BadRequestException('user is already validated');
@@ -191,24 +203,86 @@ export class AuthController {
 		return res.status(200).send({ message: 'email has been verified' });
 	}
 
-	@Post('login')
-	async login(@Body() body, @Res({passthrough: true}) res: Response) {
-			const hash = sha256.create();
-			const password = hash.update(body.password).hex();
+  @Post('login')
+  async login(@Body() body, @Res({passthrough: true}) res: Response) {
 			if (this.checkUsername(body.username))
 				throw new UnauthorizedException('username or password incorrect');
-			const user: Users | null = await this.authService.getLogin(body.username, password);
+			const user: Users | null = await this.authService.getLogin(body.username, body.password);
 			if (!user)
 				throw new UnauthorizedException('username or password incorrect');
 			if (!user.isValidated)
 				throw new UnauthorizedException('you need to verify your email first');
 			const payload = { id: user.id };
-			const jwt: string = this.jwtService.sign(payload, {secret: process.env.JWT_SECRET});
-			let eat = new Date();
-			eat.setMonth(eat.getMonth() + 2);
-			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: false, expires: eat, path: '/'});
-			res.status(200).send({ message: 'Login successful!' });
+    const jwt: string = this.jwtService.sign(payload, {secret: process.env.JWT_SECRET, expiresIn: '7d'});
+			const maxAge = 7 * 24 * 60 * 60 * 1000;
+            res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge, path: '/'});
+            res.status(200).send({ message: 'Login successful!' });
+  }
+
+	@Post('logout')
+	async logout(@Res({ passthrough: true }) res: Response) {
+		res.cookie('Auth', '', { sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', expires: new Date(0), path: '/' });
+		return { message: 'Logged out' };
 	}
+
+  @Post('google')
+  async googleLogin(@Body() body, @Res({ passthrough: true }) res: Response) {
+		const { idToken } = body || {};
+		if (!idToken)
+			throw new BadRequestException('missing idToken');
+
+		const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+		let ticket;
+		try {
+			ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
+		} catch (e) {
+			throw new UnauthorizedException('invalid google token');
+		}
+		const payload = ticket.getPayload();
+		if (!payload || !payload.email)
+			throw new UnauthorizedException('google payload invalid');
+
+		const email = payload.email;
+		const emailVerified = payload.email_verified === true;
+		const firstName = payload.given_name || 'User';
+		const lastName = payload.family_name || '';
+		const suggestedUsername = (email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20);
+
+		let user: Users | null = null;
+		try {
+			user = await this.userService.findOneByEmail(email);
+		} catch {}
+
+		if (!user) {
+			const hash = sha256.create();
+			const randomPasswordPlain = hash.update(Math.random().toString(36)).hex();
+			let username = suggestedUsername;
+			for (let i = 0; i < 10; i++) {
+				try {
+					await this.userService.findOneByUsername(username);
+					username = `${suggestedUsername}_${Math.floor(Math.random() * 1000)}`.slice(0, 20);
+				} catch {
+					break;
+				}
+			}
+			const defaultBirthday = new Date('1990-01-01');
+				user = await this.authService.addUser({
+					firstName,
+					lastName,
+					username,
+					password: await this.authService.hashPassword(randomPasswordPlain),
+					birthday: defaultBirthday.toISOString().slice(0,10) as any,
+					email,
+					isValidated: emailVerified,
+				} as Users);
+		}
+
+		const payloadJwt = { id: user.id };
+		const jwt: string = this.jwtService.sign(payloadJwt, {secret: process.env.JWT_SECRET, expiresIn: '7d'});
+		const maxAge = 7 * 24 * 60 * 60 * 1000;
+		res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge, path: '/'});
+		return { message: 'Login successful!' };
+  }
 
 	@Post('forgot')
 	async forgot(@Body() body, @Res() res: Response) {
@@ -236,8 +310,8 @@ export class AuthController {
 		return res.status(200).send({ message: 'if the user exists, an email has been sent' });
 	}
 
-	@Patch('forgot/:token')
-	async changePassword(@Param('token') token: string, @Body() body, @Res() res: Response) {
+  @Patch('forgot/:token')
+  async changePassword(@Param('token') token: string, @Body() body, @Res() res: Response) {
 		if (! token.length)
 			throw new BadRequestException('token is empty');
 
@@ -246,14 +320,17 @@ export class AuthController {
 			throw new BadRequestException('token is invalid');
 		if (Authtoken.type !== TokenType.PASS_RESET)
 			throw new BadRequestException('token is invalid');
-		if (!this.checkPassword(body.password))
-			throw new BadRequestException('password does not comply with requirements');
+		const createdAt = new Date((Authtoken as any)['createdAt'] ?? 0).getTime();
+		if (!createdAt || Date.now() - createdAt > 60 * 60 * 1000)
+			throw new BadRequestException('token expired');
+		const passErr = this.checkPassword(body.password);
+		if (passErr)
+			throw new BadRequestException(passErr || 'password does not comply with requirements');
 
 		let user = Authtoken['users'];
 		user.birthday = new Date(user.birthday).toISOString().slice(0,10);
 
-		const hash = sha256.create();
-		user.password = hash.update(body.password).hex();
+		user.password = await this.authService.hashPassword(body.password);
 		this.authService.updateUser(user);
 
 		await this.authService.deleteToken(token);

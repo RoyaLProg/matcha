@@ -10,18 +10,13 @@ export default class UserGuard implements CanActivate {
 	){}
 
 	validateRequest(request: Request): boolean {
-		const jwt = request.cookies['auth'];
-		
+		const jwt = request.cookies['Auth'];
 		try {
 			const jwtDecoded = this.jwtService.verify(jwt, {secret: process.env.JWT_SECRET});
 			const path = request.originalUrl.split('/');
 			const id = Number(path[path.length - 1]);
-
-			if (!id)
-				return true;
-
-			if (id !== jwtDecoded['id'])
-				return false;
+			if (!Number.isFinite(id) || id <= 0) return false;
+			if (id !== jwtDecoded['id']) return false;
 		} catch (e) {
 			return false;
 		}

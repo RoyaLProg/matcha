@@ -99,6 +99,17 @@ CREATE TABLE IF NOT EXISTS chat (
     CONSTRAINT fk_target_user FOREIGN KEY ("targetUserId") REFERENCES Users (id) ON DELETE CASCADE
 );
 
+-- Ensure uniqueness of pairs (userId, targetUserId) regardless of order
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'chat_unique_pair_idx'
+    ) THEN
+        CREATE UNIQUE INDEX chat_unique_pair_idx
+        ON chat (LEAST("userId","targetUserId"), GREATEST("userId","targetUserId"));
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS message (
     id SERIAL PRIMARY KEY,
     "chatId" INT NOT NULL,
@@ -149,3 +160,26 @@ CREATE TABLE IF NOT EXISTS report (
     CONSTRAINT fk_user_report FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE,
     CONSTRAINT fk_from_report FOREIGN KEY ("from") REFERENCES Users (id) ON DELETE CASCADE
 );
+
+-- Events
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables WHERE table_name = 'event'
+    ) THEN
+        CREATE TABLE event (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT DEFAULT '',
+            date DATE NULL,
+            time VARCHAR(16) NULL,
+            location VARCHAR(255) DEFAULT '',
+            "organizerId" INT NOT NULL,
+            "maxAttendees" INT DEFAULT 2,
+            "isPrivate" BOOLEAN DEFAULT FALSE,
+            "attendeeIds" INT[] DEFAULT array[]::INT[],
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_organizer_event FOREIGN KEY ("organizerId") REFERENCES Users (id) ON DELETE CASCADE
+        );
+    END IF;
+END $$;

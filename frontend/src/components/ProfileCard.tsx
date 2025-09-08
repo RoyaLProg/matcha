@@ -19,6 +19,8 @@ interface ProfileCardProps {
     photos: string[];
     isOnline: boolean;
     fameRating: number;
+    tagMatch?: number;
+    compatibility?: { percentage?: number, breakdown?: { tags: number, distance: number, age: number, fame: number, likedBonus?: number } };
   };
   onLike?: (id: string) => void;
   onPass?: (id: string) => void;
@@ -27,7 +29,6 @@ interface ProfileCardProps {
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onPass }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-      {/* Photo Carousel */}
       <div className="relative h-80 bg-gradient-to-br from-blue-200 to-sky-200">
         {profile.photos.length > 0 ? (
           <Carousel className="w-full h-full">
@@ -55,18 +56,22 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onPass }) =>
           </div>
         )}
         
-        {/* Online Status */}
         {profile.isOnline && (
           <div className="absolute top-4 left-4 w-3 h-3 bg-green-400 rounded-full border-2 border-white z-10"></div>
         )}
         
-        {/* Fame Rating */}
-        <div className="absolute top-4 right-4 flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full z-10">
-          <Star className="w-4 h-4 text-yellow-500" />
-          <span className="text-sm font-medium">{profile.fameRating}</span>
+        <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
+          {typeof profile.compatibility?.percentage === 'number' && (
+            <div className="flex items-center space-x-1 bg-pink-50/90 text-pink-700 px-2 py-1 rounded-full shadow-sm">
+              <span className="text-xs font-semibold">{profile.compatibility.percentage}% match</span>
+            </div>
+          )}
+          <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+            <Star className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm font-medium">{profile.fameRating}</span>
+          </div>
         </div>
         
-        {/* Photo indicator dots */}
         {profile.photos.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
             {profile.photos.map((_, index) => (
@@ -79,22 +84,20 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onPass }) =>
         )}
       </div>
 
-      {/* Content */}
       <div className="p-6">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xl font-semibold text-gray-900">
             {profile.name}, {profile.age}
           </h3>
-          <div className="flex items-center text-gray-500 text-sm">
-            <MapPin className="w-4 h-4 mr-1" />
-            {profile.location}
-          </div>
+        <div className="flex items-center text-gray-500 text-sm">
+          <MapPin className="w-4 h-4 mr-1" />
+          {profile.location}
         </div>
+      </div>
 
         <p className="text-gray-600 text-sm mb-4 line-clamp-3">{profile.bio}</p>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4">
           {profile.tags.slice(0, 3).map((tag, index) => (
             <span
               key={index}
@@ -108,9 +111,36 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onPass }) =>
               +{profile.tags.length - 3} more
             </span>
           )}
+          {typeof profile.tagMatch === 'number' && (
+            <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+              {profile.tagMatch} common
+            </span>
+          )}
         </div>
 
-        {/* Action Buttons */}
+        {typeof profile.compatibility?.percentage === 'number' && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+              <span>Compatibility</span>
+              <span className="font-medium">{profile.compatibility.percentage}%</span>
+            </div>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-gradient-to-r from-pink-500 to-fuchsia-500"
+                style={{ width: `${Math.max(0, Math.min(100, profile.compatibility.percentage))}%` }}
+              />
+            </div>
+            {profile.compatibility.breakdown && (
+              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-gray-500">
+                <div>Tags: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.tags}%</span></div>
+                <div>Distance: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.distance}%</span></div>
+                <div>Age: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.age}%</span></div>
+                <div>Fame: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.fame}%</span></div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex space-x-3">
           <button
             onClick={() => onPass?.(profile.id)}

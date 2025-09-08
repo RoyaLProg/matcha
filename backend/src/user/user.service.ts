@@ -23,9 +23,8 @@ export default class UserService {
 		const settings = await this.database.getFirstRow('settings', [], { userId: id }) as Settings;
 		if (settings) {
 			user.settings = settings;
-			const tags = await this.database.getRows('tags_entity', [], { settingsId: settings.id })// as Tag[];
-			const pictures = await this.database.getRows('picture', [], { settingsId: settings.id })// as Picture[];
-			// console.log(tags, pictures);
+			const tags = await this.database.getRows('tags_entity', [], { settingsId: settings.id })
+			const pictures = await this.database.getRows('picture', [], { settingsId: settings.id })
 			if (tags)
 				settings.tags = tags.map((v) => {return v as Tag});
 			if (pictures)
@@ -57,24 +56,35 @@ export default class UserService {
 		return user as Users;
 	}
 
+	async findOneByEmail(email: string) : Promise<Users> {
+		const user = await this.database.getFirstRow('users', [], { email });
+		if (!user)
+			throw new Error('User not found');
+		return user as Users;
+	}
+
 	async blockUser(userId: number, targetUserId: number) : Promise<void> {
 		const user = await this.database.getFirstRow('users', ['blockedIds'], { id: userId }) as Users;
 		if (!user)
 			throw new Error('User not found');
 
-		let updatedBlockedIds = [...user.blockedIds, targetUserId];
+		const current = Array.isArray(user.blockedIds) ? user.blockedIds : [];
+		const updatedBlockedIds = current.includes(targetUserId) ? current : [...current, targetUserId];
 
-		await this.database.updateRows('Users', { blockedIds: updatedBlockedIds }, { id: userId });
+		await this.database.updateRows('users', { blockedIds: updatedBlockedIds }, { id: userId });
 		await this.database.deleteRows('chat', { userId: userId, targetUserId: targetUserId });
 		await this.database.deleteRows('chat', { userId: targetUserId, targetUserId: userId });
 		await this.database.deleteRows('action', { userId: userId, targetUserId: targetUserId });
 		await this.database.deleteRows('action', { userId: targetUserId, targetUserId: userId });
 	}
 
-	async unblockUser(userId: Users, targetUserId: number) : Promise<void> {
-		const user = (await this.database.getFirstRow('Users', [], {id: userId})) as Users;
-		const newBlockedIds = user.blockedIds.filter((v) => v != targetUserId);
-		await this.database.updateRows('Users', { blockedIds: newBlockedIds }, {id: userId});
+	async unblockUser(userId: number, targetUserId: number) : Promise<void> {
+		const user = (await this.database.getFirstRow('users', ['blockedIds'], { id: userId })) as Users;
+		if (!user)
+			throw new Error('User not found');
+		const current = Array.isArray(user.blockedIds) ? user.blockedIds : [];
+		const newBlockedIds = current.filter((v) => v != targetUserId);
+		await this.database.updateRows('users', { blockedIds: newBlockedIds }, { id: userId });
 	}
 
 	async getFameRating(userId: number) {

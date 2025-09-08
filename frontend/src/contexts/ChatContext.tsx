@@ -1,240 +1,161 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
-
-interface Message {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  timestamp: Date;
-  read: boolean;
-}
-
-interface Conversation {
-  id: string;
-  participants: string[];
-  lastMessage?: Message;
-  unreadCount: number;
-  user: {
-    id: string;
-    name: string;
-    avatar: string;
-    isOnline: boolean;
-  };
-}
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { WebSocketContext } from "./WebSocketContext";
+import { UserContext } from "./UserContext";
+import Chat from "../interface/chat.interface";
+import Message from "../interface/message.interface";
 
 interface ChatContextType {
-  conversations: Conversation[];
-  messages: { [conversationId: string]: Message[] };
-  sendMessage: (conversationId: string, content: string) => void;
-  markAsRead: (conversationId: string) => void;
-  getUnreadCount: () => number;
+  chats: Chat[] | undefined;
+  refreshChats: () => void;
+  sendMessage: (newMessage: Message) => void;
+  sendMediaMessage: (chatId: number, file: File, type: "audio" | "video") => void;
 }
 
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
+interface IChat extends Chat {}
 
-export const useChat = () => {
-  const context = useContext(ChatContext);
-  if (!context) {
-    throw new Error('useChat must be used within a ChatProvider');
-  }
-  return context;
+export const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+const sortMessages = (messages: Message[]): Message[] => {
+  if (!Array.isArray(messages)) return [];
+  return messages.sort((a, b) => {
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return timeA - timeB;
+  });
 };
 
-export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<{ [conversationId: string]: Message[] }>({});
+const ChatProvider = ({ children }: { children: ReactNode }) => {
+  const [chats, setChats] = useState<Chat[]>();
+  const user = useContext(UserContext);
+  const socket = useContext(WebSocketContext)
 
-  // Mock conversations
-  const mockConversations: Conversation[] = [
-    {
-      id: '1',
-      participants: ['current-user', 'emma'],
-      unreadCount: 2,
-      user: {
-        id: 'emma',
-        name: 'Emma',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b332c1b0',
-        isOnline: true,
-      },
-    },
-    {
-      id: '2',
-      participants: ['current-user', 'alex'],
-      unreadCount: 0,
-      user: {
-        id: 'alex',
-        name: 'Alex',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-        isOnline: false,
-      },
-    },
-    {
-      id: '3',
-      participants: ['current-user', 'maya'],
-      unreadCount: 1,
-      user: {
-        id: 'maya',
-        name: 'Maya',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80',
-        isOnline: true,
-      },
-    },
-  ];
+  const fetchChats = async () => {
+    if (!user) return;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
+      const data = await response.json();
 
-  // Mock messages
-  const mockMessages = {
-    '1': [
-      {
-        id: '1',
-        senderId: 'emma',
-        receiverId: 'current-user',
-        content: 'Hey! Thanks for the like! 😊',
-        timestamp: new Date(Date.now() - 3600000),
-        read: true,
-      },
-      {
-        id: '2',
-        senderId: 'current-user',
-        receiverId: 'emma',
-        content: 'Hi! I loved your hiking photos, they look amazing!',
-        timestamp: new Date(Date.now() - 3500000),
-        read: true,
-      },
-      {
-        id: '3',
-        senderId: 'emma',
-        receiverId: 'current-user',
-        content: 'Thank you! I love being outdoors. Do you hike often?',
-        timestamp: new Date(Date.now() - 300000),
-        read: false,
-      },
-    ],
-    '2': [
-      {
-        id: '4',
-        senderId: 'alex',
-        receiverId: 'current-user',
-        content: 'Nice to match with you!',
-        timestamp: new Date(Date.now() - 7200000),
-        read: true,
-      },
-    ],
-    '3': [
-      {
-        id: '5',
-        senderId: 'maya',
-        receiverId: 'current-user',
-        content: 'Love your music taste! 🎵',
-        timestamp: new Date(Date.now() - 1800000),
-        read: false,
-      },
-    ],
+      if (!Array.isArray(data)) return setChats([]);
+      const updatedChats = await Promise.all(
+        data.map(async (chat: IChat) => {
+          if (!Array.isArray(chat.messages)) chat.messages = [];
+          else chat.messages = await sortMessages(chat.messages);
+          return chat;
+        })
+      );
+      setChats(updatedChats);
+
+    } catch (error) {
+      console.error("Erreur lors de la récupération des chats :", error);
+    }
   };
 
   useEffect(() => {
-    setConversations(mockConversations);
-    setMessages(mockMessages);
-  }, []);
-
-  const sendMessage = (conversationId: string, content: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: 'current-user',
-      receiverId: conversations.find(c => c.id === conversationId)?.user.id || '',
-      content,
-      timestamp: new Date(),
-      read: true,
+    if (!user || !socket) return;
+    fetchChats();
+    const handleNewChat = (newChat: Chat) => {
+      setChats((prevChats) => {
+        if (!prevChats) return [newChat];
+        if (!prevChats.find((chat) => chat.id === newChat.id)) return [...prevChats, newChat];
+        return prevChats;
+      });
     };
+    const handleReceiveMessage = async (newMessage: Message) => {
+      setChats((prevChats) => {
+        if (!prevChats) return prevChats;
+        return prevChats.map((chat) => {
+          if (chat.id === newMessage.chatId) {
+            return {
+              ...chat,
+              messages: [...(chat.messages ?? []), newMessage].sort(
+                (a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime()
+              ),
+            };
+          }
+          return chat;
+        });
+      });
+    };
+    const handleReceiveMessages = async (newMessages: Message[]) => {
+      setChats((prevChats) => {
+        if (!prevChats) return prevChats;
+        return prevChats.map((chat) => {
+          const messagesForChat = newMessages?.filter(msg => msg.chatId === chat.id);
+          if (messagesForChat?.length === 0) return chat;
+          return {
+            ...chat,
+            messages: messagesForChat?.sort(
+              (a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime()
+            ),
+          };
+        });
+      });
+    };
+    socket.on('newChat', handleNewChat);
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on('receiveMessages', handleReceiveMessages);
+    return () => {
+      socket.off('newChat', handleNewChat);
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off('receiveMessages', handleReceiveMessages);
+    };
+  }, [socket]);
 
-    setMessages(prev => ({
-      ...prev,
-      [conversationId]: [...(prev[conversationId] || []), newMessage],
-    }));
-
-    // Update last message in conversation
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === conversationId
-          ? { ...conv, lastMessage: newMessage }
-          : conv
-      )
-    );
-
-    // Simulate response
-    setTimeout(() => {
-      const responses = [
-        "That sounds great!",
-        "I'd love to hear more about that!",
-        "Really? That's interesting!",
-        "Awesome! 😊",
-        "Tell me more!",
-      ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
-      const responseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        senderId: conversations.find(c => c.id === conversationId)?.user.id || '',
-        receiverId: 'current-user',
-        content: randomResponse,
-        timestamp: new Date(),
-        read: false,
-      };
-      
-      setMessages(prev => ({
-        ...prev,
-        [conversationId]: [...(prev[conversationId] || []), responseMessage],
-      }));
-
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === conversationId
-            ? { 
-                ...conv, 
-                lastMessage: responseMessage,
-                unreadCount: conv.unreadCount + 1
-              }
-            : conv
-        )
-      );
-    }, 1000 + Math.random() * 2000);
+  const refreshChats = async () => {
+    await fetchChats();
   };
 
-  const markAsRead = (conversationId: string) => {
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === conversationId
-          ? { ...conv, unreadCount: 0 }
-          : conv
-      )
-    );
+  const sendMessage = async (newMessage: Message) => {
+    if (newMessage.chatId) {
+      try {
+        const payload = {
+          chatId: newMessage.chatId,
+          content: newMessage.content,
+          type: newMessage.type,
+        };
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/sendmessage`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: payload }),
+        });
+        if (!response.ok) throw new Error("Failed to send message");
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    }
+  }
 
-    setMessages(prev => ({
-      ...prev,
-      [conversationId]: (prev[conversationId] || []).map(msg =>
-        msg.receiverId === 'current-user' ? { ...msg, read: true } : msg
-      ),
-    }));
-  };
+  const sendMediaMessage = async (chatId: number, file: File, type: "audio" | "video") => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-  const getUnreadCount = () => {
-    return conversations.reduce((total, conv) => total + conv.unreadCount, 0);
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/upload/${chatId}/${type}`;
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error(`Failed to send ${type} message`);
+    } catch (error) {
+      console.error(`Error sending ${type} message:`, error);
+    }
   };
 
   return (
-    <ChatContext.Provider
-      value={{
-        conversations,
-        messages,
-        sendMessage,
-        markAsRead,
-        getUnreadCount,
-      }}
-    >
+    <ChatContext.Provider value={{ chats, refreshChats, sendMessage, sendMediaMessage }}>
       {children}
     </ChatContext.Provider>
   );
 };
+
+export default ChatProvider;

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from '@/components/ui/sonner';
-import { jwtDecode } from 'jwt-decode';
 interface User {
   id: string;
   email: string;
@@ -42,13 +41,7 @@ export const useAuth = () => {
   return context;
 };
 
-function getCookie(name: string): string | undefined {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : undefined;
-}
-
 function clearAuthCookie() {
-  document.cookie = 'Auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 }
 
 
@@ -60,57 +53,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
 async function updateUserFromCookie(): Promise<User | null> {
-  if (typeof document === 'undefined') return null;
-
-  const token = getCookie('Auth');
-  if (!token) {
-    setUser(null);
-    setIsLoggedIn(false);
-    setIsLoadingUser(false); // 👈 ici
-    return null;
-  }
-
   try {
-    const decoded: any = jwtDecode(token);
-    const isExpired = decoded?.exp && decoded.exp * 1000 < Date.now();
-    if (isExpired) {
-      clearAuthCookie();
-      setUser(null);
-      setIsLoggedIn(false);
-      setIsLoadingUser(false); // 👈 ici aussi
-      return null;
-    }
-
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
       method: 'GET',
       credentials: 'include',
     });
-
     if (!res.ok) {
-      clearAuthCookie();
       setUser(null);
       setIsLoggedIn(false);
-      setIsLoadingUser(false); // 👈 encore ici
+      setIsLoadingUser(false);
       return null;
     }
-
     const u = await res.json();
-    let complete = false;
-    if (u?.settings)
-      complete = true;
-    const user = { ...u, profileCompleted: complete };
+    const user = { ...u, profileCompleted: !!u?.settings };
     setUser(user);
     setIsLoggedIn(true);
-    setIsLoadingUser(false); // 👈 et ici
+    setIsLoadingUser(false);
     return user;
-
   } catch (err) {
-    console.error("Erreur updateUserFromCookie:", err);
+    console.error('Erreur updateUserFromCookie:', err);
     setUser(null);
     setIsLoggedIn(false);
-    setIsLoadingUser(false); // 👈 dernière fois
-    return null
-
+    setIsLoadingUser(false);
+    return null;
   }
 }
 
@@ -157,11 +122,7 @@ useEffect(() => {
       return false;
     }
 
-    // Appelle ta fonction de mise à jour du contexte utilisateur si elle existe
-    const user = await updateUserFromCookie();
-    if (user) {
-      console.log("✅ Utilisateur à jour immédiatement :", user);
-    }
+    await updateUserFromCookie();
 
     toast.success("Connexion réussie !");
     return true;
@@ -225,7 +186,10 @@ useEffect(() => {
   };
 
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch {}
     setUser(null);
     setIsLoggedIn(false);
     localStorage.removeItem('matcha_user');

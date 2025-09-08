@@ -11,7 +11,6 @@ export enum TagCategory {
 }
 
 export enum Tags {
-	// Interests
 	Cinema = 'cinema',
 	Netflix = 'netflix',
 	Youtube = 'youtube',
@@ -22,7 +21,6 @@ export enum Tags {
 	Travel = 'travel',
 	Photography = 'photography',
 
-	// Sports
 	Football = 'football',
 	Basketball = 'basketball',
 	Swimming = 'swimming',
@@ -33,14 +31,12 @@ export enum Tags {
 	Hiking = 'hiking',
 	Climbing = 'climbing',
 
-	// Lifestyle
 	Meditation = 'meditation',
 	Gardening = 'gardening',
 	Volunteering = 'volunteering',
 	Gaming = 'gaming',
 	Writing = 'writing',
 
-	// Gastronomy
 	Vegetarian = 'vegetarian',
 	Vegan = 'vegan',
 	StreetFood = 'street_food',
@@ -49,20 +45,17 @@ export enum Tags {
 	Wine = 'wine',
 	Barbecue = 'barbecue',
 
-	// Culture
 	Fantasy = 'fantasy',
 	Documentaries = 'documentaries',
 	Anime = 'anime',
 	History = 'history',
 	Mythology = 'mythology',
 
-	// Technology
 	Startups = 'startups',
 	Cryptocurrencies = 'cryptocurrencies',
 	Robotics = 'robotics',
 	Programming = 'programming',
 
-	// Personality
 	Adventurous = 'adventurous',
 	Introvert = 'introvert',
 	Extrovert = 'extrovert',

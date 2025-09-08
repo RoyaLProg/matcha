@@ -2,9 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { ChatProvider } from "./contexts/ChatContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import UserProvider from "./contexts/UserContext";
+import WebSocketProvider from "./contexts/WebSocketContext";
+import ChatProvider from "./contexts/ChatContext";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -14,23 +16,33 @@ import FirstConnection from "./pages/FirstConnection";
 import HomePage from "./pages/HomePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RedirectIfAuthenticated from "./components/RedirectIfAuthenticated";
+import SearchPage from "./pages/SearchPage";
+import EditProfile from "./pages/EditProfile";
+import PublicProfile from "./pages/PublicProfile";
+import AccountPage from "./pages/AccountPage";
+import ChatListPage from "./pages/ChatListPage";
+import ChatPage from "./pages/ChatPage";
+import CallProvider from "./contexts/CallContext";
+import CallModal from "./components/CallModal";
+import EventsPage from "./pages/EventsPage";
 
 
 const queryClient = new QueryClient();
 
 function App() {
-
 	return (
-		// AuthProvider 
     <QueryClientProvider client={queryClient}>
 		<AuthProvider>
-      <ChatProvider>
+      <UserProvider>
+        <WebSocketProvider>
+          <CallProvider>
+          <ChatProvider>
 		 <TooltipProvider>
 			<Toaster />
 			<Sonner />
+            <CallModal />
           <BrowserRouter>
             <Routes>
-              {/* Public Routes */}
               <Route path="/" element={
   <RedirectIfAuthenticated>
     <Auth />
@@ -46,14 +58,23 @@ function App() {
                 </ProtectedRoute>)
               } />
               
-              {/* Protected Routes (require completed profile) */}
               <Route path="/home" element={
                 (console.log("routing vers /home"),
                 <ProtectedRoute>
                   <HomePage />
                 </ProtectedRoute>)
               } />
-               {/*<Route path="/search" element={
+              <Route path="/chat" element={
+                <ProtectedRoute>
+                  <ChatListPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/chat/:id" element={
+                <ProtectedRoute>
+                  <ChatPage />
+                </ProtectedRoute>
+              } />
+               <Route path="/search" element={
                 <ProtectedRoute>
                   <SearchPage />
                 </ProtectedRoute>
@@ -73,27 +94,20 @@ function App() {
                   <AccountPage />
                 </ProtectedRoute>
               } />
-              <Route path="/chat" element={
+              <Route path="/events" element={
                 <ProtectedRoute>
-                  <ChatListPage />
+                  <EventsPage />
                 </ProtectedRoute>
               } />
-              <Route path="/chat/:userId" element={
-                <ProtectedRoute>
-                  <ChatPage />
-                </ProtectedRoute>
-              } /> */}
               
-              {/* Legacy redirects
-              <Route path="/browse" element={<Navigate to="/home" replace />} />
-              <Route path="/profile" element={<Navigate to="/profile/edit" replace />} />
-               */}
-              {/* Catch-all route */}
-              {/* <Route path="*" element={<NotFound />} /> */}
+              
             </Routes>
           </BrowserRouter>
 		  </TooltipProvider>
-      </ChatProvider>
+          </ChatProvider>
+          </CallProvider>
+        </WebSocketProvider>
+      </UserProvider>
 		</AuthProvider>
     </QueryClientProvider>
 	)

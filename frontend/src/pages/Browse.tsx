@@ -13,7 +13,6 @@ const Browse = () => {
     interests: [] as string[]
   });
 
-  // Mock data
   const profiles = [
     {
       id: '1',
@@ -63,18 +62,15 @@ const Browse = () => {
 
   const handleLike = (profileId: string) => {
     console.log('Liked profile:', profileId);
-    // Here you would typically make an API call
   };
 
   const handlePass = (profileId: string) => {
     console.log('Passed on profile:', profileId);
-    // Here you would typically make an API call
   };
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Discover</h1>
@@ -83,16 +79,15 @@ const Browse = () => {
           
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 px-4 py-2 bg-white border border-pink-200 hover:border-pink-300 rounded-xl transition-all"
+            className="flex items-center space-x-2 px-4 py-2 bg-white border border-blue-200 hover:border-blue-300 rounded-xl transition-all"
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span>Filters</span>
           </button>
         </div>
 
-        {/* Filters Panel */}
         {showFilters && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-pink-100">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-blue-100">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -103,7 +98,7 @@ const Browse = () => {
                     type="number"
                     min="18"
                     max="65"
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="18"
                   />
                   <span className="text-gray-500">to</span>
@@ -111,7 +106,7 @@ const Browse = () => {
                     type="number"
                     min="18"
                     max="65"
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="65"
                   />
                 </div>
@@ -123,7 +118,7 @@ const Browse = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="City or area"
                 />
               </div>
@@ -134,7 +129,7 @@ const Browse = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., hiking, music, art"
                 />
               </div>
@@ -142,7 +137,6 @@ const Browse = () => {
           </div>
         )}
 
-        {/* Profiles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
           {profiles.map((profile) => (
             <ProfileCard

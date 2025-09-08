@@ -18,20 +18,20 @@ export enum UserSexualOrientation {
 }
 
 interface Settings {
-	id?: number;
-	userId: string;
-	latitude?: number;
-	longitude?: number;
-	maxDistance: number;
-	geoloc: boolean;
-	minAgePreference: number;
-	maxAgePreference: number;
-	maxFameRating: number;
-	biography: string;
-	gender: UserGender;
-	sexualOrientation: UserSexualOrientation;
-	pictures: Picture[];
-	tags: Tag[];
+    id?: number;
+    userId: string;
+    latitude?: number;
+    longitude?: number;
+    maxDistance: number;
+    geoloc: boolean;
+    minAgePreference: number;
+    maxAgePreference: number;
+    maxFameRating: number;
+    biography: string;
+    gender: UserGender;
+    sexualOrientation: UserSexualOrientation;
+    pictures: Picture[];
+    tags: Tag[];
 }
 
 export default Settings;

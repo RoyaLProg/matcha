@@ -4,10 +4,11 @@ import Layout from '../components/Layout';
 import ProfileCard from '../components/ProfileCard';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { ALL_TAGS } from '@/constants/tags';
 
 const HomePage = () => {
   const { user, updateUser } = useAuth();
-  const [sortBy, setSortBy] = useState('age');
+  const [sortBy, setSortBy] = useState('distance');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     ageRange: [18, 65],
@@ -19,14 +20,15 @@ const HomePage = () => {
   const [profiles, setProfiles] = useState<any[]>([]);
 const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
     if (!user?.settings) return;
     console.log(user);
     setFilters({
       ageRange: [user?.settings.minAgePreference, user?.settings.maxAgePreference],
-      fameRange: [0, user?.settings.maxFameRating], // ou [min, max] si tu stockes les deux
+      fameRange: [0, user?.settings.maxFameRating],
       distance: user?.settings.maxDistance,
-      tags: user?.settings.tags?.map(tag => tag.tag) || [],
+      tags: [],
     });
   }, [user?.settings]);
 
@@ -36,11 +38,23 @@ const [loading, setLoading] = useState(true);
       credentials: 'include',
     });
     const data = await res.json();
+    if (!res.ok || !Array.isArray(data)) {
+      console.error('getMatches returned non-array or error:', data);
+      setProfiles([]);
+      setLoading(false);
+      return;
+    }
+
+    const apiBase = import.meta.env.VITE_API_URL;
+    const toAbsolute = (u: string) => {
+      if (!u) return u;
+      if (/^https?:/i.test(u) || u.startsWith('blob:')) return u;
+      return `${apiBase}/api${u.startsWith('/') ? '' : '/'}${u}`;
+    };
 
     const mappedProfiles = await Promise.all(data.map(async (profile: any) => {
-      const { user, settings, tags, pictures, age, distance } = profile;
+      const { user, settings, tags, pictures, age, distance, fameRating, commonTagsCount, compatibility } = profile;
 
-      // Reverse geocoding
       let location = '';
       try {
         const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${settings.latitude}&longitude=${settings.longitude}&localityLanguage=en`);
@@ -57,10 +71,15 @@ const [loading, setLoading] = useState(true);
         location: location,
         bio: settings.biography,
         tags: tags.map((tag: any) => tag.tag),
-        photos: pictures.map((pic: any) => pic.url),
+        photos: pictures.map((pic: any) => toAbsolute(pic.url)),
         isOnline: user.status === 'online',
-        fameRating: settings.maxFameRating,
-        distance: distance.toFixed(1),
+        fameRating: fameRating ?? 0,
+        distance: Number(distance?.toFixed?.(1) ?? distance ?? 0),
+        tagMatch: commonTagsCount ?? 0,
+        compatibility: {
+          percentage: compatibility?.percentage ?? undefined,
+          breakdown: compatibility?.breakdown ?? undefined,
+        },
       };
     }));
 
@@ -82,7 +101,6 @@ useEffect(() => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user?.id,
           targetUserId,
           status,
         }),
@@ -116,17 +134,19 @@ useEffect(() => {
 
   const sendFiltersToBackend = async () => {
     try {
-      // cree la route filter 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/filter`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ageRange: filters.ageRange,
-          fameRange: filters.fameRange,
-          distance: filters.distance,
-        }),
+      const payload = {
+        minAgePreference: filters.ageRange[0],
+        maxAgePreference: filters.ageRange[1],
+        maxDistance: filters.distance,
+      };
+
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(payload));
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings`, {
+        method: "PATCH",
+        credentials: 'include',
+        body: formData,
       });
 
       if (!response.ok) throw new Error("Erreur lors de l'envoi des filtres");
@@ -140,14 +160,17 @@ useEffect(() => {
 const sortProfiles = (profiles: any[]) => {
   return [...profiles].sort((a, b) => {
     switch (sortBy) {
+      case "compatibility":
+        return (b.compatibility?.percentage ?? -1) - (a.compatibility?.percentage ?? -1);
       case "age":
         return a.age - b.age;
       case "distance":
         return a.distance - b.distance;
       case "fame":
-        return b.fameRating - a.fameRating; // tri décroissant
+        return b.fameRating - a.fameRating;
+      case "commonTags":
+        return (b.tagMatch ?? 0) - (a.tagMatch ?? 0);
       case "recent":
-        // Suppose que tu as un champ comme lastConnection ou status === 'online'
         return a.isOnline === b.isOnline ? 0 : a.isOnline ? -1 : 1;
       default:
         return 0;
@@ -155,10 +178,19 @@ const sortProfiles = (profiles: any[]) => {
   });
 };
 
+  const filteredProfiles = React.useMemo(() => {
+    return profiles.filter((p) => {
+      const ageOk = p.age >= filters.ageRange[0] && p.age <= filters.ageRange[1];
+      const distOk = typeof p.distance === 'number' ? p.distance <= filters.distance : true;
+      const fameOk = typeof p.fameRating === 'number' ? p.fameRating >= filters.fameRange[0] : true;
+      const tagsOk = filters.tags.length === 0 || filters.tags.some((t) => p.tags.includes(t));
+      return ageOk && distOk && fameOk && tagsOk;
+    });
+  }, [profiles, filters]);
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent mb-2">
             Discover People
@@ -166,7 +198,6 @@ const sortProfiles = (profiles: any[]) => {
           <p className="text-gray-600">Find your perfect match based on your preferences</p>
         </div>
 
-        {/* Controls */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-5 h-5" />
@@ -195,15 +226,16 @@ const sortProfiles = (profiles: any[]) => {
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition-all bg-white/80 backdrop-blur-sm"
             >
+              <option value="compatibility">Sort by Compatibility</option>
               <option value="age">Sort by Age</option>
               <option value="distance">Sort by Distance</option>
               <option value="fame">Sort by Fame Rating</option>
+              <option value="commonTags">Sort by Common Tags</option>
               <option value="recent">Recently Active</option>
             </select>
           </div>
         </div>
 
-        {/* Filters Panel */}
         {showFilters && (
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100 p-6 mb-8 blue-card-hover">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Filters</h3>
@@ -271,26 +303,51 @@ const sortProfiles = (profiles: any[]) => {
                 </div>
               </div>
               
-              <div>
+              <div className="md:col-span-2 lg:col-span-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Interests</label>
                 <div className="flex flex-wrap gap-2">
-                  {['hiking', 'yoga', 'coffee', 'travel', 'art', 'music'].map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors font-medium"
-                    >
-                      #{tag}
-                    </button>
-                  ))}
+                  {ALL_TAGS.map((tag) => {
+                    const active = filters.tags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                          active
+                            ? 'bg-blue-100 text-blue-700 border-blue-200'
+                            : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                        }`}
+                      >
+                        #{tag}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="col-span-full flex justify-end mt-4">
-                  <button
-                    onClick={sendFiltersToBackend}
-                    className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs hover:bg-blue-200 transition-colors font-medium"
-                  >
-                    Apply Filters
-                  </button>
+                <div className="flex flex-wrap gap-2 justify-between items-center mt-4">
+                  <div className="text-xs text-gray-500">{filters.tags.length} selected</div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFilters((prev) => ({ ...prev, tags: [] }))}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs hover:bg-gray-200"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFilters((prev) => ({ ...prev, tags: [...ALL_TAGS] }))}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs hover:bg-gray-200"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={sendFiltersToBackend}
+                      className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs hover:bg-blue-200 transition-colors font-medium"
+                    >
+                      Apply Filters
+                    </button>
+                  </div>
                 </div>
               </div>
               
@@ -298,18 +355,23 @@ const sortProfiles = (profiles: any[]) => {
           </div>
         )}
 
-        {/* Profile Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-          {sortProfiles(profiles).map((profile) => (
-            <ProfileCard
-              key={profile.id}
-              profile={profile}
-              onLike={handleLike}
-              onPass={handlePass}
-            />
-          ))}
-        </div>
+        {(!loading && sortProfiles(filteredProfiles).length === 0) ? (
+          <div className="text-center text-gray-600 py-16">
+            <p className="text-lg font-medium">Aucun profil correspondant pour le moment.</p>
+            <p className="text-sm mt-2">Vérifie tes préférences (âge, distance, tags) et assure-toi d'avoir au moins une photo et des centres d'intérêt.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortProfiles(filteredProfiles).map((profile) => (
+              <ProfileCard
+                key={profile.id}
+                profile={profile}
+                onLike={handleLike}
+                onPass={handlePass}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );

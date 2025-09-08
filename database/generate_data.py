@@ -1,24 +1,69 @@
 
 import bcrypt
 import random
+import time
 from faker import Faker
 import psycopg2
+from psycopg2 import sql
 import os
 
 DB_NAME = os.getenv("POSTGRES_DB")
 DB_USER = os.getenv("POSTGRES_USER")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 
-# Connexion PostgreSQL
-conn = psycopg2.connect(
-    dbname=DB_NAME,
-    user=DB_USER,
-    password=DB_PASSWORD,
-    host="database",
-    port="5432"
-)
-cursor = conn.cursor()
 fake = Faker("fr_FR")
+
+
+def wait_for_db(max_retries: int = 120, delay_seconds: float = 1.0):
+    """Wait for PostgreSQL to be ready and return a connection + cursor.
+
+    - Retries connection creation until success or max_retries.
+    - After connecting, waits until core tables exist (created by init SQL).
+    """
+    last_err = None
+    conn = None
+    for _ in range(max_retries):
+        try:
+            conn = psycopg2.connect(
+                dbname=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD,
+                host="database",
+                port="5432",
+            )
+            conn.autocommit = False
+            cursor = conn.cursor()
+            break
+        except Exception as e:
+            last_err = e
+            time.sleep(delay_seconds)
+    else:
+        raise RuntimeError(f"Unable to connect to database after {max_retries} retries: {last_err}")
+
+    # Ensure required tables exist (init script may still be running)
+    required_tables = {"users", "settings", "picture", "tags_entity"}
+    for _ in range(max_retries):
+        try:
+            cursor.execute(
+                """
+                SELECT LOWER(table_name)
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                """
+            )
+            present = {row[0] for row in cursor.fetchall()}
+            if required_tables.issubset(present):
+                return conn, cursor
+        except Exception:
+            pass
+        time.sleep(delay_seconds)
+
+    cursor.close()
+    conn.close()
+    raise RuntimeError("Database connected but required tables not found in time.")
+
+
+conn, cursor = wait_for_db()
 
 # Enums
 genders = ['man', 'woman', 'other']
@@ -34,11 +79,27 @@ def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def create_unique_username():
+    """Generate a username and ensure it is unique in DB.
+
+    Appends a small random suffix and validates against the Users table.
+    """
     while True:
-        username = fake.user_name()[:50]
-        cursor.execute("SELECT 1 FROM Users WHERE username = %s", (username,))
+        base = fake.user_name()[:40]
+        # Keep username reasonably short and ASCII-like from faker
+        candidate = f"{base}{random.randint(0, 9999):04d}"
+        candidate = candidate[:50]
+        cursor.execute("SELECT 1 FROM Users WHERE username = %s", (candidate,))
         if not cursor.fetchone():
-            return username
+            return candidate
+
+
+def create_unique_email():
+    """Generate an email and ensure it is unique in DB."""
+    while True:
+        email = fake.email()[:255]
+        cursor.execute("SELECT 1 FROM Users WHERE email = %s", (email,))
+        if not cursor.fetchone():
+            return email
 
 def create_user():
     password = fake.password(length=12)
@@ -47,15 +108,18 @@ def create_user():
     first_name = fake.first_name_male() if gender == 'man' else (
         fake.first_name_female() if gender == 'woman' else fake.first_name())
     last_name = fake.last_name()
-    email = fake.email()[:255]
+    email = create_unique_email()
     birth_date = fake.date_of_birth(minimum_age=18, maximum_age=35)
-    username = create_unique_username() + str(random.randint(0, 999))
+    username = create_unique_username()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         INSERT INTO Users ("firstName", "lastName", email, birthday, username, password, "isValidated", "profilePicture")
         VALUES (%s, %s, %s, %s, %s, %s, %s, '')
         RETURNING id;
-    """, (first_name, last_name, email, birth_date, username, hashed_password, True))
+        """,
+        (first_name, last_name, email, birth_date, username, hashed_password, True),
+    )
 
     user_id = cursor.fetchone()[0]
     return user_id, gender
@@ -102,14 +166,21 @@ def create_tags(settings_id, tag_count=3):
         """, (settings_id, tag))
 
 def generate_users(count=500):
+    success = 0
     for _ in range(count):
-        user_id, gender = create_user()
-        settings_id = create_settings(user_id, gender)
-        create_picture(settings_id, gender)
-        create_tags(settings_id)
+        try:
+            user_id, gender = create_user()
+            settings_id = create_settings(user_id, gender)
+            create_picture(settings_id, gender)
+            create_tags(settings_id)
+            conn.commit()
+            success += 1
+        except Exception as e:
+            # Rollback this iteration and continue; don't abort whole run
+            conn.rollback()
+            print(f"[WARN] Skipping one user due to error: {e}")
 
-    conn.commit()
-    print(f"{count} utilisateurs générés avec succès.")
+    print(f"{success}/{count} utilisateurs générés avec succès.")
 
 if __name__ == "__main__":
     generate_users()

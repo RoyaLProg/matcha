@@ -16,27 +16,37 @@ import ActionService from './action/action.service';
 import MatchService from './action/match.service';
 import ChatService from './chat/chat.service';
 import ChatController from './chat/chat.controller';
-import { join } from 'path';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import ChatGateway from './chat/chat.gateway';
 import HistoryService from './history/history.service';
 import HistoryController from './history/history.controller';
 import ReportController from './report/report.controller';
 import ReportService from './report/report.service';
+import EventController from './event/event.controller';
+import EventService from './event/event.service';
 
 @Module({
 	imports: [
-		MailerModule.forRoot({
-			transport: `smtps://${process.env.EMAIL_USER}:${process.env.EMAIL_PASSWORD}@smtp.gmail.com`,
-			defaults: {
-				from: '"matcha noreply" <matcha.noreply@matcha.com>',
-			},
-		}),
+		MailerModule.forRoot((() => {
+			if (process.env.SMTP_HOST) {
+				return {
+					transport: {
+						host: process.env.SMTP_HOST,
+						port: Number(process.env.SMTP_PORT) || 1025,
+						secure: false,
+					},
+					defaults: {
+						from: '"matcha noreply" <noreply@matcha.local>',
+					},
+				};
+			}
+			return {
+				transport: `smtps://${process.env.EMAIL_USER}:${process.env.EMAIL_PASSWORD}@smtp.gmail.com`,
+				defaults: {
+					from: '"matcha noreply" <matcha.noreply@matcha.com>',
+				},
+			};
+		})()),
 		JwtModule,
-		ServeStaticModule.forRoot({
-			rootPath: join(__dirname, '..', 'uploads'), // 📂 Dossier à servir
-			serveRoot: '/upload', // 🔗 URL accessible
-		  }),
 	],
   controllers: [
 		UserController,
@@ -45,7 +55,8 @@ import ReportService from './report/report.service';
 		ActionController,
 		ChatController,
 		HistoryController,
-		ReportController
+		ReportController,
+		EventController
 	],
   providers: [
 		SocketsService,
@@ -61,7 +72,8 @@ import ReportService from './report/report.service';
 		AuthService,
 		Database,
 		HistoryService,
-		ReportService
+		ReportService,
+		EventService
 	],
 
 })
