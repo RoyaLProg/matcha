@@ -120,8 +120,9 @@ export default class MatchService {
     }
 
 	private isOrientationCompatible(my: Settings, other: Settings): boolean {
-		const mine = (my.sexualOrientation ?? 'bisexual') as any;
-		const theirs = (other.sexualOrientation ?? 'bisexual') as any;
+		// Si orientation non spécifiée = bisexuel par défaut (selon specs)
+		const mine = my.sexualOrientation || 'bisexual';
+		const theirs = other.sexualOrientation || 'bisexual';
 
 		const sameGender = my.gender === other.gender;
 		const differentGender = my.gender !== other.gender;
@@ -129,12 +130,12 @@ export default class MatchService {
 		const meOk =
 			mine === 'bisexual' ? true :
 			mine === 'heterosexual' ? differentGender :
-			mine === 'homosexual' ? sameGender : true;
+			mine === 'homosexual' ? sameGender : false;
 
 		const otherOk =
 			theirs === 'bisexual' ? true :
 			theirs === 'heterosexual' ? differentGender :
-			theirs === 'homosexual' ? sameGender : true;
+			theirs === 'homosexual' ? sameGender : false;
 
 		return meOk && otherOk;
 	}
@@ -170,7 +171,8 @@ export default class MatchService {
                 }
                 if (!this.isOrientationCompatible(userSettings, settings)) return null;
                 const age = await this.calculeAge(otherUser.birthday);
-                if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference || age < settings.minAgePreference || age > settings.maxAgePreference) return null;
+                if (age < userSettings.minAgePreference || age > userSettings.maxAgePreference) return null;
+                if (myAge < settings.minAgePreference || myAge > settings.maxAgePreference) return null;
                 const userLikeOther = await this.database.getRows('action', [], { userId: userId, targetUserId: settings.userId, status: 'like'});
                 const userLikeReverse = await this.database.getRows('action', [], { userId: settings.userId, targetUserId: userId, status: 'like'});
                 if (userLikeOther.length > 0) return null;
@@ -227,7 +229,7 @@ export default class MatchService {
 	}
 
 	async getFameRating(userId: number) {
-		const data = await this.database.getRows("history", undefined, {userId: userId, message: "a user liked your profile"});
+		const data = await this.database.getRows("history", undefined, {userId: userId, message: "%user% liked your profile"});
 		return data.length;
 	}
 

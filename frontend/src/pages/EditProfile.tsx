@@ -206,23 +206,17 @@ const EditProfile = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
                 <input
-                  type="number"
-                  step="0.0001"
+                  type="hidden"
                   value={formData.latitude ?? ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value === '' ? undefined : Number(e.target.value) }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
                 <input
-                  type="number"
-                  step="0.0001"
+                  type="hidden"
                   value={formData.longitude ?? ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value === '' ? undefined : Number(e.target.value) }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>

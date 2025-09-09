@@ -183,6 +183,6 @@ def generate_users(count=500):
     print(f"{success}/{count} utilisateurs générés avec succès.")
 
 if __name__ == "__main__":
-    generate_users()
+    generate_users(2000)
     cursor.close()
     conn.close()

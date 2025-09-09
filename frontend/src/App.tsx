@@ -8,7 +8,6 @@ import UserProvider from "./contexts/UserContext";
 import WebSocketProvider from "./contexts/WebSocketContext";
 import ChatProvider from "./contexts/ChatContext";
 
-import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import EmailConfirmation from "./pages/EmailConfirmation";

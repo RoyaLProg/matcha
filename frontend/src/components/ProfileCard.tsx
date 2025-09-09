@@ -1,5 +1,6 @@
 import React from 'react';
-import { Heart, X, MapPin, Star } from 'lucide-react';
+import { Heart, X, MapPin, Star, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Carousel,
   CarouselContent,
@@ -29,31 +30,54 @@ interface ProfileCardProps {
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, onPass }) => {
+  const navigate = useNavigate();
+
+  const handleViewProfile = () => {
+    navigate(`/profile/${profile.id}`);
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-      <div className="relative h-80 bg-gradient-to-br from-blue-200 to-sky-200">
+      <div className="relative h-80 bg-gradient-to-br from-blue-200 to-sky-200 group">
         {profile.photos.length > 0 ? (
-          <Carousel className="w-full h-full">
-            <CarouselContent>
-              {profile.photos.map((photo, index) => (
-                <CarouselItem key={index}>
-                  <img
-                    src={photo}
-                    alt={`${profile.name}'s photo ${index + 1}`}
-                    className="w-full h-80 object-cover"
-                  />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            {profile.photos.length > 1 && (
-              <>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </>
-            )}
-          </Carousel>
+          <div className="relative w-full h-full">
+            <Carousel className="w-full h-full">
+              <CarouselContent>
+                {profile.photos.map((photo, index) => (
+                  <CarouselItem key={index}>
+                    <img
+                      src={photo}
+                      alt={`${profile.name}'s photo ${index + 1}`}
+                      className="w-full h-80 object-cover cursor-pointer"
+                      onClick={handleViewProfile}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {profile.photos.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
+                </>
+              )}
+            </Carousel>
+            
+            {/* Overlay pour voir le profil */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+              <button
+                onClick={handleViewProfile}
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-lg flex items-center space-x-2 font-medium shadow-lg"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Voir profil</span>
+              </button>
+            </div>
+          </div>
         ) : (
-          <div className="absolute inset-0 bg-gray-300 rounded-t-2xl flex items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-gray-300 rounded-t-2xl flex items-center justify-center cursor-pointer"
+            onClick={handleViewProfile}
+          >
             <span className="text-gray-500 text-lg">No photo</span>
           </div>
         )}
@@ -88,7 +112,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, on
 
       <div className="p-6">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 
+            className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+            onClick={handleViewProfile}
+          >
             {profile.name}, {profile.age}
           </h3>
         <div className="flex items-center text-gray-500 text-sm">

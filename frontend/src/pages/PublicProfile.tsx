@@ -15,6 +15,7 @@ const PublicProfile = () => {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<Users | null>(null);
+  const [cityName, setCityName] = useState<string>('');
   const numericId = Number(id);
   const meId = authUser?.id ? Number(authUser.id) : undefined;
   const isSelf = meId !== undefined && numericId === meId;
@@ -36,6 +37,16 @@ const PublicProfile = () => {
     return `${import.meta.env.VITE_API_URL}/api${url}`;
   };
 
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+      const geoData = await geores.json();
+      return `${geoData.city || geoData.locality || geoData.principalSubdivision}, ${geoData.countryName}`;
+    } catch (e) {
+      return 'Unknown location';
+    }
+  };
+
   const photoItems: { url: string; isProfile?: boolean }[] = useMemo(() => {
     const pics = (userData?.settings?.pictures ?? []) as Array<{ url: string; isProfile?: boolean }>;
     const arr = pics.map(p => ({ url: normalize(p.url), isProfile: p.isProfile }));
@@ -49,6 +60,13 @@ const PublicProfile = () => {
     const idx = photoItems.findIndex(p => p.isProfile);
     setCurrentPhoto(idx >= 0 ? idx : 0);
   }, [photoItems.length]);
+
+  useEffect(() => {
+    if (userData?.settings?.latitude && userData?.settings?.longitude) {
+      reverseGeocode(userData.settings.latitude, userData.settings.longitude)
+        .then(cityName => setCityName(cityName));
+    }
+  }, [userData]);
 
   const prevPhoto = () => {
     if (photos.length === 0) return;
@@ -84,21 +102,19 @@ const PublicProfile = () => {
 
   const profile = {
     id: id || '1',
-    name: 'Emma',
-    age: 28,
-    location: 'San Francisco, CA',
-    bio: 'Love hiking, yoga, and good coffee. Looking for someone to explore the city with! I enjoy weekend adventures, trying new restaurants, and deep conversations about life. Always up for spontaneous trips and making memories.',
-    tags: ['hiking', 'yoga', 'coffee', 'adventure', 'travel', 'photography', 'music'],
-    photos: [
-      'https://images.unsplash.com/photo-1494790108755-2616b332c1b0',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9',
-    ],
-    isOnline: true,
-    lastSeen: '2 minutes ago',
-    fameRating: 4.2,
-    mutualMatch: false,
-    distance: '2.5 miles away',
+    name: userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...',
+    age: computeAge(userData?.birthday) || 0,
+    location: cityName || (userData?.settings?.latitude && userData?.settings?.longitude 
+      ? `${userData.settings.latitude.toFixed(2)}, ${userData.settings.longitude.toFixed(2)}` 
+      : 'Location not set'),
+    bio: userData?.settings?.biography || 'No bio available',
+    tags: userData?.settings?.tags?.map((tag: any) => typeof tag === 'string' ? tag : tag.name) || [],
+    photos: photos,
+    isOnline: userData?.status === 'online',
+    lastSeen: userData?.lastconnection ? new Date(userData.lastconnection).toLocaleString() : 'Unknown',
+    fameRating: userData?.fameRating || 0,
+    mutualMatch: userData?.connected || false,
+    distance: 'Unknown distance',
   };
 
   const handleLike = () => {
@@ -301,7 +317,7 @@ const PublicProfile = () => {
                 )}
                 <div className="flex items-center text-gray-600 mt-1">
                   <MapPin className="w-4 h-4 mr-1 text-blue-400" />
-                  <span>{userData.settings?.city ?? ''}{userData.settings?.country ? `, ${userData.settings.country}` : ''}</span>
+                  <span>{profile.location}</span>
                 </div>
               </div>
               

@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => void;
   isLoggedIn: boolean;
   updateUser: (userData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
   confirmEmail: (token: string) => Promise<boolean>;
 }
 
@@ -204,6 +205,10 @@ useEffect(() => {
     }
   };
 
+  const refreshUser = async () => {
+    await updateUserFromCookie();
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -213,6 +218,7 @@ useEffect(() => {
         logout,
         isLoggedIn,
         updateUser,
+        refreshUser,
         confirmEmail,
         isLoadingUser,
       }}
