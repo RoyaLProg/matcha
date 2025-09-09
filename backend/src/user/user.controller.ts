@@ -128,6 +128,7 @@ class UserController {
 			}
 
 			const userLikeReverse = await this.database.getRows('action', [], { userId: s.userId, targetUserId: req.user.id, status: 'like'});
+			const myLikeToUser = await this.database.getRows('action', [], { userId: req.user.id, targetUserId: s.userId, status: 'like'});
 
 			const safeUser: any = { ...otherUser };
 			delete safeUser.password;
@@ -141,6 +142,7 @@ class UserController {
 				age,
 				distance,
 				likedYou: userLikeReverse.length > 0,
+				likedByMe: myLikeToUser.length > 0,
 			});
 		}
 

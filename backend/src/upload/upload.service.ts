@@ -21,7 +21,9 @@ export class UploadService {
 			if (isValid) {
 				cb(null, true);
 			} else {
-				cb(new Error('Unsupported file type'), false);
+				const error = new Error(`Unsupported file type: ${file.mimetype}. Allowed types: ${allowedTypes.source}`);
+				error.name = 'MulterError';
+				cb(error, false);
 			}
 		};
 	}

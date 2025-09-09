@@ -100,8 +100,9 @@ useEffect(() => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/like`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
-          targetUserId,
+          targetUserId: Number(targetUserId),
           status,
         }),
       });

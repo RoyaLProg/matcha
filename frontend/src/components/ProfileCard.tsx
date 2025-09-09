@@ -20,13 +20,15 @@ interface ProfileCardProps {
     isOnline: boolean;
     fameRating: number;
     tagMatch?: number;
+    likedByMe?: boolean;
     compatibility?: { percentage?: number, breakdown?: { tags: number, distance: number, age: number, fame: number, likedBonus?: number } };
   };
   onLike?: (id: string) => void;
+  onUnlike?: (id: string) => void;
   onPass?: (id: string) => void;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onPass }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, onPass }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       <div className="relative h-80 bg-gradient-to-br from-blue-200 to-sky-200">
@@ -149,13 +151,23 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onPass }) =>
             <X className="w-5 h-5" />
             <span>Pass</span>
           </button>
-          <button
-            onClick={() => onLike?.(profile.id)}
-            className="flex-1 flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white rounded-xl transition-all"
-          >
-            <Heart className="w-5 h-5" />
-            <span>Like</span>
-          </button>
+          {profile.likedByMe ? (
+            <button
+              onClick={() => onUnlike?.(profile.id)}
+              className="flex-1 flex items-center justify-center space-x-2 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all"
+            >
+              <Heart className="w-5 h-5 fill-current" />
+              <span>Unlike</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onLike?.(profile.id)}
+              className="flex-1 flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white rounded-xl transition-all"
+            >
+              <Heart className="w-5 h-5" />
+              <span>Like</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -57,7 +57,7 @@ const SearchPage = () => {
       const myTags = ((user as any)?.settings?.tags ?? []).map((t: any) => t.tag?.toLowerCase?.() ?? String(t).toLowerCase());
       let mapped = await Promise.all(
         (data as any[]).map(async (profile: any) => {
-          const { user: u, settings, tags, pictures, age, distance } = profile;
+          const { user: u, settings, tags, pictures, age, distance, likedByMe } = profile;
           let location = '';
           try {
             if (settings?.latitude != null && settings?.longitude != null) {
@@ -87,6 +87,7 @@ const SearchPage = () => {
             fameRating: (profile as any)?.fameRating ?? 0,
             distance: distance,
             tagMatch,
+            likedByMe: likedByMe === true,
           };
         })
       );
@@ -119,12 +120,34 @@ const SearchPage = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: id, status: 'like' }),
+        credentials: 'include',
+        body: JSON.stringify({ targetUserId: Number(id), status: 'like' }),
       });
       if (!response.ok) throw new Error('Failed to like');
-      setSearchResults(prev => prev.filter(p => p.id !== id));
+      // Update the profile to show it's now liked instead of removing it
+      setSearchResults(prev => prev.map(p => 
+        p.id === id ? { ...p, likedByMe: true } : p
+      ));
     } catch (e) {
       console.error('Like error:', e);
+    }
+  };
+
+  const handleUnlike = async (id: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/unlike`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ targetUserId: Number(id) }),
+      });
+      if (!response.ok) throw new Error('Failed to unlike');
+      // Update the profile to show it's now unliked
+      setSearchResults(prev => prev.map(p => 
+        p.id === id ? { ...p, likedByMe: false } : p
+      ));
+    } catch (e) {
+      console.error('Unlike error:', e);
     }
   };
 
@@ -133,7 +156,8 @@ const SearchPage = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: id, status: 'dislike' }),
+        credentials: 'include',
+        body: JSON.stringify({ targetUserId: Number(id), status: 'dislike' }),
       });
       if (!response.ok) throw new Error('Failed to pass');
       setSearchResults(prev => prev.filter(p => p.id !== id));
@@ -328,6 +352,7 @@ const SearchPage = () => {
                   key={profile.id}
                   profile={profile}
                   onLike={handleLike}
+                  onUnlike={handleUnlike}
                   onPass={handlePass}
                 />
               ))}

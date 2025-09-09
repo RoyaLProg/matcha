@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get, UploadedFile } from "@nestjs/common";
+import { Controller, Param, Post, Request, UploadedFiles, UseGuards, UseInterceptors, HttpException, HttpStatus, StreamableFile, Get, UploadedFile, Catch, ExceptionFilter, ArgumentsHost } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { UploadService } from "./upload.service";
 import Users from "src/interface/users.interface";
@@ -30,16 +30,50 @@ class UploadController {
         limits: { fileSize: 5 * 1024 * 1024 },
     }))
 	async uploadPictures(@UploadedFiles() files: Express.Multer.File[], @Request() req): Promise<Picture[]> {
-		const userId = req.user.id;
-		const user = await this.database.getFirstRow('users', [], { id: userId }) as Users;
-		if (!user) {
-			throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		try {
+			// Vérifier si des fichiers ont été uploadés
+			if (!files || files.length === 0) {
+				throw new HttpException('No valid image files provided. Supported formats: JPEG, PNG, GIF', HttpStatus.BAD_REQUEST);
+			}
+
+			const userId = req.user.id;
+			const user = await this.database.getFirstRow('users', [], { id: userId }) as Users;
+			if (!user) {
+				throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+			}
+
+			// Validation supplémentaire côté serveur
+			for (const file of files) {
+				if (!file.mimetype.match(/^image\/(jpeg|jpg|png|gif)$/)) {
+					throw new HttpException(`Invalid file format: ${file.mimetype}. Only JPEG, PNG, and GIF are allowed.`, HttpStatus.BAD_REQUEST);
+				}
+				
+				// Vérifier la taille du fichier
+				if (file.size > 5 * 1024 * 1024) {
+					throw new HttpException(`File too large: ${file.originalname}. Maximum size is 5MB.`, HttpStatus.BAD_REQUEST);
+				}
+			}
+
+			const uploadedPictures = files.map((file, index) => ({
+				url: `/upload/pictures/${file.filename}`,
+				isProfile: index === 0,
+			}));
+			
+			return uploadedPictures;
+		} catch (error) {
+			// Gérer les erreurs Multer
+			if (error.name === 'MulterError') {
+				throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+			}
+			
+			// Réthrow autres HttpException
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			
+			// Erreur générique
+			throw new HttpException('File upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		const uploadedPictures = files.map((file, index) => ({
-			url: `/upload/pictures/${file.filename}`,
-			isProfile: index === 0,
-		}));
-		return uploadedPictures;
 	}
 
 
@@ -55,31 +89,56 @@ async uploadVideo(
     @UploadedFile() file: Express.Multer.File,
     @Request() req
 ) {
-    const userId = req.user.id;
+    try {
+        if (!file) {
+            throw new HttpException('No valid video file provided. Supported format: WebM', HttpStatus.BAD_REQUEST);
+        }
 
-    const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
-	if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
-        throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
+        // Validation supplémentaire
+        if (!file.mimetype.match(/^video\/webm$/)) {
+            throw new HttpException(`Invalid video format: ${file.mimetype}. Only WebM is allowed.`, HttpStatus.BAD_REQUEST);
+        }
+
+        if (file.size > 50 * 1024 * 1024) {
+            throw new HttpException(`Video file too large: ${file.originalname}. Maximum size is 50MB.`, HttpStatus.BAD_REQUEST);
+        }
+
+        const userId = req.user.id;
+
+        const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
+        if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
+            throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
+        }
+        const otherId = chat.userId === userId ? chat.targetUserId : chat.userId;
+        const me = await this.database.getFirstRow('users', [], { id: userId });
+        const other = await this.database.getFirstRow('users', [], { id: otherId });
+        if ((Array.isArray(me?.blockedIds) && me.blockedIds.includes(otherId)) || (Array.isArray(other?.blockedIds) && other.blockedIds.includes(userId))) {
+          throw new HttpException('User blocked', HttpStatus.FORBIDDEN);
+        }
+
+        const videoMessage: Partial<Message> = {
+            chatId,
+            userId,
+            type: MessageType.Video,
+            content: null,
+            fileUrl: `/api/upload/videos/${file.filename}`,
+        };
+
+        const savedVideo = await this.database.addOne('message', videoMessage) as Message;
+        this.chatGateway.emitMessage(savedVideo);
+
+        return { message: 'Video uploaded successfully!', video: savedVideo };
+    } catch (error) {
+        if (error.name === 'MulterError') {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+        
+        if (error instanceof HttpException) {
+            throw error;
+        }
+        
+        throw new HttpException('Video upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    const otherId = chat.userId === userId ? chat.targetUserId : chat.userId;
-    const me = await this.database.getFirstRow('users', [], { id: userId });
-    const other = await this.database.getFirstRow('users', [], { id: otherId });
-    if ((Array.isArray(me?.blockedIds) && me.blockedIds.includes(otherId)) || (Array.isArray(other?.blockedIds) && other.blockedIds.includes(userId))) {
-      throw new HttpException('User blocked', HttpStatus.FORBIDDEN);
-    }
-
-    const videoMessage: Partial<Message> = {
-        chatId,
-        userId,
-        type: MessageType.Video,
-        content: null,
-        fileUrl: `/api/upload/videos/${file.filename}`,
-    };
-
-    const savedVideo = await this.database.addOne('message', videoMessage) as Message;
-	this.chatGateway.emitMessage(savedVideo);
-
-    return { message: 'Video uploaded successfully!', video: savedVideo };
 }
 
 @Post(':chatId/audio')
@@ -94,29 +153,55 @@ async uploadAudio(
     @UploadedFile() file: Express.Multer.File,
     @Request() req
 ) {
-    const userId = req.user.id;
+    try {
+        if (!file) {
+            throw new HttpException('No valid audio file provided. Supported format: WebM', HttpStatus.BAD_REQUEST);
+        }
 
-    const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
-    if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
-		throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
-	}
-    const otherId = chat.userId === userId ? chat.targetUserId : chat.userId;
-    const me = await this.database.getFirstRow('users', [], { id: userId });
-    const other = await this.database.getFirstRow('users', [], { id: otherId });
-    if ((Array.isArray(me?.blockedIds) && me.blockedIds.includes(otherId)) || (Array.isArray(other?.blockedIds) && other.blockedIds.includes(userId))) {
-      throw new HttpException('User blocked', HttpStatus.FORBIDDEN);
+        // Validation supplémentaire
+        if (!file.mimetype.match(/^audio\/webm$/)) {
+            throw new HttpException(`Invalid audio format: ${file.mimetype}. Only WebM audio is allowed.`, HttpStatus.BAD_REQUEST);
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            throw new HttpException(`Audio file too large: ${file.originalname}. Maximum size is 10MB.`, HttpStatus.BAD_REQUEST);
+        }
+
+        const userId = req.user.id;
+
+        const chat = await this.database.getFirstRow('chat', [], { id: chatId }) as Chat;
+        if (!chat || !(chat.userId === userId || chat.targetUserId === userId)) {
+            throw new HttpException('You do not have access to this chat', HttpStatus.FORBIDDEN);
+        }
+        const otherId = chat.userId === userId ? chat.targetUserId : chat.userId;
+        const me = await this.database.getFirstRow('users', [], { id: userId });
+        const other = await this.database.getFirstRow('users', [], { id: otherId });
+        if ((Array.isArray(me?.blockedIds) && me.blockedIds.includes(otherId)) || (Array.isArray(other?.blockedIds) && other.blockedIds.includes(userId))) {
+          throw new HttpException('User blocked', HttpStatus.FORBIDDEN);
+        }
+        
+        const audioMessage: Partial<Message> = {
+            chatId,
+            userId,
+            type: MessageType.Audio,
+            content: null,
+            fileUrl: `/api/upload/audios/${file.filename}`,
+        };
+
+        const savedAudio = await this.database.addOne('message', audioMessage) as Message;
+        this.chatGateway.emitMessage(savedAudio);
+        return { message: 'Audio uploaded successfully!', audio: savedAudio };
+    } catch (error) {
+        if (error.name === 'MulterError') {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+        
+        if (error instanceof HttpException) {
+            throw error;
+        }
+        
+        throw new HttpException('Audio upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    const audioMessage: Partial<Message> = {
-        chatId,
-        userId,
-        type: MessageType.Audio,
-        content: null,
-        fileUrl: `/api/upload/audios/${file.filename}`,
-    };
-
-    const savedAudio = await this.database.addOne('message', audioMessage) as Message;
-    this.chatGateway.emitMessage(savedAudio);
-    return { message: 'Audio uploaded successfully!', audio: savedAudio };
 }
 
 	@Get('pictures/:file')
