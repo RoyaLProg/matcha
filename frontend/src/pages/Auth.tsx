@@ -121,7 +121,7 @@ const Auth = () => {
             Matcha
           </h1>
           <p className="text-gray-600 mt-2 font-medium">
-            {isLogin ? 'Bienvenue dans la Blue Edition!' : 'Trouvez votre âme sœur dans la Blue Edition'}
+            {isLogin ? 'Bienvenue sur Matcha!' : 'Trouvez LE lait pour votre thé'}
           </p>
         </div>
 

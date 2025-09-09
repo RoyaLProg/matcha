@@ -133,7 +133,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="bg-white/80 backdrop-blur-sm border-t border-blue-100 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-500">
-            <p>&copy; 2024 Matcha - Blue Edition. Made with 💙 for meaningful connections.</p>
+            <p>&copy; 2025 Matcha. Made with 💙 for meaningful connections.</p>
           </div>
         </div>
       </footer>
