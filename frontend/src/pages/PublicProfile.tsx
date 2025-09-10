@@ -321,10 +321,13 @@ const PublicProfile = () => {
                 </div>
               </div>
               
-              <div className="flex items-center text-gray-500 text-sm">
-                <Clock className="w-4 h-4 mr-1" />
-                <span>Last seen {profile.lastSeen}</span>
-              </div>
+			  { profile.isOnline === false && (
+					  <div className="flex items-center text-gray-500 text-sm">
+						<Clock className="w-4 h-4 mr-1" />
+						<span>Last seen {profile.lastSeen}</span>
+					  </div>
+				  )
+			  }
             </div>
 
             <div className="mb-6">
