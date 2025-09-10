@@ -58,6 +58,12 @@ CREATE TABLE IF NOT EXISTS Users (
     "profilePicture" VARCHAR(255) DEFAULT ''
 );
 
+-- Ensure 2FA columns exist on users table (handles existing DBs)
+ALTER TABLE Users
+    ADD COLUMN IF NOT EXISTS "twoFactorSecret" VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS "twoFactorEnabled" BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS "backupCodes" TEXT;
+
 
 CREATE TABLE IF NOT EXISTS settings (
     id SERIAL PRIMARY KEY,

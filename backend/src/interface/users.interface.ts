@@ -18,6 +18,9 @@ interface Users {
 	lastconnection?: string;
 	blockedIds?: number[];
 	settings?: Settings;
+	twoFactorSecret?: string;
+	twoFactorEnabled?: boolean;
+	backupCodes?: string[];
 }
 
 export default Users;

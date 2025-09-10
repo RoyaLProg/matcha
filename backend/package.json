@@ -29,6 +29,8 @@
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/websockets": "^10.4.15",
     "@types/pg": "^8.11.10",
+    "@types/qrcode": "^1.5.5",
+    "@types/speakeasy": "^2.0.10",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
@@ -39,10 +41,12 @@
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
     "pg": "^8.16.3",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

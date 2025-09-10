@@ -13,6 +13,7 @@ interface CallState {
   toUserId?: number;
   localStream?: MediaStream | null;
   remoteStream?: MediaStream | null;
+  error?: string | null;
 }
 
 interface StartCallArgs {
@@ -38,7 +39,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const socket = useContext(WebSocketContext);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
-  const [state, setState] = useState<CallState>({ inCall: false, ringing: false, incoming: false, callType: null, chatId: null, localStream: null, remoteStream: null });
+  const [state, setState] = useState<CallState>({ inCall: false, ringing: false, incoming: false, callType: null, chatId: null, localStream: null, remoteStream: null, error: null });
 
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
@@ -46,7 +47,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (state.localStream) {
       state.localStream.getTracks().forEach(t => t.stop());
     }
-    setState(s => ({ ...s, inCall: false, ringing: false, incoming: false, callType: null, chatId: null, localStream: null, remoteStream: null }));
+    setState(s => ({ ...s, inCall: false, ringing: false, incoming: false, callType: null, chatId: null, localStream: null, remoteStream: null, error: null }));
   }, [state.localStream]);
 
   useEffect(() => {
@@ -94,38 +95,61 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   }, [socket, state.chatId]);
 
   const startCall = useCallback(async ({ type, chatId, toUserId }: StartCallArgs) => {
-    if (!socket) return;
-    const pc = createPeer(type);
-    const constraints: MediaStreamConstraints = type === 'video' ? { video: true, audio: true } : { video: false, audio: true };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    stream.getTracks().forEach(t => pc.addTrack(t, stream));
-    setState(s => ({ ...s, callType: type, chatId, toUserId, localStream: stream, ringing: true }));
+    if (!socket) {
+      throw new Error('Socket not connected');
+    }
+    
+    try {
+      setState(s => ({ ...s, error: null }));
+      const pc = createPeer(type);
+      const constraints: MediaStreamConstraints = type === 'video' ? { video: true, audio: true } : { video: false, audio: true };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream.getTracks().forEach(t => pc.addTrack(t, stream));
+      setState(s => ({ ...s, callType: type, chatId, toUserId, localStream: stream, ringing: true }));
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit('webrtc-offer', { chatId, offer, type });
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit('webrtc-offer', { chatId, offer, type });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start call';
+      setState(s => ({ ...s, error: errorMessage }));
+      throw err;
+    }
   }, [socket, createPeer]);
 
   const acceptCall = useCallback(async () => {
-    if (!socket) return;
+    if (!socket) {
+      throw new Error('Socket not connected');
+    }
+    
     const incoming = (window as any).__incomingOffer;
-    if (!incoming) return;
-    const pc = createPeer((incoming.type as CallType) ?? 'video');
-    const constraints: MediaStreamConstraints = incoming.type === 'video' ? { video: true, audio: true } : { video: false, audio: true };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    stream.getTracks().forEach(t => pc.addTrack(t, stream));
-    setState(s => ({ ...s, localStream: stream, chatId: incoming.chatId, callType: (incoming.type as CallType) ?? 'video', incoming: false, ringing: false }));
+    if (!incoming) {
+      throw new Error('No incoming call to accept');
+    }
+    
+    try {
+      setState(s => ({ ...s, error: null }));
+      const pc = createPeer((incoming.type as CallType) ?? 'video');
+      const constraints: MediaStreamConstraints = incoming.type === 'video' ? { video: true, audio: true } : { video: false, audio: true };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream.getTracks().forEach(t => pc.addTrack(t, stream));
+      setState(s => ({ ...s, localStream: stream, chatId: incoming.chatId, callType: (incoming.type as CallType) ?? 'video', incoming: false, ringing: false }));
 
-    await pc.setRemoteDescription(new RTCSessionDescription(incoming.offer));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    socket.emit('webrtc-answer', { chatId: incoming.chatId, answer });
-    (window as any).__incomingOffer = undefined;
+      await pc.setRemoteDescription(new RTCSessionDescription(incoming.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('webrtc-answer', { chatId: incoming.chatId, answer });
+      (window as any).__incomingOffer = undefined;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to accept call';
+      setState(s => ({ ...s, error: errorMessage }));
+      throw err;
+    }
   }, [socket, createPeer]);
 
   const rejectCall = useCallback(() => {
     (window as any).__incomingOffer = undefined;
-    setState(s => ({ ...s, incoming: false, ringing: false, callType: null, chatId: null }));
+    setState(s => ({ ...s, incoming: false, ringing: false, callType: null, chatId: null, error: null }));
   }, []);
 
   const hangup = useCallback(() => {

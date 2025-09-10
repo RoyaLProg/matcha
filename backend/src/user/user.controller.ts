@@ -440,6 +440,22 @@ async createSettings(
 	}
 
 
+	@Delete('me')
+	@UseGuards(AuthGuard)
+	async deleteMyAccount(@Request() req) : Promise<void> {
+		try {
+			await this.userService.remove(req.user.id);
+		} catch (error) {
+			if (error.message === 'User not found') {
+				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+			}
+			throw new HttpException(
+				'Failed to delete account',
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+	}
+
 	@Delete(':id')
 	@UseGuards(AuthGuard, UserGuard)
 	deleteUser(@Param('id') id: number) : Promise<void> {

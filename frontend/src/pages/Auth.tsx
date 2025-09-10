@@ -3,6 +3,7 @@ import { Heart, Eye, EyeOff, Calendar, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import OmniAuth from '../components/OmniAuth';
+import TwoFactorVerify from '../components/TwoFactorVerify';
 import { toast } from '@/components/ui/sonner';
 
 const Auth = () => {
@@ -10,6 +11,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [twoFactorCredentials, setTwoFactorCredentials] = useState({ username: '', password: '' });
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -62,11 +65,17 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const success = await login(formData.username, formData.password);
-        if (success) {
+        const result = await login(formData.username, formData.password);
+        if (result.success) {
           navigate('/home');
+        } else if (result.requiresTwoFactor) {
+          setTwoFactorCredentials({ 
+            username: result.username || formData.username, 
+            password: formData.password 
+          });
+          setShowTwoFactor(true);
         } else {
-          setError('Email ou mot de passe incorrect');
+          setError(result.error || 'Email ou mot de passe incorrect');
         }
       } else {
         if (formData.password !== formData.confirmPassword) {
@@ -108,6 +117,17 @@ const Auth = () => {
       [e.target.name]: e.target.value
     });
     if (error) setError('');
+  };
+
+  const handleTwoFactorSuccess = async () => {
+    setShowTwoFactor(false);
+    await refreshUser();
+    navigate('/home');
+  };
+
+  const handleTwoFactorCancel = () => {
+    setShowTwoFactor(false);
+    setTwoFactorCredentials({ username: '', password: '' });
   };
 
   return (
@@ -310,6 +330,15 @@ const Auth = () => {
           )}
         </div>
       </div>
+      
+      {showTwoFactor && (
+        <TwoFactorVerify
+          username={twoFactorCredentials.username}
+          password={twoFactorCredentials.password}
+          onSuccess={handleTwoFactorSuccess}
+          onCancel={handleTwoFactorCancel}
+        />
+      )}
     </div>
   );
 };

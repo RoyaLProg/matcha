@@ -14,7 +14,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; requiresTwoFactor?: boolean; username?: string; error?: string }>;
   register: (userData: RegisterData) => Promise<{ success: boolean; needsConfirmation?: boolean; error?: string }>;
   logout: () => void;
   isLoggedIn: boolean;
@@ -104,7 +104,7 @@ useEffect(() => {
 }, [user, isLoggedIn]);
 
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; requiresTwoFactor?: boolean; username?: string; error?: string }> => {
     try {
     const response = await fetch(import.meta.env.VITE_API_URL + "/api/auth/login", {
       method: "POST",
@@ -119,18 +119,28 @@ useEffect(() => {
     const data = await response.json();
 
     if (!response.ok) {
-      toast.error(data.message || "Erreur de connexion");
-      return false;
+      const errorMessage = data.message || "Erreur de connexion";
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+
+    if (data.requiresTwoFactor) {
+      return { 
+        success: false, 
+        requiresTwoFactor: true, 
+        username: data.username 
+      };
     }
 
     await updateUserFromCookie();
 
     toast.success("Connexion réussie !");
-    return true;
+    return { success: true };
   } catch (error) {
     console.error("Erreur lors du login :", error);
-    toast.error("Erreur réseau lors de la connexion");
-    return false;
+    const errorMessage = "Erreur réseau lors de la connexion";
+    toast.error(errorMessage);
+    return { success: false, error: errorMessage };
   }
   };
 

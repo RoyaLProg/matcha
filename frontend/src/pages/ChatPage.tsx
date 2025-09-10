@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { Send, MoreVertical, Heart, Phone, Video, Image, ArrowLeft } from 'lucide-react';
-import VideoChat from '../components/VideoChat';
+import { Send, MoreVertical, Heart, Phone, Video, Image, ArrowLeft, Camera } from 'lucide-react';
+import VideoMessageRecorder from '../components/VideoMessageRecorder';
+import VideoCall from '../components/VideoCall';
 import { ChatContext } from '../contexts/ChatContext';
 import { UserContext } from '../contexts/UserContext';
 import { MessageType } from '../interface/message.interface';
@@ -14,7 +15,7 @@ const ChatPage = () => {
   const chatsCtx = useContext(ChatContext);
   const userCtx = useContext(UserContext);
   const [message, setMessage] = useState('');
-  const [showVideoChat, setShowVideoChat] = useState(false);
+  const [showVideoMessageRecorder, setShowVideoMessageRecorder] = useState(false);
   const [blocked, setBlocked] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socket = useContext(WebSocketContext);
@@ -46,7 +47,7 @@ const ChatPage = () => {
     (async () => {
       try {
         if (!otherUser?.id) return;
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/Users/${otherUser.id}`, { credentials: 'include' });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/${otherUser.id}`, { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         if (typeof data?.blocked === 'boolean') setBlocked(!!data.blocked);
@@ -146,15 +147,40 @@ const ChatPage = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => {
-                  if (chat && otherUser && callCtx) callCtx.startCall({ type: 'audio', chatId: chat.id!, toUserId: otherUser.id });
-                }}>
+                <button 
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" 
+                  onClick={() => {
+                    if (chat && otherUser && callCtx) {
+                      callCtx.startCall({ type: 'audio', chatId: chat.id!, toUserId: otherUser.id }).catch(err => {
+                        console.error('Failed to start audio call:', err);
+                        alert('Failed to start call. Please check your microphone permissions.');
+                      });
+                    }
+                  }}
+                  title="Start audio call"
+                >
                   <Phone className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => {
-                  if (chat && otherUser && callCtx) callCtx.startCall({ type: 'video', chatId: chat.id!, toUserId: otherUser.id });
-                }}>
+                <button 
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" 
+                  onClick={() => {
+                    if (chat && otherUser && callCtx) {
+                      callCtx.startCall({ type: 'video', chatId: chat.id!, toUserId: otherUser.id }).catch(err => {
+                        console.error('Failed to start video call:', err);
+                        alert('Failed to start call. Please check your camera and microphone permissions.');
+                      });
+                    }
+                  }}
+                  title="Start video call"
+                >
                   <Video className="w-5 h-5" />
+                </button>
+                <button 
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => setShowVideoMessageRecorder(true)}
+                  title="Record video message"
+                >
+                  <Camera className="w-5 h-5" />
                 </button>
                 <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                   <MoreVertical className="w-5 h-5" />
@@ -243,12 +269,17 @@ const ChatPage = () => {
           </div>
         </div>
 
-        <VideoChat
-          isOpen={showVideoChat}
-          onClose={() => setShowVideoChat(false)}
+        <VideoMessageRecorder
+          isOpen={showVideoMessageRecorder}
+          onClose={() => setShowVideoMessageRecorder(false)}
           recipientName={otherUser?.firstName ?? otherUser?.username ?? 'User'}
           recipientAvatar={otherUser?.settings?.pictures?.length ? `${import.meta.env.VITE_API_URL}/api${otherUser.settings.pictures.find((p:any)=>p.isProfile)?.url}` : undefined}
           chatId={chat.id}
+        />
+        
+        <VideoCall
+          recipientName={otherUser?.firstName ?? otherUser?.username ?? 'User'}
+          recipientAvatar={otherUser?.settings?.pictures?.length ? `${import.meta.env.VITE_API_URL}/api${otherUser.settings.pictures.find((p:any)=>p.isProfile)?.url}` : undefined}
         />
       </div>
     </Layout>

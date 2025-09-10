@@ -1,14 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, UseGuards, Request } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import AuthService from './auth.service';
 import { sha256 } from 'js-sha256';
-import { MailerService } from '@nestjs-modules/mailer';
+import { Response } from 'express';
+import MailService from 'src/mail/mail.service';
 import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
 import { TokenType } from 'src/interface/auth.interface';
 import AuthGuard from './auth.guard';
 import { OAuth2Client } from 'google-auth-library';
+import { TwoFactorService } from './twoFactor.service';
+import { Database } from 'src/database/Database';
 
 type MyOmit<T, K extends PropertyKey> =
     { [P in keyof T as Exclude<P, K>]: T[P] }
@@ -18,9 +20,11 @@ export class AuthController {
 
 	constructor(
 		private readonly authService: AuthService,
-		private readonly mailService: MailerService,
+    private readonly mailService: MailService,
 		private readonly userService: UserService,
-		private readonly jwtService: JwtService
+		private readonly jwtService: JwtService,
+		private readonly twoFactorService: TwoFactorService,
+		private readonly database: Database
 	) {}
 
 	@Get('')
@@ -161,19 +165,13 @@ export class AuthController {
 		} catch (e) {
 			throw new BadRequestException({other: 'email or user already exist'});
 		}
-		try {
-			const token = await this.authService.create_token(result);
-			const message = `Welcome to Matcha the latte
-
-							Can you please click this <a href="${process.env.URL}/confirm-email?token=${token.token}">link</a> to confirm your email`;
-			await this.mailService.sendMail({
-				to: user.email,
-				html: message,
-				subject: "Matcha The Latte - Email Verification"
-			});
-		} catch (e) {
-			throw new BadRequestException({other: 'could not send email'});
-		}
+        try {
+            const token = await this.authService.create_token(result);
+            const confirmUrl = `${process.env.URL}/confirm-email?token=${token.token}`;
+            await this.mailService.sendEmailConfirmation(user.email, user.firstName, confirmUrl);
+        } catch (e) {
+            throw new BadRequestException({other: 'could not send email'});
+        }
 
 		return res.status(201).send({ message: 'account has been created, please confirm you email !' });
 	}
@@ -212,6 +210,19 @@ export class AuthController {
 				throw new UnauthorizedException('username or password incorrect');
 			if (!user.isValidated)
 				throw new UnauthorizedException('you need to verify your email first');
+
+			// Check if 2FA is enabled
+			const twoFactorEnabled = await this.twoFactorService.isTwoFactorEnabled(user.id!);
+			if (twoFactorEnabled) {
+				// Don't log in yet, require 2FA verification
+				return res.status(200).send({ 
+					message: 'Two-factor authentication required',
+					requiresTwoFactor: true,
+					username: body.username
+				});
+			}
+
+			// Normal login without 2FA
 			const payload = { id: user.id };
     const jwt: string = this.jwtService.sign(payload, {secret: process.env.JWT_SECRET, expiresIn: '7d'});
 			const maxAge = 7 * 24 * 60 * 60 * 1000;
@@ -291,22 +302,14 @@ export class AuthController {
 		const user = await this.userService.findOneByUsername(body.username);
 		if (!user)
 			throw new NotFoundException('user not found');
-		if (user !== null) {
-			try {
-				const token = await this.authService.create_token(user, TokenType.PASS_RESET);
-				const message = `
-									Ho no !
-									You forgot your password ? do not worry !
-									Here is a one time <a href="${process.env.URL}/forgot/${token.token}">link</a> to reset your password !
-								`;
-				await this.mailService.sendMail({
-					to: user.email,
-					html: message,
-					subject: "Matcha The Latte - Password Reset"
-				});
-			} catch (e) {
-			}
-		}
+        if (user !== null) {
+            try {
+                const token = await this.authService.create_token(user, TokenType.PASS_RESET);
+                const resetUrl = `${process.env.URL}/forgot/${token.token}`;
+                await this.mailService.sendPasswordReset(user.email, user.firstName, resetUrl);
+            } catch (e) {
+            }
+        }
 		return res.status(200).send({ message: 'if the user exists, an email has been sent' });
 	}
 
@@ -335,6 +338,238 @@ export class AuthController {
 
 		await this.authService.deleteToken(token);
 		return res.status(200).send({ message: 'password has been updated' });
+	}
+
+	@Patch('change-password')
+	@UseGuards(AuthGuard)
+	async changePasswordAuth(@Body() body, @Request() req, @Res() res: Response) {
+		const { currentPassword, newPassword } = body;
+		
+		if (!currentPassword || !newPassword) {
+			throw new BadRequestException('Current password and new password are required');
+		}
+		
+		const user = await this.userService.findOne(req.user.id);
+		if (!user) {
+			throw new NotFoundException('User not found');
+		}
+		
+		// Verify current password
+		const passwordVerification = await this.authService.verifyPassword(currentPassword, user.password);
+		if (!passwordVerification.valid) {
+			throw new UnauthorizedException('Current password is incorrect');
+		}
+		
+		// Validate new password
+		const passErr = this.checkPassword(newPassword);
+		if (passErr) {
+			throw new BadRequestException(passErr);
+		}
+		
+		// Update password
+		user.password = await this.authService.hashPassword(newPassword);
+		await this.authService.updateUser(user);
+		
+		return res.status(200).send({ message: 'Password has been updated successfully' });
+	}
+
+	@Get('2fa/setup')
+	@UseGuards(AuthGuard)
+	async setup2FA(@Request() req, @Res() res: Response) {
+		try {
+			const user = await this.userService.findOne(req.user.id);
+			if (!user) {
+				throw new NotFoundException('User not found');
+			}
+
+			// Check if 2FA is already enabled
+			if (await this.twoFactorService.isTwoFactorEnabled(req.user.id)) {
+				throw new BadRequestException('Two-factor authentication is already enabled');
+			}
+
+			// Generate secret and QR code
+			const { secret, qrCodeUrl, manualEntryKey } = this.twoFactorService.generateSecret(user.username);
+			const qrCodeDataUrl = await this.twoFactorService.generateQRCode(qrCodeUrl);
+
+			// Store the secret temporarily (not enabled yet)
+			await this.database.updateRows('users', { twoFactorSecret: secret }, { id: req.user.id });
+
+			return res.status(200).json({
+				qrCode: qrCodeDataUrl,
+				manualEntryKey,
+				secret
+			});
+		} catch (error) {
+			throw new BadRequestException(error.message || 'Failed to setup 2FA');
+		}
+	}
+
+	@Post('2fa/verify-setup')
+	@UseGuards(AuthGuard)
+	async verifyAndEnable2FA(@Request() req, @Body() body, @Res() res: Response) {
+		try {
+			const { token } = body;
+			if (!token) {
+				throw new BadRequestException('Token is required');
+			}
+
+			const secret = await this.twoFactorService.getUserSecret(req.user.id);
+			if (!secret) {
+				throw new BadRequestException('No 2FA setup found. Please setup 2FA first.');
+			}
+
+			// Verify the token
+			const isValid = this.twoFactorService.verifyToken(secret, token);
+			if (!isValid) {
+				throw new BadRequestException('Invalid token');
+			}
+
+			// Enable 2FA and generate backup codes
+			const backupCodes = await this.twoFactorService.enableTwoFactor(req.user.id, secret);
+
+			return res.status(200).json({ 
+				message: 'Two-factor authentication enabled successfully',
+				backupCodes 
+			});
+		} catch (error) {
+			throw new BadRequestException(error.message || 'Failed to verify 2FA setup');
+		}
+	}
+
+	@Delete('2fa/disable')
+	@UseGuards(AuthGuard)
+	async disable2FA(@Request() req, @Body() body, @Res() res: Response) {
+		try {
+			const { token } = body;
+			if (!token) {
+				throw new BadRequestException('Token is required to disable 2FA');
+			}
+
+			const secret = await this.twoFactorService.getUserSecret(req.user.id);
+			if (!secret || !(await this.twoFactorService.isTwoFactorEnabled(req.user.id))) {
+				throw new BadRequestException('Two-factor authentication is not enabled');
+			}
+
+			// Verify the token before disabling
+			const isValid = this.twoFactorService.verifyToken(secret, token);
+			if (!isValid) {
+				throw new BadRequestException('Invalid token');
+			}
+
+			// Disable 2FA
+			await this.twoFactorService.disableTwoFactor(req.user.id);
+
+			return res.status(200).json({ message: 'Two-factor authentication disabled successfully' });
+		} catch (error) {
+			throw new BadRequestException(error.message || 'Failed to disable 2FA');
+		}
+	}
+
+	@Post('2fa/verify')
+	async verify2FA(@Body() body, @Res() res: Response) {
+		try {
+			const { username, token } = body;
+			if (!username || !token) {
+				throw new BadRequestException('Username and token are required');
+			}
+
+			const user = await this.userService.findOneByUsername(username);
+			if (!user) {
+				throw new UnauthorizedException('Invalid credentials');
+			}
+
+			const secret = await this.twoFactorService.getUserSecret(user.id!);
+			if (!secret || !(await this.twoFactorService.isTwoFactorEnabled(user.id!))) {
+				throw new BadRequestException('Two-factor authentication is not enabled for this user');
+			}
+
+			// Try to verify as TOTP token first
+			let isValid = this.twoFactorService.verifyToken(secret, token);
+			
+			// If TOTP fails, try as backup code
+			if (!isValid) {
+				isValid = await this.twoFactorService.verifyBackupCode(user.id!, token);
+			}
+			
+			if (!isValid) {
+				throw new UnauthorizedException('Invalid token or backup code');
+			}
+
+			// Generate JWT token for successful 2FA verification
+			const payload = { id: user.id };
+			const jwt: string = this.jwtService.sign(payload, {secret: process.env.JWT_SECRET, expiresIn: '7d'});
+			const maxAge = 7 * 24 * 60 * 60 * 1000;
+			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge, path: '/'});
+			
+			return res.status(200).json({ message: '2FA verification successful' });
+		} catch (error) {
+			throw new BadRequestException(error.message || 'Failed to verify 2FA token');
+		}
+	}
+
+	@Get('2fa/status')
+	@UseGuards(AuthGuard)
+	async get2FAStatus(@Request() req, @Res() res: Response) {
+		try {
+			const enabled = await this.twoFactorService.isTwoFactorEnabled(req.user.id);
+			let backupCodesCount = 0;
+			if (enabled) {
+				const backupCodes = await this.twoFactorService.getBackupCodes(req.user.id);
+				backupCodesCount = backupCodes.length;
+			}
+			return res.status(200).json({ enabled, backupCodesCount });
+		} catch (error) {
+			throw new BadRequestException('Failed to get 2FA status');
+		}
+	}
+
+	@Get('2fa/backup-codes')
+	@UseGuards(AuthGuard)
+	async getBackupCodes(@Request() req, @Res() res: Response) {
+		try {
+			if (!(await this.twoFactorService.isTwoFactorEnabled(req.user.id))) {
+				throw new BadRequestException('Two-factor authentication is not enabled');
+			}
+
+			const backupCodes = await this.twoFactorService.getBackupCodes(req.user.id);
+			return res.status(200).json({ backupCodes });
+		} catch (error) {
+			throw new BadRequestException(error.message || 'Failed to get backup codes');
+		}
+	}
+
+	@Post('2fa/regenerate-backup-codes')
+	@UseGuards(AuthGuard)
+	async regenerateBackupCodes(@Request() req, @Body() body, @Res() res: Response) {
+		try {
+			const { token } = body;
+			if (!token) {
+				throw new BadRequestException('2FA token is required to regenerate backup codes');
+			}
+
+			if (!(await this.twoFactorService.isTwoFactorEnabled(req.user.id))) {
+				throw new BadRequestException('Two-factor authentication is not enabled');
+			}
+
+			const secret = await this.twoFactorService.getUserSecret(req.user.id);
+			if (!secret) {
+				throw new BadRequestException('2FA secret not found');
+			}
+
+			// Verify current 2FA token
+			const isValid = this.twoFactorService.verifyToken(secret, token);
+			if (!isValid) {
+				throw new BadRequestException('Invalid 2FA token');
+			}
+
+			const newBackupCodes = await this.twoFactorService.regenerateBackupCodes(req.user.id);
+			return res.status(200).json({ 
+				message: 'Backup codes regenerated successfully',
+				backupCodes: newBackupCodes 
+			});
+		} catch (error) {
+			throw new BadRequestException(error.message || 'Failed to regenerate backup codes');
+		}
 	}
 
 	@Get('test')

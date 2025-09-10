@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import { ChatContext } from '@/contexts/ChatContext';
 
-interface VideoChatProps {
+interface VideoMessageRecorderProps {
   isOpen: boolean;
   onClose: () => void;
   recipientName: string;
@@ -10,7 +10,7 @@ interface VideoChatProps {
   onSendFile?: (file: File) => Promise<void> | void;
 }
 
-const VideoChat: React.FC<VideoChatProps> = ({ isOpen, onClose, recipientName, recipientAvatar, chatId, onSendFile }) => {
+const VideoMessageRecorder: React.FC<VideoMessageRecorderProps> = ({ isOpen, onClose, recipientName, recipientAvatar, chatId, onSendFile }) => {
   const chatsCtx = useContext(ChatContext);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -125,7 +125,7 @@ const VideoChat: React.FC<VideoChatProps> = ({ isOpen, onClose, recipientName, r
             {recipientAvatar && (
               <img src={recipientAvatar} alt={recipientName} className="w-10 h-10 rounded-full object-cover" />
             )}
-            <h2 className="text-lg font-semibold">Video call with {recipientName}</h2>
+            <h2 className="text-lg font-semibold">Record video message for {recipientName}</h2>
           </div>
           <button onClick={handleClose} className="text-gray-500 hover:text-gray-800">✕</button>
         </div>
@@ -140,10 +140,10 @@ const VideoChat: React.FC<VideoChatProps> = ({ isOpen, onClose, recipientName, r
 
         <div className="mt-4 flex justify-end gap-2">
           {!previewUrl && !isRecording && (
-            <button onClick={startRecording} className="px-4 py-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700">Start</button>
+            <button onClick={startRecording} className="px-4 py-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700">Start Recording</button>
           )}
           {isRecording && (
-            <button onClick={stopRecording} className="px-4 py-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700">Stop</button>
+            <button onClick={stopRecording} className="px-4 py-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700">Stop Recording</button>
           )}
           {previewUrl && !isRecording && (
             <>
@@ -160,4 +160,4 @@ const VideoChat: React.FC<VideoChatProps> = ({ isOpen, onClose, recipientName, r
   );
 };
 
-export default VideoChat;
+export default VideoMessageRecorder;

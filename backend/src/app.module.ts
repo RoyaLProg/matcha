@@ -6,6 +6,8 @@ import UserService from './user/user.service';
 import AuthController from './auth/auth.controller';
 import AuthService from './auth/auth.service';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { join } from 'path';
 import { JwtModule } from '@nestjs/jwt';
 import { Database } from './database/Database';
 import SettingsService from './user/settings.service';
@@ -23,6 +25,8 @@ import ReportController from './report/report.controller';
 import ReportService from './report/report.service';
 import EventController from './event/event.controller';
 import EventService from './event/event.service';
+import MailService from './mail/mail.service';
+import { TwoFactorService } from './auth/twoFactor.service';
 
 @Module({
 	imports: [
@@ -37,12 +41,22 @@ import EventService from './event/event.service';
 					defaults: {
 						from: '"matcha noreply" <noreply@matcha.local>',
 					},
+					template: {
+						dir: join(process.cwd(), 'src', 'mail', 'templates'),
+						adapter: new HandlebarsAdapter(),
+						options: { strict: true },
+					},
 				};
 			}
 			return {
 				transport: `smtps://${process.env.EMAIL_USER}:${process.env.EMAIL_PASSWORD}@smtp.gmail.com`,
 				defaults: {
 					from: '"matcha noreply" <matcha.noreply@matcha.com>',
+				},
+				template: {
+					dir: join(process.cwd(), 'src', 'mail', 'templates'),
+					adapter: new HandlebarsAdapter(),
+					options: { strict: true },
 				},
 			};
 		})()),
@@ -73,7 +87,9 @@ import EventService from './event/event.service';
 		Database,
 		HistoryService,
 		ReportService,
-		EventService
+		EventService,
+		MailService,
+		TwoFactorService
 	],
 
 })
