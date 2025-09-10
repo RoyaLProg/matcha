@@ -353,13 +353,18 @@ export class AuthController {
 	async forgot(@Body() body, @Res() res: Response) {
 		if (!body.username)
 			throw new BadRequestException('no username was provided');
-		const user = await this.userService.findOneByUsername(body.username);
+		let user;
+		try {
+			user = await this.userService.findOneByUsername(body.username);
+		} catch {
+			throw new NotFoundException('user not found');
+		}
 		if (!user)
 			throw new NotFoundException('user not found');
         if (user !== null) {
             try {
                 const token = await this.authService.create_token(user, TokenType.PASS_RESET);
-                const resetUrl = `${process.env.URL}/forgot/${token.token}`;
+                const resetUrl = `${process.env.URL}/reset-password/${token.token}`;
                 await this.mailService.sendPasswordReset(user.email, user.firstName, resetUrl);
             } catch (e) {
             }
@@ -391,7 +396,7 @@ export class AuthController {
 		this.authService.updateUser(user);
 
 		await this.authService.deleteToken(token);
-		return res.status(200).send({ message: 'password has been updated' });
+		return res.status(200).send({ message: 'password was successfully updated' });
 	}
 
 	@Patch('change-password')

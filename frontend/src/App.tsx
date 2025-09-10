@@ -47,6 +47,7 @@ function App() {
     <Auth />
   </RedirectIfAuthenticated>
 } />
+              <Route path="/reset-password/:token" element={<RedirectIfAuthenticated><ResetPassword /></RedirectIfAuthenticated>} />
               <Route path="/reset-password" element={<RedirectIfAuthenticated><ResetPassword /></RedirectIfAuthenticated>} />
               <Route path="/confirm-email" element={<RedirectIfAuthenticated><EmailConfirmation /></RedirectIfAuthenticated>} />
 

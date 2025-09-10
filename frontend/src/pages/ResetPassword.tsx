@@ -1,18 +1,17 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Heart, ArrowLeft, User, Lock } from 'lucide-react';
 
 const ResetPassword = () => {
-  const [step, setStep] = useState<'request' | 'reset'>('request');
   const [username, setUsername] = useState('');
   const [resetData, setResetData] = useState({
-    token: '',
     password: '',
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const { token } = useParams();
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +30,6 @@ const ResetPassword = () => {
       if (!response.ok) {
       } else {
         setMessage(data.message);
-        setStep("reset");
       }
     } catch (error) {
       console.error("Erreur de réinitialisation:", error);
@@ -72,7 +70,6 @@ const ResetPassword = () => {
       return;
     }
 
-
     setIsLoading(true);
 
     try {
@@ -82,12 +79,8 @@ const ResetPassword = () => {
         body: JSON.stringify({ password }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-      } else {
-        setMessage("Mot de passe réinitialisé ! Vous pouvez maintenant vous connecter.");
-      }
+	  const data = await response.json()
+	  setMessage(data.message);
     } catch (error) {
       console.error("Erreur de réinitialisation:", error);
     } finally {
@@ -113,12 +106,12 @@ const ResetPassword = () => {
             Matcha
           </h1>
           <p className="text-gray-600 mt-2">
-            {step === 'request' ? 'Reset your password' : 'Enter your new password'}
+            {!token ? 'Reset your password' : 'Enter your new password'}
           </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
-          {step === 'request' ? (
+          {!token ? (
             <form onSubmit={handleRequestReset} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -145,21 +138,6 @@ const ResetPassword = () => {
             </form>
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reset Token
-                </label>
-                <input
-                  type="text"
-                  name="token"
-                  value={resetData.token}
-                  onChange={handleResetInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter reset token from email"
-                  required
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Lock className="w-4 h-4 inline mr-2" />
