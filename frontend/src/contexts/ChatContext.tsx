@@ -26,11 +26,11 @@ const sortMessages = (messages: Message[]): Message[] => {
 
 const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [chats, setChats] = useState<Chat[]>();
-  const user = useContext(UserContext);
+  const userCtx = useContext(UserContext);
   const socket = useContext(WebSocketContext)
 
   const fetchChats = async () => {
-    if (!user) return;
+    if (!userCtx?.user) return;
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/`, {
         method: "GET",
@@ -55,7 +55,7 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (!user || !socket) return;
+    if (!userCtx?.user || !socket) return;
     fetchChats();
     const handleNewChat = (newChat: Chat) => {
       setChats((prevChats) => {
@@ -103,7 +103,7 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off('receiveMessages', handleReceiveMessages);
     };
-  }, [socket]);
+  }, [socket, userCtx?.user]);
 
   const refreshChats = async () => {
     await fetchChats();

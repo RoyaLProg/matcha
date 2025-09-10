@@ -30,16 +30,17 @@ export default function WebSocketProvider({ children }: { children: ReactNode })
 	const [socket, setSocket] = useState<Socket | undefined>(undefined);
 
 	useEffect(() => {
-
-
-		if (user) {
+		// Connect WebSocket as soon as there's an auth cookie, even if user context is still loading
+		const hasAuthCookie = typeof document !== 'undefined' && 
+			document.cookie.includes('Auth=');
+		
+		if (user || hasAuthCookie) {
 			const socketIOClient = io(`${import.meta.env.VITE_API_URL}`, {
 				withCredentials: true,
 				transports: ["websocket", "polling"],
 			});
 			socketIOClient.on("connect", () => {
 				setSocket(socketIOClient);
-
 			});
 			socketIOClient.on("notification", (notification: Notification) => {
 				notificationFunctions[notification.type](notification.message);

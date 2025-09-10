@@ -128,7 +128,8 @@ export default function UserProvider({ children }: { children: ReactNode }) {
         setUser(undefined);
       }
     } else {
-      console.error('No token found');
+      // First visit or logged-out state: no Auth cookie yet
+      console.info('No auth token found (not logged in)');
       setUser(undefined);
     }
   };

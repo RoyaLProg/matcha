@@ -1,5 +1,5 @@
 import { UseGuards, Controller, Get, Body, Param, Delete, Patch, HttpException, HttpStatus, Post, UseInterceptors, UploadedFiles, Request, Put, BadRequestException, NotFoundException } from '@nestjs/common';
-import Users from 'src/interface/users.interface';
+import Users, { UserStatus } from 'src/interface/users.interface';
 import UserService from './user.service';
 import Settings from 'src/interface/settings.interface';
 import SettingsService from './settings.service';
@@ -299,6 +299,13 @@ async createSettings(
 		try {
 			const user = await this.userService.findOne(req.user.id);
 			user['fameRating'] = await this.userService.getFameRating(req.user.id);
+			
+			// Force status to online when user accesses /me endpoint
+			if (user.id) {
+				await this.database.updateRows('users', { status: UserStatus.Online }, { id: user.id });
+				user.status = UserStatus.Online;
+			}
+			
 			return user;
 		} catch (error) {
 			if (error.message === 'User not found')
