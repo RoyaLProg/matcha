@@ -230,6 +230,60 @@ export class AuthController {
             res.status(200).send({ message: 'Login successful!' });
   }
 
+  @Post('2fa/verify-login')
+  async verifyLogin(@Body() body, @Res({passthrough: true}) res: Response) {
+    const { username, password, token, isBackupCode } = body;
+    
+    if (!username || !password || !token) {
+      throw new BadRequestException('Missing required fields');
+    }
+
+    // First verify the user credentials again
+    if (this.checkUsername(username))
+      throw new UnauthorizedException('Invalid credentials');
+    
+    const user: Users | null = await this.authService.getLogin(username, password);
+    if (!user)
+      throw new UnauthorizedException('Invalid credentials');
+    
+    if (!user.isValidated)
+      throw new UnauthorizedException('You need to verify your email first');
+
+    // Verify 2FA is enabled
+    const twoFactorEnabled = await this.twoFactorService.isTwoFactorEnabled(user.id!);
+    if (!twoFactorEnabled) {
+      throw new UnauthorizedException('Two-factor authentication is not enabled');
+    }
+
+    let isValidToken = false;
+
+    if (isBackupCode) {
+      // Verify backup code
+      isValidToken = await this.twoFactorService.verifyBackupCode(user.id!, token);
+      if (!isValidToken) {
+        throw new UnauthorizedException('Invalid or expired backup code');
+      }
+    } else {
+      // Verify TOTP token
+      const secret = await this.twoFactorService.getUserSecret(user.id!);
+      if (!secret) {
+        throw new UnauthorizedException('Two-factor authentication is not properly configured');
+      }
+      
+      isValidToken = this.twoFactorService.verifyToken(secret, token);
+      if (!isValidToken) {
+        throw new UnauthorizedException('Invalid authenticator code');
+      }
+    }
+
+    // Login successful, create JWT
+    const payload = { id: user.id };
+    const jwt: string = this.jwtService.sign(payload, {secret: process.env.JWT_SECRET, expiresIn: '7d'});
+    const maxAge = 7 * 24 * 60 * 60 * 1000;
+    res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge, path: '/'});
+    res.status(200).send({ message: 'Login successful!' });
+  }
+
 	@Post('logout')
 	async logout(@Res({ passthrough: true }) res: Response) {
 		res.cookie('Auth', '', { sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', expires: new Date(0), path: '/' });
