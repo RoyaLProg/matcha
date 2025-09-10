@@ -228,9 +228,62 @@ export default class MatchService {
 		}
 	}
 
-	async getFameRating(userId: number) {
-		const data = await this.database.getRows("history", undefined, {userId: userId, message: "%user% liked your profile"});
-		return data.length;
-	}
+    async getFameRating(userId: number) {
+        const data = await this.database.getRows("history", undefined, {userId: userId, message: "%user% liked your profile"});
+        return data.length;
+    }
 
+    // Public API used by UserController to compare two users directly
+    public async calculateCompatibilityScore(userId: number, otherUserId: number): Promise<number> {
+        try {
+            if (!Number.isFinite(userId) || !Number.isFinite(otherUserId) || userId === otherUserId) return 0;
+
+            const me = await this.database.getFirstRow('users', [], { id: userId }) as Users;
+            const other = await this.database.getFirstRow('users', [], { id: otherUserId }) as Users;
+            if (!me || !other) return 0;
+
+            const mySettings = await this.database.getFirstRow('settings', [], { userId }) as Settings;
+            const otherSettings = await this.database.getFirstRow('settings', [], { userId: otherUserId }) as Settings;
+            if (!mySettings || !otherSettings) return 0;
+
+            // If sexual orientations are incompatible, compatibility is 0
+            if (!this.isOrientationCompatible(mySettings, otherSettings)) return 0;
+
+            const myTags = await this.database.getRows('tags_entity', [], { settingsId: mySettings.id }) as Tag[];
+            const otherTags = await this.database.getRows('tags_entity', [], { settingsId: otherSettings.id }) as Tag[];
+
+            let distanceKm = Number.POSITIVE_INFINITY;
+            if (
+                Number.isFinite(mySettings.latitude) && Number.isFinite(mySettings.longitude) &&
+                Number.isFinite(otherSettings.latitude) && Number.isFinite(otherSettings.longitude)
+            ) {
+                distanceKm = await this.calculateDistance(
+                    Number(mySettings.latitude), Number(mySettings.longitude),
+                    Number(otherSettings.latitude), Number(otherSettings.longitude)
+                );
+            }
+
+            const myAge = await this.calculeAge(me.birthday as any);
+            const otherAge = await this.calculeAge(other.birthday as any);
+            const myFame = await this.getFameRating(userId);
+            const otherFame = await this.getFameRating(otherUserId);
+            const likedYou = (await this.database.getRows('action', [], { userId: otherUserId, targetUserId: userId, status: 'like'})).length > 0;
+
+            const { percentage } = this.computeCompatibility({
+                mySettings,
+                myAge,
+                myTags,
+                otherSettings,
+                otherAge,
+                otherTags,
+                distanceKm,
+                otherFame,
+                myFame,
+                likedYou,
+            });
+            return percentage;
+        } catch {
+            return 0;
+        }
+    }
 }

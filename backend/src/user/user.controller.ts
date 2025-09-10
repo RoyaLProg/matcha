@@ -14,6 +14,8 @@ import { Database } from 'src/database/Database';
 import { NotificationType, SocketsService } from 'src/sockets.service';
 import Tag from 'src/interface/tags.interface';
 import { Query } from 'express-serve-static-core';
+import MatchService from 'src/action/match.service';
+import { UserGender, UserSexualOrientation } from 'src/interface/settings.interface';
 
 @Controller('users')
 class UserController {
@@ -23,6 +25,7 @@ class UserController {
 		private readonly historyService: HistoryService,
 		private readonly database: Database,
 		private readonly socketsService: SocketsService,
+		private readonly matchService: MatchService,
 	) { }
 
 	private async getProfileAvatarUrl(userId: number) {
@@ -147,6 +150,181 @@ class UserController {
 		}
 
 		return results;
+	}
+
+	@Get('suggestions')
+	@UseGuards(AuthGuard)
+	async getSuggestions(@Request() req): Promise<any[]> {
+		const sortBy = req.query?.sortBy || 'compatibility'; // compatibility, age, distance, fame, tags
+		const ageMin = Number(req.query?.ageMin ?? 18);
+		const ageMax = Number(req.query?.ageMax ?? 100);
+		const fameMin = Number(req.query?.fameMin ?? 0);
+		const fameMax = req.query?.fameMax !== undefined ? Number(req.query.fameMax) : undefined;
+		const maxDistance = req.query?.distance !== undefined ? Number(req.query.distance) : undefined;
+		const tagsParam = (req.query?.tags ?? '').toString();
+		const requestedTags: string[] = tagsParam
+			.split(',')
+			.map((t: string) => t.trim())
+			.filter((t: string) => t.length)
+			.map((t: string) => t.toLowerCase().replace(/#/g, '').replace(/\s+/g, '_'));
+
+		const currentUser = await this.database.getFirstRow('users', [], { id: req.user.id }) as Users;
+		if (!currentUser) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		const currentSettings = await this.database.getFirstRow('settings', [], { userId: req.user.id }) as Settings;
+		if (!currentSettings) throw new HttpException('User settings not found', HttpStatus.NOT_FOUND);
+
+		// Check sexual orientation compatibility
+		const isCompatible = (userOrientation: UserSexualOrientation, userGender: UserGender, otherOrientation: UserSexualOrientation, otherGender: UserGender): boolean => {
+			// Treat undefined as bisexual by default
+			const normalizedUserOrientation = userOrientation === UserSexualOrientation.Undefined ? UserSexualOrientation.Bisexual : userOrientation;
+			const normalizedOtherOrientation = otherOrientation === UserSexualOrientation.Undefined ? UserSexualOrientation.Bisexual : otherOrientation;
+			
+			// Bisexual users are compatible with everyone
+			if (normalizedUserOrientation === UserSexualOrientation.Bisexual || normalizedOtherOrientation === UserSexualOrientation.Bisexual) {
+				return true;
+			}
+			
+			// Heterosexual compatibility
+			if (normalizedUserOrientation === UserSexualOrientation.Heterosexual && normalizedOtherOrientation === UserSexualOrientation.Heterosexual) {
+				return userGender !== otherGender; // Different genders
+			}
+			
+			// Homosexual compatibility
+			if (normalizedUserOrientation === UserSexualOrientation.Homosexual && normalizedOtherOrientation === UserSexualOrientation.Homosexual) {
+				return userGender === otherGender; // Same genders
+			}
+			
+			// Mixed orientations (hetero + homo)
+			if ((normalizedUserOrientation === UserSexualOrientation.Heterosexual && normalizedOtherOrientation === UserSexualOrientation.Homosexual) ||
+				(normalizedUserOrientation === UserSexualOrientation.Homosexual && normalizedOtherOrientation === UserSexualOrientation.Heterosexual)) {
+				return false; // Not compatible
+			}
+			
+			return false;
+		};
+
+		const allSettings = (await this.database.getRows('settings', [])) as Settings[];
+		const candidates: any[] = [];
+
+		for (const otherSettings of allSettings) {
+			if (Number(otherSettings.userId) === req.user.id) continue;
+			
+			const otherUser = (await this.database.getFirstRow('users', [], { id: otherSettings.userId })) as Users;
+			if (!otherUser) continue;
+
+			// Block check
+			if (currentUser.blockedIds?.includes(Number(otherSettings.userId)) || otherUser.blockedIds?.includes(req.user.id)) continue;
+
+			// Sexual orientation compatibility check
+			if (!isCompatible(currentSettings.sexualOrientation, currentSettings.gender, otherSettings.sexualOrientation, otherSettings.gender)) continue;
+
+			// Age filtering
+			const birth = new Date(otherUser.birthday);
+			const now = new Date();
+			let age = now.getFullYear() - birth.getFullYear();
+			const m = now.getMonth() - birth.getMonth();
+			if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+			if (age < ageMin || age > ageMax) continue;
+
+			// Picture requirement
+			const otherPictures = (await this.database.getRows('picture', [], { settingsId: otherSettings.id })) as Picture[];
+			if (!otherPictures || otherPictures.length === 0) continue;
+
+			// Fame rating filtering
+			try {
+				const fameRating = await this.userService.getFameRating(otherUser.id);
+				if (typeof fameMin === 'number' && isFinite(fameMin) && fameRating < fameMin) continue;
+				if (typeof fameMax === 'number' && isFinite(fameMax) && fameRating > fameMax) continue;
+			} catch {}
+
+			// Distance filtering
+			let distance: number | undefined = undefined;
+			if (currentSettings.latitude !== undefined && currentSettings.longitude !== undefined && 
+				otherSettings.latitude !== undefined && otherSettings.longitude !== undefined) {
+				const R = 6378;
+				const lat1 = currentSettings.latitude * (Math.PI / 180);
+				const lon1 = currentSettings.longitude * (Math.PI / 180);
+				const lat2 = otherSettings.latitude * (Math.PI / 180);
+				const lon2 = otherSettings.longitude * (Math.PI / 180);
+				const dLat = lat2 - lat1;
+				const dLon = lon2 - lon1;
+				const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+				const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+				distance = R * c;
+				
+				if (typeof maxDistance === 'number' && isFinite(maxDistance) && distance > maxDistance) continue;
+			}
+
+			// Tags filtering
+			const otherTags = (await this.database.getRows('tags_entity', [], { settingsId: otherSettings.id })) as Tag[];
+			if (requestedTags.length > 0) {
+				const hasAll = requestedTags.every((t) => otherTags.some((ot) => ot.tag === t));
+				if (!hasAll) continue;
+			}
+
+			// Get compatibility score using MatchService
+			const compatibilityScore = await this.matchService.calculateCompatibilityScore(req.user.id, Number(otherSettings.userId));
+
+			const userLikeReverse = await this.database.getRows('action', [], { userId: otherSettings.userId, targetUserId: req.user.id, status: 'like' });
+			const myLikeToUser = await this.database.getRows('action', [], { userId: req.user.id, targetUserId: otherSettings.userId, status: 'like' });
+
+			const safeUser: any = { ...otherUser };
+			delete safeUser.password;
+			delete safeUser.email;
+
+			candidates.push({
+				user: safeUser,
+				settings: otherSettings,
+				tags: otherTags,
+				pictures: otherPictures,
+				age,
+				distance,
+				compatibilityScore,
+				fameRating: await this.userService.getFameRating(otherUser.id).catch(() => 0),
+				likedYou: userLikeReverse.length > 0,
+				likedByMe: myLikeToUser.length > 0,
+				commonTags: otherTags.length > 0 ? await this.getCommonTagsCount(currentSettings.id, otherSettings.id) : 0,
+			});
+		}
+
+		// Sort results based on requested criteria
+		candidates.sort((a, b) => {
+			switch (sortBy) {
+				case 'age':
+					return a.age - b.age;
+				case 'distance':
+					if (a.distance === undefined && b.distance === undefined) return 0;
+					if (a.distance === undefined) return 1;
+					if (b.distance === undefined) return -1;
+					return a.distance - b.distance;
+				case 'fame':
+					return b.fameRating - a.fameRating;
+				case 'tags':
+					return b.commonTags - a.commonTags;
+				case 'compatibility':
+				default:
+					// Primary sort: compatibility score (higher is better)
+					if (b.compatibilityScore !== a.compatibilityScore) {
+						return b.compatibilityScore - a.compatibilityScore;
+					}
+					// Secondary sort: geographical priority (closer is better)
+					if (a.distance !== undefined && b.distance !== undefined) {
+						return a.distance - b.distance;
+					}
+					if (a.distance === undefined && b.distance !== undefined) return 1;
+					if (b.distance === undefined && a.distance !== undefined) return -1;
+					// Tertiary sort: fame rating (higher is better)
+					return b.fameRating - a.fameRating;
+			}
+		});
+
+		return candidates;
+	}
+
+	private async getCommonTagsCount(settingsId1: number, settingsId2: number): Promise<number> {
+		const tags1 = (await this.database.getRows('tags_entity', [], { settingsId: settingsId1 })) as Tag[];
+		const tags2 = (await this.database.getRows('tags_entity', [], { settingsId: settingsId2 })) as Tag[];
+		return tags1.filter(tag1 => tags2.some(tag2 => tag2.tag === tag1.tag)).length;
 	}
 
 	@Post(':id/block')

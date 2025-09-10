@@ -34,7 +34,17 @@ const [loading, setLoading] = useState(true);
 
   const fetchProfiles = async () => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/action/matches`, {
+    // Use intelligent suggestions endpoint instead of matches
+    const params = new URLSearchParams();
+    params.append('sortBy', sortBy);
+    params.append('ageMin', String(filters.ageRange[0]));
+    params.append('ageMax', String(filters.ageRange[1]));
+    params.append('fameMin', String(filters.fameRange[0]));
+    params.append('fameMax', String(filters.fameRange[1]));
+    params.append('distance', String(filters.distance));
+    if (filters.tags.length) params.append('tags', filters.tags.join(','));
+
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/suggestions?${params.toString()}`, {
       credentials: 'include',
     });
     const data = await res.json();
@@ -74,7 +84,7 @@ const [loading, setLoading] = useState(true);
     };
 
     const mappedProfiles = await Promise.all(data.map(async (profile: any) => {
-      const { user, settings, tags, pictures, age, distance, fameRating, commonTagsCount, compatibility } = profile;
+      const { user, settings, tags, pictures, age, distance, fameRating, commonTags, compatibilityScore } = profile;
 
       const location = settings.latitude && settings.longitude 
         ? await getLocationFromCache(settings.latitude, settings.longitude)
@@ -91,11 +101,10 @@ const [loading, setLoading] = useState(true);
         isOnline: user.status === 'online',
         fameRating: fameRating ?? 0,
         distance: Number(distance?.toFixed?.(1) ?? distance ?? 0),
-        tagMatch: commonTagsCount ?? 0,
-        compatibility: {
-          percentage: compatibility?.percentage ?? undefined,
-          breakdown: compatibility?.breakdown ?? undefined,
-        },
+        tagMatch: commonTags ?? 0,
+        compatibilityScore: compatibilityScore ?? 0,
+        likedByMe: profile.likedByMe ?? false,
+        likedYou: profile.likedYou ?? false,
       };
     }));
 
@@ -110,6 +119,13 @@ const [loading, setLoading] = useState(true);
 useEffect(() => {
   fetchProfiles();
 }, []);
+
+// Refetch when filters or sorting change
+useEffect(() => {
+  if (user?.settings) {
+    fetchProfiles();
+  }
+}, [sortBy, filters]);
 
   const sendAction = async (targetUserId: string, status: 'like' | 'dislike') => {
     try {
