@@ -61,14 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
 async function updateUserFromCookie(): Promise<User | null> {
-  // Avoid a 403 request when no auth cookie yet (first visit on login)
-  const hasAuth = typeof document !== 'undefined' && !!getCookie('Auth');
-  if (!hasAuth) {
-    setUser(null);
-    setIsLoggedIn(false);
-    setIsLoadingUser(false);
-    return null;
-  }
+
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
       method: 'GET',
