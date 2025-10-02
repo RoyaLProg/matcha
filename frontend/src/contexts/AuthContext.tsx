@@ -170,7 +170,7 @@ useEffect(() => {
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data?.other || data?.message || "Erreur lors de l'inscription";
+        const errorMessage = (data ? Object.values(data).join('\n')  : "Erreur lors de l'inscription");
         return { success: false, error: errorMessage };
       }
 

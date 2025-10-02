@@ -37,9 +37,9 @@ const Auth = () => {
         if (result.success) {
           navigate('/home');
         } else if (result.requiresTwoFactor) {
-          setTwoFactorCredentials({ 
-            username: result.username || formData.username, 
-            password: formData.password 
+          setTwoFactorCredentials({
+            username: result.username || formData.username,
+            password: formData.password
           });
           setShowTwoFactor(true);
         } else {
@@ -51,7 +51,7 @@ const Auth = () => {
           setIsLoading(false);
           return;
         }
-        
+
         const result = await register({
           email: formData.email,
           password: formData.password,
@@ -60,7 +60,7 @@ const Auth = () => {
           lastName: formData.lastName,
           birthday: formData.birthday,
         });
-        
+
         if (result.success) {
           if (result.needsConfirmation) {
             toast.info('Vérifiez votre email pour confirmer votre compte');
@@ -154,7 +154,7 @@ const Auth = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nom d'utilisateur
@@ -295,7 +295,7 @@ const Auth = () => {
           )}
         </div>
       </div>
-      
+
       {showTwoFactor && (
         <TwoFactorVerify
           username={twoFactorCredentials.username}
