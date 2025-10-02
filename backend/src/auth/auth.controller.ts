@@ -1,19 +1,15 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Res, BadRequestException, NotFoundException, UnauthorizedException, UseGuards, Request } from '@nestjs/common';
 import Users from 'src/interface/users.interface';
 import AuthService from './auth.service';
-import { sha256 } from 'js-sha256';
 import { Response } from 'express';
 import MailService from 'src/mail/mail.service';
 import UserService from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { TokenType } from 'src/interface/auth.interface';
 import AuthGuard from './auth.guard';
-import { OAuth2Client } from 'google-auth-library';
 import { TwoFactorService } from './twoFactor.service';
 import { Database } from 'src/database/Database';
 
-type MyOmit<T, K extends PropertyKey> =
-    { [P in keyof T as Exclude<P, K>]: T[P] }
 
 @Controller("auth")
 export class AuthController {
@@ -290,64 +286,6 @@ export class AuthController {
 		return { message: 'Logged out' };
 	}
 
-  @Post('google')
-  async googleLogin(@Body() body, @Res({ passthrough: true }) res: Response) {
-		const { idToken } = body || {};
-		if (!idToken)
-			throw new BadRequestException('missing idToken');
-
-		const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-		let ticket;
-		try {
-			ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
-		} catch (e) {
-			throw new UnauthorizedException('invalid google token');
-		}
-		const payload = ticket.getPayload();
-		if (!payload || !payload.email)
-			throw new UnauthorizedException('google payload invalid');
-
-		const email = payload.email;
-		const emailVerified = payload.email_verified === true;
-		const firstName = payload.given_name || 'User';
-		const lastName = payload.family_name || '';
-		const suggestedUsername = (email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20);
-
-		let user: Users | null = null;
-		try {
-			user = await this.userService.findOneByEmail(email);
-		} catch {}
-
-		if (!user) {
-			const hash = sha256.create();
-			const randomPasswordPlain = hash.update(Math.random().toString(36)).hex();
-			let username = suggestedUsername;
-			for (let i = 0; i < 10; i++) {
-				try {
-					await this.userService.findOneByUsername(username);
-					username = `${suggestedUsername}_${Math.floor(Math.random() * 1000)}`.slice(0, 20);
-				} catch {
-					break;
-				}
-			}
-			const defaultBirthday = new Date('1990-01-01');
-				user = await this.authService.addUser({
-					firstName,
-					lastName,
-					username,
-					password: await this.authService.hashPassword(randomPasswordPlain),
-					birthday: defaultBirthday.toISOString().slice(0,10) as any,
-					email,
-					isValidated: emailVerified,
-				} as Users);
-		}
-
-		const payloadJwt = { id: user.id };
-		const jwt: string = this.jwtService.sign(payloadJwt, {secret: process.env.JWT_SECRET, expiresIn: '7d'});
-		const maxAge = 7 * 24 * 60 * 60 * 1000;
-		res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge, path: '/'});
-		return { message: 'Login successful!' };
-  }
 
 	@Post('forgot')
 	async forgot(@Body() body, @Res() res: Response) {

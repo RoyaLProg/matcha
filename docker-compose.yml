@@ -48,7 +48,6 @@ services:
       - /opt/frontend/node_modules  # empêche conflit avec host
     environment:
       - VITE_API_URL=${API_URL}
-      - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     depends_on:
       - backend
     ports:

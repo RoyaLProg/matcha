@@ -30,16 +30,25 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
   const socket = useContext(WebSocketContext)
 
   const fetchChats = async () => {
-    if (!userCtx?.user) return;
+    if (!userCtx?.user) {
+      console.log("ChatContext: No user context, skipping fetch");
+      return;
+    }
     try {
+      console.log("ChatContext: Fetching chats for user", userCtx.user.id);
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/`, {
         method: "GET",
         credentials: "include",
       });
+      console.log("ChatContext: Response status", response.status);
       if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
       const data = await response.json();
+      console.log("ChatContext: Received data", data);
 
-      if (!Array.isArray(data)) return setChats([]);
+      if (!Array.isArray(data)) {
+        console.log("ChatContext: Data is not an array, setting empty chats");
+        return setChats([]);
+      }
       const updatedChats = await Promise.all(
         data.map(async (chat: IChat) => {
           if (!Array.isArray(chat.messages)) chat.messages = [];
@@ -47,6 +56,7 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
           return chat;
         })
       );
+      console.log("ChatContext: Setting chats", updatedChats);
       setChats(updatedChats);
 
     } catch (error) {
@@ -58,9 +68,18 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
     if (!userCtx?.user || !socket) return;
     fetchChats();
     const handleNewChat = (newChat: Chat) => {
+      console.log("ChatContext: Received newChat event", newChat);
       setChats((prevChats) => {
-        if (!prevChats) return [newChat];
-        if (!prevChats.find((chat) => chat.id === newChat.id)) return [...prevChats, newChat];
+        console.log("ChatContext: Current chats before update", prevChats);
+        if (!prevChats) {
+          console.log("ChatContext: No previous chats, setting new chat");
+          return [newChat];
+        }
+        if (!prevChats.find((chat) => chat.id === newChat.id)) {
+          console.log("ChatContext: Chat not found, adding new chat");
+          return [...prevChats, newChat];
+        }
+        console.log("ChatContext: Chat already exists, no update");
         return prevChats;
       });
     };

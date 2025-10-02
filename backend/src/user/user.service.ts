@@ -38,6 +38,21 @@ export default class UserService {
 		const user = await this.database.getFirstRow('users', [], { id });
 		if (!user)
 			throw new Error('User not found');
+
+		// Validate email uniqueness if email is being updated
+		if (data.email && data.email !== user.email) {
+			const existingUser = await this.database.getFirstRow('users', [], { email: data.email });
+			if (existingUser)
+				throw new Error('Email already in use');
+		}
+
+		// Validate username uniqueness if username is being updated
+		if (data.username && data.username !== user.username) {
+			const existingUser = await this.database.getFirstRow('users', [], { username: data.username });
+			if (existingUser)
+				throw new Error('Username already in use');
+		}
+
 		const updatedUser = await this.database.updateRows('users', data, { id });
 		return updatedUser[0] as Users;
 	}
@@ -88,7 +103,8 @@ export default class UserService {
 	}
 
 	async getFameRating(userId: number) {
-		const data = await this.database.getRows("history", undefined, {userId: userId, message: "a user liked your profile"});
-		return data.length;
+		// Count all likes received (from action table)
+		const likes = await this.database.getRows("action", undefined, {targetUserId: userId, status: 'like'});
+		return likes.length;
 	}
 }

@@ -74,36 +74,62 @@ export default class MatchService {
         } = args;
 
         // Weights (sum to 1). LikedYou adds a small bonus treated after weighting
-        const W_TAGS = 0.40;
-        const W_DISTANCE = 0.25;
+        const W_TAGS = 0.35;
+        const W_DISTANCE = 0.30;
         const W_AGE = 0.25;
         const W_FAME = 0.10;
-        const BONUS_LIKED = 0.05; // capped later
+        const BONUS_LIKED = 0.10; // bonus if the other user liked you
 
-        // Tags similarity via Jaccard
-        const tagSim = this.jaccardSimilarity(myTags, otherTags); // 0..1
+        // Tags similarity via Jaccard (0..1)
+        const tagSim = this.jaccardSimilarity(myTags, otherTags);
 
-        // Distance: closer is better, normalized to my/max pref
-        const maxDist = Math.max(1, Number(mySettings.maxDistance || 1));
-        const distScore = this.clamp01(1 - (distanceKm / maxDist));
+        // Distance: closer is better
+        // Use exponential decay for more realistic distance scoring
+        // Users within 10km get high score, drops off quickly after
+        let distScore = 0;
+        if (Number.isFinite(distanceKm)) {
+            const maxReasonableDistance = 100; // km - beyond this compatibility drops significantly
+            distScore = Math.exp(-distanceKm / (maxReasonableDistance / 3));
+            distScore = this.clamp01(distScore);
+        }
 
-        // Age fit: closeness to each other's preferred ranges
+        // Age fit: check if each person is within the other's preferred range
         const myMin = Number(mySettings.minAgePreference ?? 18);
-        const myMax = Number(mySettings.maxAgePreference ?? 65);
+        const myMax = Number(mySettings.maxAgePreference ?? 80);
         const otherMin = Number(otherSettings.minAgePreference ?? 18);
-        const otherMax = Number(otherSettings.maxAgePreference ?? 65);
-        const myMid = (myMin + myMax) / 2;
-        const otherMid = (otherMin + otherMax) / 2;
-        const myHalf = Math.max(1, (myMax - myMin) / 2);
-        const otherHalf = Math.max(1, (otherMax - otherMin) / 2);
-        const fitOtherToMe = this.clamp01(1 - Math.abs(otherAge - myMid) / myHalf);
-        const fitMeToOther = this.clamp01(1 - Math.abs(myAge - otherMid) / otherHalf);
-        const ageScore = (fitOtherToMe + fitMeToOther) / 2;
+        const otherMax = Number(otherSettings.maxAgePreference ?? 80);
 
-        // Fame fit: prefer closer fame within my allowed cap
-        const fameCap = Math.max(1, Number(mySettings.maxFameRating ?? 5));
+        // Calculate how well the other person fits MY age preference
+        let fitOtherToMe = 0;
+        if (otherAge >= myMin && otherAge <= myMax) {
+            // Within range: score based on distance from ideal (middle of range)
+            const myIdeal = (myMin + myMax) / 2;
+            const myRange = Math.max(1, myMax - myMin);
+            const deviation = Math.abs(otherAge - myIdeal) / (myRange / 2);
+            fitOtherToMe = this.clamp01(1 - deviation * 0.3); // Max 30% penalty for edge of range
+        } else {
+            // Outside range: 0 score
+            fitOtherToMe = 0;
+        }
+
+        // Calculate how well I fit the OTHER person's age preference
+        let fitMeToOther = 0;
+        if (myAge >= otherMin && myAge <= otherMax) {
+            const otherIdeal = (otherMin + otherMax) / 2;
+            const otherRange = Math.max(1, otherMax - otherMin);
+            const deviation = Math.abs(myAge - otherIdeal) / (otherRange / 2);
+            fitMeToOther = this.clamp01(1 - deviation * 0.3);
+        } else {
+            fitMeToOther = 0;
+        }
+
+        // Both must fit each other's preferences for good compatibility
+        const ageScore = (fitOtherToMe * 0.5) + (fitMeToOther * 0.5);
+
+        // Fame: prefer similar fame ratings (normalized)
+        const maxFame = 100; // reasonable upper bound for fame
         const fameDiff = Math.abs((otherFame || 0) - (myFame || 0));
-        const fameScore = this.clamp01(1 - (fameDiff / fameCap));
+        const fameScore = this.clamp01(1 - (fameDiff / maxFame));
 
         const base = (tagSim * W_TAGS) + (distScore * W_DISTANCE) + (ageScore * W_AGE) + (fameScore * W_FAME);
         const finalScore = Math.min(1, base + (likedYou ? BONUS_LIKED : 0));
@@ -229,8 +255,9 @@ export default class MatchService {
 	}
 
     async getFameRating(userId: number) {
-        const data = await this.database.getRows("history", undefined, {userId: userId, message: "%user% liked your profile"});
-        return data.length;
+        // Count all likes received (from action table, not history)
+        const likes = await this.database.getRows("action", undefined, {targetUserId: userId, status: 'like'});
+        return likes.length;
     }
 
     // Public API used by UserController to compare two users directly

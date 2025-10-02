@@ -17,6 +17,7 @@ const AccountPage = () => {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     username: user?.username || '',
+    email: user?.email || '',
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -46,6 +47,7 @@ const AccountPage = () => {
         if (formData.firstName !== user?.firstName) payload.firstName = formData.firstName.trim();
         if (formData.lastName !== user?.lastName) payload.lastName = formData.lastName.trim();
         if (formData.username !== user?.username) payload.username = formData.username.trim();
+        if (formData.email !== user?.email) payload.email = formData.email.trim();
         const has = Object.keys(payload).length > 0;
         if (has) {
           const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/${user?.id}`, {
@@ -307,11 +309,12 @@ const AccountPage = () => {
                 </label>
                 <input
                   type="email"
-                  value={user?.email || ''}
-                  disabled
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                 />
-                <p className="text-xs text-gray-500 mt-1">Email cannot be modified</p>
               </div>
 
               <div>

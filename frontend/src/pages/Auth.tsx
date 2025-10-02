@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Heart, Eye, EyeOff, Calendar, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import OmniAuth from '../components/OmniAuth';
 import TwoFactorVerify from '../components/TwoFactorVerify';
 import { toast } from '@/components/ui/sonner';
 
@@ -26,37 +25,6 @@ const Auth = () => {
   const { login, register, refreshUser } = useAuth();
   const navigate = useNavigate();
 
-  const handleSocialLogin = async (provider: string) => {
-    console.log(`Connexion avec ${provider} réussie`);
-    toast.success(`Connexion avec ${provider} réussie !`);
-    
-    // Actualiser les données utilisateur après la connexion Google
-    try {
-      await refreshUser();
-      
-      // Récupérer les données utilisateur pour vérifier l'état du profil
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const userData = await response.json();
-        console.log('Données utilisateur récupérées:', userData);
-        
-        // Redirection basée sur l'état du profil
-        if (!userData.settings || !userData.settings.pictures || userData.settings.pictures.length === 0) {
-          navigate('/first-connection');
-        } else {
-          navigate('/home');
-        }
-      } else {
-        navigate('/home');
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des données utilisateur:', error);
-      navigate('/home');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -305,9 +273,6 @@ const Auth = () => {
             </button>
           </form>
 
-          <div className="mt-6">
-            <OmniAuth onSocialLogin={handleSocialLogin} />
-          </div>
 
           <div className="mt-6 text-center">
             <button
