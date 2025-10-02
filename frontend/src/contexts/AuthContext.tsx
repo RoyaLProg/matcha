@@ -32,7 +32,7 @@ interface RegisterData {
   birthday: string;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -90,14 +90,14 @@ async function updateUserFromCookie(): Promise<User | null> {
 
 
 useEffect(() => {
-  
+
     const init = async () => {
       const user = await updateUserFromCookie();
-      
+
       setIsLoadingUser(false);
     };
     init();
-  
+
 }, []);
 
 
@@ -133,10 +133,10 @@ useEffect(() => {
     }
 
     if (data.requiresTwoFactor) {
-      return { 
-        success: false, 
-        requiresTwoFactor: true, 
-        username: data.username 
+      return {
+        success: false,
+        requiresTwoFactor: true,
+        username: data.username
       };
     }
 

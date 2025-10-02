@@ -5,15 +5,15 @@ import { Send, MoreVertical, Heart, Phone, Video, Image, ArrowLeft, Camera } fro
 import VideoMessageRecorder from '../components/VideoMessageRecorder';
 import VideoCall from '../components/VideoCall';
 import { ChatContext } from '../contexts/ChatContext';
-import { UserContext } from '../contexts/UserContext';
 import { MessageType } from '../interface/message.interface';
 import { WebSocketContext } from '../contexts/WebSocketContext';
 import { CallContext } from '../contexts/CallContext';
+import { AuthContext } from '@/contexts/AuthContext';
 
 const ChatPage = () => {
   const { id } = useParams();
   const chatsCtx = useContext(ChatContext);
-  const userCtx = useContext(UserContext);
+  const authCtx = useContext(AuthContext);
   const [message, setMessage] = useState('');
   const [showVideoMessageRecorder, setShowVideoMessageRecorder] = useState(false);
   const [blocked, setBlocked] = useState<boolean>(false);
@@ -27,9 +27,9 @@ const ChatPage = () => {
   }, [chatsCtx?.chats, id]);
 
   const otherUser = useMemo(() => {
-    if (!chat || !userCtx?.user) return undefined;
-    return chat.user?.id === userCtx.user.id ? chat.targetUser : chat.user;
-  }, [chat, userCtx?.user]);
+    if (!chat || !authCtx?.user) return undefined;
+    return chat.user?.id === authCtx.user.id ? chat.targetUser : chat.user;
+  }, [chat, authCtx?.user]);
 
   useEffect(() => {
   }, [chat?.id]);
@@ -71,11 +71,11 @@ const ChatPage = () => {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !chat || !userCtx?.user || !chatsCtx?.sendMessage) return;
+    if (!message.trim() || !chat || !authCtx?.user || !chatsCtx?.sendMessage) return;
 
     const newMessage = {
       chatId: chat.id!,
-      userId: userCtx.user.id,
+      userId: authCtx.user.id,
       type: MessageType.Text,
       content: message,
       fileUrl: null,
@@ -147,8 +147,8 @@ const ChatPage = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <button 
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" 
+                <button
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   onClick={() => {
                     if (chat && otherUser && callCtx) {
                       callCtx.startCall({ type: 'audio', chatId: chat.id!, toUserId: otherUser.id }).catch(err => {
@@ -161,8 +161,8 @@ const ChatPage = () => {
                 >
                   <Phone className="w-5 h-5" />
                 </button>
-                <button 
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" 
+                <button
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   onClick={() => {
                     if (chat && otherUser && callCtx) {
                       callCtx.startCall({ type: 'video', chatId: chat.id!, toUserId: otherUser.id }).catch(err => {
@@ -175,15 +175,12 @@ const ChatPage = () => {
                 >
                   <Video className="w-5 h-5" />
                 </button>
-                <button 
+                <button
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   onClick={() => setShowVideoMessageRecorder(true)}
                   title="Record video message"
                 >
                   <Camera className="w-5 h-5" />
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                  <MoreVertical className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -193,11 +190,11 @@ const ChatPage = () => {
             {(chat.messages ?? []).map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex ${msg.userId === userCtx?.user?.id ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${msg.userId === authCtx?.user?.id ? 'justify-end' : 'justify-start'}`}
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                    msg.userId === userCtx?.user?.id
+                    msg.userId === authCtx?.user?.id
                       ? 'bg-gradient-to-r from-blue-500 to-sky-500 text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}
@@ -215,7 +212,7 @@ const ChatPage = () => {
                   )}
                   <p
                     className={`text-xs mt-1 ${
-                      msg.userId === userCtx?.user?.id ? 'text-blue-100' : 'text-gray-500'
+                      msg.userId === authCtx?.user?.id ? 'text-blue-100' : 'text-gray-500'
                     }`}
                   >
                     {msg.createdAt ? formatTime(new Date(msg.createdAt)) : ''}
@@ -231,13 +228,6 @@ const ChatPage = () => {
               <div className="mb-2 text-sm text-red-500">Messaging disabled: you have blocked this user or they blocked you.</div>
             )}
             <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-              <button
-                type="button"
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Image className="w-5 h-5" />
-              </button>
-              
               <div className="flex-1 relative">
                 <input
                   type="text"
@@ -276,7 +266,7 @@ const ChatPage = () => {
           recipientAvatar={otherUser?.settings?.pictures?.length ? `${import.meta.env.VITE_API_URL}/api${otherUser.settings.pictures.find((p:any)=>p.isProfile)?.url}` : undefined}
           chatId={chat.id}
         />
-        
+
         <VideoCall
           recipientName={otherUser?.firstName ?? otherUser?.username ?? 'User'}
           recipientAvatar={otherUser?.settings?.pictures?.length ? `${import.meta.env.VITE_API_URL}/api${otherUser.settings.pictures.find((p:any)=>p.isProfile)?.url}` : undefined}

@@ -7,8 +7,8 @@ import { ChatContext } from '../contexts/ChatContext';
 import { UserContext } from '../contexts/UserContext';
 
 const ChatListPage = () => {
-  const chatsCtx = useContext(ChatContext);
   const userCtx = useContext(UserContext);
+  const chatsCtx = useContext(ChatContext);
 
   const handleRefresh = () => {
     console.log("Manual refresh triggered");

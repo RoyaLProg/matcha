@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { WebSocketContext } from "./WebSocketContext";
-import { UserContext } from "./UserContext";
+import { AuthContext } from "./AuthContext";
 import Chat from "../interface/chat.interface";
 import Message from "../interface/message.interface";
 
@@ -26,18 +26,18 @@ const sortMessages = (messages: Message[]): Message[] => {
 
 const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [chats, setChats] = useState<Chat[]>();
-  const userCtx = useContext(UserContext);
+  const authCtx = useContext(AuthContext);
   const socket = useContext(WebSocketContext)
 
-  console.log("ChatContext: Provider rendering, userCtx:", !!userCtx, "user:", !!userCtx?.user, "socket:", !!socket);
+  console.log("ChatContext: Provider rendering, userCtx:", !!authCtx, "user:", !!authCtx?.user, "socket:", !!socket);
 
   const fetchChats = async () => {
-    if (!userCtx?.user) {
-      console.log("ChatContext: No user context, skipping fetch. userCtx:", userCtx);
+    if (!authCtx?.user) {
+      console.log("ChatContext: No user context, skipping fetch. userCtx:", authCtx?.user);
       return;
     }
     try {
-      console.log("ChatContext: Fetching chats for user", userCtx.user.id);
+      console.log("ChatContext: Fetching chats for user", authCtx.user.id);
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/`, {
         method: "GET",
         credentials: "include",
@@ -67,7 +67,7 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (!userCtx?.user || !socket) return;
+    if (!authCtx?.user || !socket) return;
     fetchChats();
     const handleNewChat = (newChat: Chat) => {
       console.log("ChatContext: Received newChat event", newChat);
@@ -128,7 +128,7 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off('receiveMessages', handleReceiveMessages);
     };
-  }, [socket, userCtx?.user]);
+  }, [socket, authCtx?.user]);
 
   const refreshChats = async () => {
     await fetchChats();
