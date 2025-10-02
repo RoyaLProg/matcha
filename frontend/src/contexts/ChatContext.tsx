@@ -29,9 +29,11 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
   const userCtx = useContext(UserContext);
   const socket = useContext(WebSocketContext)
 
+  console.log("ChatContext: Provider rendering, userCtx:", !!userCtx, "user:", !!userCtx?.user, "socket:", !!socket);
+
   const fetchChats = async () => {
     if (!userCtx?.user) {
-      console.log("ChatContext: No user context, skipping fetch");
+      console.log("ChatContext: No user context, skipping fetch. userCtx:", userCtx);
       return;
     }
     try {

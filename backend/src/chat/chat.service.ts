@@ -27,12 +27,16 @@ class ChatService {
 			existingChat.messages = await this.getMessagesByChatId(existingChat.id) || [];
 			existingChat.user = await this.userService.findOne(existingChat.userId as number);
 			existingChat.targetUser = await this.userService.findOne(existingChat.targetUserId as number);
-			delete existingChat.user.settings.latitude;
-			delete existingChat.user.settings.longitude;
+			if (existingChat.user.settings) {
+				delete existingChat.user.settings.latitude;
+				delete existingChat.user.settings.longitude;
+			}
 			delete existingChat.user.password;
 			delete existingChat.user.email;
-			delete existingChat.targetUser.settings.latitude;
-			delete existingChat.targetUser.settings.longitude;
+			if (existingChat.targetUser.settings) {
+				delete existingChat.targetUser.settings.latitude;
+				delete existingChat.targetUser.settings.longitude;
+			}
 			delete existingChat.targetUser.password;
 			delete existingChat.targetUser.email;
 			return existingChat;
@@ -48,12 +52,16 @@ class ChatService {
 		newChat.messages = [];
 		newChat.user = await this.userService.findOne(newChat.userId as number);
 		newChat.targetUser = await this.userService.findOne(newChat.targetUserId as number);
-		delete newChat.user.settings.latitude;
-		delete newChat.user.settings.longitude;
+		if (newChat.user.settings) {
+			delete newChat.user.settings.latitude;
+			delete newChat.user.settings.longitude;
+		}
 		delete newChat.user.password;
 		delete newChat.user.email;
-		delete newChat.targetUser.settings.latitude;
-		delete newChat.targetUser.settings.longitude;
+		if (newChat.targetUser.settings) {
+			delete newChat.targetUser.settings.latitude;
+			delete newChat.targetUser.settings.longitude;
+		}
 		delete newChat.targetUser.password;
 		delete newChat.targetUser.email;
 
@@ -109,16 +117,20 @@ class ChatService {
 			chat.messages = await this.getMessagesByChatId(chat.id);
 			chat.user = await this.userService.findOne(chat.userId as number);
 			chat.targetUser = await this.userService.findOne(chat.targetUserId as number);
-			delete chat.user.settings.latitude
-			delete chat.user.settings.longitude
-			delete chat.user.password
-			delete chat.user.email
-			delete chat.targetUser.settings.latitude
-			delete chat.targetUser.settings.longitude
-			delete chat.targetUser.password
-			delete chat.targetUser.email
-			delete chat.userId
-			delete chat.targetUserId
+			if (chat.user.settings) {
+				delete chat.user.settings.latitude;
+				delete chat.user.settings.longitude;
+			}
+			delete chat.user.password;
+			delete chat.user.email;
+			if (chat.targetUser.settings) {
+				delete chat.targetUser.settings.latitude;
+				delete chat.targetUser.settings.longitude;
+			}
+			delete chat.targetUser.password;
+			delete chat.targetUser.email;
+			delete chat.userId;
+			delete chat.targetUserId;
 		}
 		return allChats as Chat[];
 	}
