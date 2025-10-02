@@ -22,8 +22,6 @@ interface ProfileCardProps {
     fameRating: number;
     tagMatch?: number;
     likedByMe?: boolean;
-    compatibilityScore?: number;
-    compatibility?: { percentage?: number, breakdown?: { tags: number, distance: number, age: number, fame: number, likedBonus?: number } };
   };
   onLike?: (id: string) => void;
   onUnlike?: (id: string) => void;
@@ -88,11 +86,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, on
         )}
         
         <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
-          {typeof profile.compatibility?.percentage === 'number' && (
-            <div className="flex items-center space-x-1 bg-pink-50/90 text-pink-700 px-2 py-1 rounded-full shadow-sm">
-              <span className="text-xs font-semibold">{profile.compatibility.percentage}% match</span>
-            </div>
-          )}
           <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
             <Star className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-medium">{profile.fameRating}</span>
@@ -148,39 +141,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, on
           )}
         </div>
 
-        {(typeof profile.compatibilityScore === 'number' || typeof profile.compatibility?.percentage === 'number') && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-              <span>Compatibility</span>
-              <span className="font-medium">
-                {typeof profile.compatibilityScore === 'number' 
-                  ? `${Math.round(profile.compatibilityScore * 100)}%` 
-                  : `${profile.compatibility?.percentage}%`
-                }
-              </span>
-            </div>
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-2 bg-gradient-to-r from-pink-500 to-fuchsia-500"
-                style={{ 
-                  width: `${Math.max(0, Math.min(100, 
-                    typeof profile.compatibilityScore === 'number' 
-                      ? profile.compatibilityScore * 100
-                      : profile.compatibility?.percentage || 0
-                  ))}%` 
-                }}
-              />
-            </div>
-            {profile.compatibility?.breakdown && (
-              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-gray-500">
-                <div>Tags: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.tags}%</span></div>
-                <div>Distance: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.distance}%</span></div>
-                <div>Age: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.age}%</span></div>
-                <div>Fame: <span className="text-gray-700 font-medium">{profile.compatibility.breakdown.fame}%</span></div>
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="flex space-x-3">
           <button

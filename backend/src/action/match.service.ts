@@ -34,116 +34,6 @@ export default class MatchService {
         return userTags.filter((tag) => otherUserTags.some((t) => t.tag === tag.tag)).length;
     }
 
-    private jaccardSimilarity(userTags: Tag[], otherUserTags: Tag[]): number {
-        try {
-            const a = new Set((userTags || []).map((t) => t.tag));
-            const b = new Set((otherUserTags || []).map((t) => t.tag));
-            if (a.size === 0 && b.size === 0) return 0;
-            let inter = 0;
-            for (const t of a) if (b.has(t)) inter++;
-            const union = new Set<string>([...a, ...b]).size || 1;
-            return inter / union;
-        } catch {
-            return 0;
-        }
-    }
-
-    private clamp01(n: number): number {
-        if (!Number.isFinite(n)) return 0;
-        if (n < 0) return 0;
-        if (n > 1) return 1;
-        return n;
-    }
-
-    private computeCompatibility(args: {
-        mySettings: Settings,
-        myAge: number,
-        myTags: Tag[],
-        otherSettings: Settings,
-        otherAge: number,
-        otherTags: Tag[],
-        distanceKm: number,
-        otherFame: number,
-        myFame: number,
-        likedYou: boolean,
-    }) {
-        const {
-            mySettings, myAge, myTags,
-            otherSettings, otherAge, otherTags,
-            distanceKm, otherFame, myFame, likedYou,
-        } = args;
-
-        // Weights (sum to 1). LikedYou adds a small bonus treated after weighting
-        const W_TAGS = 0.35;
-        const W_DISTANCE = 0.30;
-        const W_AGE = 0.25;
-        const W_FAME = 0.10;
-        const BONUS_LIKED = 0.10; // bonus if the other user liked you
-
-        // Tags similarity via Jaccard (0..1)
-        const tagSim = this.jaccardSimilarity(myTags, otherTags);
-
-        // Distance: closer is better
-        // Use exponential decay for more realistic distance scoring
-        // Users within 10km get high score, drops off quickly after
-        let distScore = 0;
-        if (Number.isFinite(distanceKm)) {
-            const maxReasonableDistance = 100; // km - beyond this compatibility drops significantly
-            distScore = Math.exp(-distanceKm / (maxReasonableDistance / 3));
-            distScore = this.clamp01(distScore);
-        }
-
-        // Age fit: check if each person is within the other's preferred range
-        const myMin = Number(mySettings.minAgePreference ?? 18);
-        const myMax = Number(mySettings.maxAgePreference ?? 80);
-        const otherMin = Number(otherSettings.minAgePreference ?? 18);
-        const otherMax = Number(otherSettings.maxAgePreference ?? 80);
-
-        // Calculate how well the other person fits MY age preference
-        let fitOtherToMe = 0;
-        if (otherAge >= myMin && otherAge <= myMax) {
-            // Within range: score based on distance from ideal (middle of range)
-            const myIdeal = (myMin + myMax) / 2;
-            const myRange = Math.max(1, myMax - myMin);
-            const deviation = Math.abs(otherAge - myIdeal) / (myRange / 2);
-            fitOtherToMe = this.clamp01(1 - deviation * 0.3); // Max 30% penalty for edge of range
-        } else {
-            // Outside range: 0 score
-            fitOtherToMe = 0;
-        }
-
-        // Calculate how well I fit the OTHER person's age preference
-        let fitMeToOther = 0;
-        if (myAge >= otherMin && myAge <= otherMax) {
-            const otherIdeal = (otherMin + otherMax) / 2;
-            const otherRange = Math.max(1, otherMax - otherMin);
-            const deviation = Math.abs(myAge - otherIdeal) / (otherRange / 2);
-            fitMeToOther = this.clamp01(1 - deviation * 0.3);
-        } else {
-            fitMeToOther = 0;
-        }
-
-        // Both must fit each other's preferences for good compatibility
-        const ageScore = (fitOtherToMe * 0.5) + (fitMeToOther * 0.5);
-
-        // Fame: prefer similar fame ratings (normalized)
-        const maxFame = 100; // reasonable upper bound for fame
-        const fameDiff = Math.abs((otherFame || 0) - (myFame || 0));
-        const fameScore = this.clamp01(1 - (fameDiff / maxFame));
-
-        const base = (tagSim * W_TAGS) + (distScore * W_DISTANCE) + (ageScore * W_AGE) + (fameScore * W_FAME);
-        const finalScore = Math.min(1, base + (likedYou ? BONUS_LIKED : 0));
-
-        const breakdown = {
-            tags: Math.round(tagSim * W_TAGS * 100),
-            distance: Math.round(distScore * W_DISTANCE * 100),
-            age: Math.round(ageScore * W_AGE * 100),
-            fame: Math.round(fameScore * W_FAME * 100),
-            likedBonus: likedYou ? Math.round(BONUS_LIKED * 100) : 0,
-        };
-        const percentage = Math.max(0, Math.min(100, Math.round(finalScore * 100)));
-        return { percentage, breakdown };
-    }
 
 	private isOrientationCompatible(my: Settings, other: Settings): boolean {
 		// Si orientation non spécifiée = bisexuel par défaut (selon specs)
@@ -207,18 +97,6 @@ export default class MatchService {
                 const otherFameRating = await this.getFameRating(otherUser.id);
                 const userFameRating = await this.getFameRating(userId);
                 if (otherFameRating > userSettings.maxFameRating || userFameRating > settings.maxFameRating) return null;
-                const compatibility = this.computeCompatibility({
-                    mySettings: userSettings,
-                    myAge,
-                    myTags: userTags,
-                    otherSettings: settings,
-                    otherAge: age,
-                    otherTags,
-                    distanceKm: distance,
-                    otherFame: otherFameRating,
-                    myFame: userFameRating,
-                    likedYou: userLikeReverse.length > 0,
-                });
                 return {
                     user: otherUser,
                     settings,
@@ -229,7 +107,6 @@ export default class MatchService {
                     likedYou: userLikeReverse.length > 0,
                     commonTagsCount,
                     fameRating: otherFameRating,
-                    compatibility,
                 };
             }));
 			const areaThresholdKm = 10;
@@ -260,57 +137,4 @@ export default class MatchService {
         return likes.length;
     }
 
-    // Public API used by UserController to compare two users directly
-    public async calculateCompatibilityScore(userId: number, otherUserId: number): Promise<number> {
-        try {
-            if (!Number.isFinite(userId) || !Number.isFinite(otherUserId) || userId === otherUserId) return 0;
-
-            const me = await this.database.getFirstRow('users', [], { id: userId }) as Users;
-            const other = await this.database.getFirstRow('users', [], { id: otherUserId }) as Users;
-            if (!me || !other) return 0;
-
-            const mySettings = await this.database.getFirstRow('settings', [], { userId }) as Settings;
-            const otherSettings = await this.database.getFirstRow('settings', [], { userId: otherUserId }) as Settings;
-            if (!mySettings || !otherSettings) return 0;
-
-            // If sexual orientations are incompatible, compatibility is 0
-            if (!this.isOrientationCompatible(mySettings, otherSettings)) return 0;
-
-            const myTags = await this.database.getRows('tags_entity', [], { settingsId: mySettings.id }) as Tag[];
-            const otherTags = await this.database.getRows('tags_entity', [], { settingsId: otherSettings.id }) as Tag[];
-
-            let distanceKm = Number.POSITIVE_INFINITY;
-            if (
-                Number.isFinite(mySettings.latitude) && Number.isFinite(mySettings.longitude) &&
-                Number.isFinite(otherSettings.latitude) && Number.isFinite(otherSettings.longitude)
-            ) {
-                distanceKm = await this.calculateDistance(
-                    Number(mySettings.latitude), Number(mySettings.longitude),
-                    Number(otherSettings.latitude), Number(otherSettings.longitude)
-                );
-            }
-
-            const myAge = await this.calculeAge(me.birthday as any);
-            const otherAge = await this.calculeAge(other.birthday as any);
-            const myFame = await this.getFameRating(userId);
-            const otherFame = await this.getFameRating(otherUserId);
-            const likedYou = (await this.database.getRows('action', [], { userId: otherUserId, targetUserId: userId, status: 'like'})).length > 0;
-
-            const { percentage } = this.computeCompatibility({
-                mySettings,
-                myAge,
-                myTags,
-                otherSettings,
-                otherAge,
-                otherTags,
-                distanceKm,
-                otherFame,
-                myFame,
-                likedYou,
-            });
-            return percentage;
-        } catch {
-            return 0;
-        }
-    }
 }

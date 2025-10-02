@@ -262,9 +262,6 @@ class UserController {
 				if (!hasAll) continue;
 			}
 
-			// Get compatibility score using MatchService
-			const compatibilityScore = await this.matchService.calculateCompatibilityScore(req.user.id, Number(otherSettings.userId));
-
 			const userLikeReverse = await this.database.getRows('action', [], { userId: otherSettings.userId, targetUserId: req.user.id, status: 'like' });
 			const myLikeToUser = await this.database.getRows('action', [], { userId: req.user.id, targetUserId: otherSettings.userId, status: 'like' });
 
@@ -279,7 +276,6 @@ class UserController {
 				pictures: otherPictures,
 				age,
 				distance,
-				compatibilityScore,
 				fameRating: await this.userService.getFameRating(otherUser.id).catch(() => 0),
 				likedYou: userLikeReverse.length > 0,
 				likedByMe: myLikeToUser.length > 0,
@@ -301,19 +297,14 @@ class UserController {
 					return b.fameRating - a.fameRating;
 				case 'tags':
 					return b.commonTags - a.commonTags;
-				case 'compatibility':
 				default:
-					// Primary sort: compatibility score (higher is better)
-					if (b.compatibilityScore !== a.compatibilityScore) {
-						return b.compatibilityScore - a.compatibilityScore;
-					}
-					// Secondary sort: geographical priority (closer is better)
+					// Default sort: distance (closer is better)
 					if (a.distance !== undefined && b.distance !== undefined) {
 						return a.distance - b.distance;
 					}
 					if (a.distance === undefined && b.distance !== undefined) return 1;
 					if (b.distance === undefined && a.distance !== undefined) return -1;
-					// Tertiary sort: fame rating (higher is better)
+					// Secondary sort: fame rating (higher is better)
 					return b.fameRating - a.fameRating;
 			}
 		});

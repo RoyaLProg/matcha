@@ -84,9 +84,9 @@ const [loading, setLoading] = useState(true);
     };
 
     const mappedProfiles = await Promise.all(data.map(async (profile: any) => {
-      const { user, settings, tags, pictures, age, distance, fameRating, commonTags, compatibilityScore } = profile;
+      const { user, settings, tags, pictures, age, distance, fameRating, commonTags } = profile;
 
-      const location = settings.latitude && settings.longitude 
+      const location = settings.latitude && settings.longitude
         ? await getLocationFromCache(settings.latitude, settings.longitude)
         : 'Unknown location';
 
@@ -102,7 +102,6 @@ const [loading, setLoading] = useState(true);
         fameRating: fameRating ?? 0,
         distance: Number(distance?.toFixed?.(1) ?? distance ?? 0),
         tagMatch: commonTags ?? 0,
-        compatibilityScore: compatibilityScore ?? 0,
         likedByMe: profile.likedByMe ?? false,
         likedYou: profile.likedYou ?? false,
       };
@@ -125,7 +124,7 @@ useEffect(() => {
   if (user?.settings) {
     fetchProfiles();
   }
-}, [sortBy, filters]);
+}, [sortBy, filters.ageRange[0], filters.ageRange[1], filters.fameRange[0], filters.fameRange[1], filters.distance, filters.tags.join(',')]);
 
   const sendAction = async (targetUserId: string, status: 'like' | 'dislike') => {
     try {
@@ -193,8 +192,6 @@ useEffect(() => {
 const sortProfiles = (profiles: any[]) => {
   return [...profiles].sort((a, b) => {
     switch (sortBy) {
-      case "compatibility":
-        return (b.compatibility?.percentage ?? -1) - (a.compatibility?.percentage ?? -1);
       case "age":
         return a.age - b.age;
       case "distance":
@@ -259,9 +256,8 @@ const sortProfiles = (profiles: any[]) => {
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition-all bg-white/80 backdrop-blur-sm"
             >
-              <option value="compatibility">Sort by Compatibility</option>
-              <option value="age">Sort by Age</option>
               <option value="distance">Sort by Distance</option>
+              <option value="age">Sort by Age</option>
               <option value="fame">Sort by Fame Rating</option>
               <option value="commonTags">Sort by Common Tags</option>
               <option value="recent">Recently Active</option>
