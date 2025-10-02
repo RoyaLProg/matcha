@@ -10,6 +10,11 @@ const ChatListPage = () => {
   const chatsCtx = useContext(ChatContext);
   const userCtx = useContext(UserContext);
 
+  const handleRefresh = () => {
+    console.log("Manual refresh triggered");
+    chatsCtx?.refreshChats();
+  };
+
   const normalize = (url?: string) => {
     if (!url) return undefined;
     if (/^https?:/i.test(url)) return url;
@@ -54,15 +59,23 @@ const ChatListPage = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-blue-100">
           <div className="bg-gradient-to-r from-blue-500 to-sky-500 px-6 py-4">
-            <h1 className="text-2xl font-bold text-white flex items-center">
-              <MessageCircle className="w-6 h-6 mr-2" />
-              Messages
-              {0 > 0 && (
-                <span className="ml-2 bg-white text-blue-600 text-sm px-2 py-1 rounded-full font-semibold">
-                  {0}
-                </span>
-              )}
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-white flex items-center">
+                <MessageCircle className="w-6 h-6 mr-2" />
+                Messages
+                {0 > 0 && (
+                  <span className="ml-2 bg-white text-blue-600 text-sm px-2 py-1 rounded-full font-semibold">
+                    {0}
+                  </span>
+                )}
+              </h1>
+              <button
+                onClick={handleRefresh}
+                className="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
           </div>
 
           {items.length === 0 ? (

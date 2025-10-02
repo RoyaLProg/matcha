@@ -62,32 +62,11 @@ const [loading, setLoading] = useState(true);
       return `${apiBase}/api${u.startsWith('/') ? '' : '/'}${u}`;
     };
 
-    const locationCache = new Map<string, string>();
-    
-    const getLocationFromCache = async (lat: number, lng: number): Promise<string> => {
-      const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
-      if (locationCache.has(key)) {
-        return locationCache.get(key)!;
-      }
-      
-      try {
-        const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
-        const geoData = await geores.json();
-        const location = `${geoData.city || geoData.locality || geoData.principalSubdivision}, ${geoData.countryName}`;
-        locationCache.set(key, location);
-        return location;
-      } catch (e) {
-        const fallback = 'Unknown location';
-        locationCache.set(key, fallback);
-        return fallback;
-      }
-    };
-
-    const mappedProfiles = await Promise.all(data.map(async (profile: any) => {
+    const mappedProfiles = data.map((profile: any) => {
       const { user, settings, tags, pictures, age, distance, fameRating, commonTags } = profile;
 
-      const location = settings.latitude && settings.longitude
-        ? await getLocationFromCache(settings.latitude, settings.longitude)
+      const location = settings.city && settings.country
+        ? `${settings.city}, ${settings.country}`
         : 'Unknown location';
 
       return {
@@ -105,7 +84,7 @@ const [loading, setLoading] = useState(true);
         likedByMe: profile.likedByMe ?? false,
         likedYou: profile.likedYou ?? false,
       };
-    }));
+    });
 
     setProfiles(mappedProfiles);
     setLoading(false);

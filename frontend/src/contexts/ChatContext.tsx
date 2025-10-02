@@ -69,6 +69,10 @@ const ChatProvider = ({ children }: { children: ReactNode }) => {
     fetchChats();
     const handleNewChat = (newChat: Chat) => {
       console.log("ChatContext: Received newChat event", newChat);
+      console.log("ChatContext: newChat has user?", !!newChat.user);
+      console.log("ChatContext: newChat has targetUser?", !!newChat.targetUser);
+      console.log("ChatContext: newChat.user.settings?", newChat.user?.settings);
+      console.log("ChatContext: newChat.targetUser.settings?", newChat.targetUser?.settings);
       setChats((prevChats) => {
         console.log("ChatContext: Current chats before update", prevChats);
         if (!prevChats) {

@@ -37,16 +37,6 @@ const PublicProfile = () => {
     return `${import.meta.env.VITE_API_URL}/api${url}`;
   };
 
-  const reverseGeocode = async (lat: number, lng: number) => {
-    try {
-      const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
-      const geoData = await geores.json();
-      return `${geoData.city || geoData.locality || geoData.principalSubdivision}, ${geoData.countryName}`;
-    } catch (e) {
-      return 'Unknown location';
-    }
-  };
-
   const photoItems: { url: string; isProfile?: boolean }[] = useMemo(() => {
     const pics = (userData?.settings?.pictures ?? []) as Array<{ url: string; isProfile?: boolean }>;
     const arr = pics.map(p => ({ url: normalize(p.url), isProfile: p.isProfile }));
@@ -62,9 +52,10 @@ const PublicProfile = () => {
   }, [photoItems.length]);
 
   useEffect(() => {
-    if (userData?.settings?.latitude && userData?.settings?.longitude) {
-      reverseGeocode(userData.settings.latitude, userData.settings.longitude)
-        .then(cityName => setCityName(cityName));
+    if (userData?.settings?.city && userData?.settings?.country) {
+      setCityName(`${userData.settings.city}, ${userData.settings.country}`);
+    } else {
+      setCityName('Unknown location');
     }
   }, [userData]);
 

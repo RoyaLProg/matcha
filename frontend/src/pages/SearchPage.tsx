@@ -55,17 +55,11 @@ const SearchPage = () => {
       const data = await res.json();
 
       const myTags = ((user as any)?.settings?.tags ?? []).map((t: any) => t.tag?.toLowerCase?.() ?? String(t).toLowerCase());
-      let mapped = await Promise.all(
-        (data as any[]).map(async (profile: any) => {
+      let mapped = (data as any[]).map((profile: any) => {
           const { user: u, settings, tags, pictures, age, distance, likedByMe } = profile;
-          let location = '';
-          try {
-            if (settings?.latitude != null && settings?.longitude != null) {
-              const geores = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${settings.latitude}&longitude=${settings.longitude}&localityLanguage=en`);
-              const geoData = await geores.json();
-              location = `${geoData.city || geoData.locality || geoData.principalSubdivision || ''}${geoData.countryName ? ', ' + geoData.countryName : ''}`;
-            }
-          } catch {}
+          const location = settings?.city && settings?.country
+            ? `${settings.city}, ${settings.country}`
+            : 'Unknown location';
 
           const otherTags = (tags || []).map((t: any) => t.tag?.toLowerCase?.() ?? String(t).toLowerCase());
           const tagMatch = myTags.length ? otherTags.filter((t) => myTags.includes(t)).length : 0;
@@ -89,8 +83,7 @@ const SearchPage = () => {
             tagMatch,
             likedByMe: likedByMe === true,
           };
-        })
-      );
+        });
       mapped = mapped.filter(p => (typeof filters.fameMax === 'number' ? p.fameRating <= filters.fameMax : true));
       setSearchResults(mapped);
       

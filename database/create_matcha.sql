@@ -70,6 +70,8 @@ CREATE TABLE IF NOT EXISTS settings (
     "userId" INT UNIQUE NOT NULL,
     latitude FLOAT NULL,
     longitude FLOAT NULL,
+    city VARCHAR(255) NULL,
+    country VARCHAR(255) NULL,
     "maxDistance" FLOAT DEFAULT 50,
     geoloc BOOLEAN DEFAULT FALSE,
     "minAgePreference" INT DEFAULT 18,
@@ -80,6 +82,11 @@ CREATE TABLE IF NOT EXISTS settings (
     "sexualOrientation" user_sexual_orientation_enum,
     CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES Users (id) ON DELETE CASCADE
 );
+
+-- Add city and country columns to existing settings table
+ALTER TABLE settings
+    ADD COLUMN IF NOT EXISTS city VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS country VARCHAR(255) NULL;
 
 CREATE TABLE IF NOT EXISTS picture (
     id SERIAL PRIMARY KEY,

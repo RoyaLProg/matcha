@@ -22,6 +22,8 @@ interface Settings {
     userId: string;
     latitude?: number;
     longitude?: number;
+    city?: string;
+    country?: string;
     maxDistance: number;
     geoloc: boolean;
     minAgePreference: number;

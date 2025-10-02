@@ -94,7 +94,9 @@ export default function UserProvider({ children }: { children: ReactNode }) {
                   const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
                   const data = await response.json();
                   if (data) {
-                    const updatedSettings: Partial<Settings> = { latitude, longitude };
+                    const city = data.city || data.locality || data.principalSubdivision || '';
+                    const country = data.countryName || '';
+                    const updatedSettings: Partial<Settings> = { latitude, longitude, city, country };
                     setUserSettings(updatedSettings);
                     updateUserSettingsAPI(updatedSettings);
                   }
@@ -103,18 +105,26 @@ export default function UserProvider({ children }: { children: ReactNode }) {
                   console.error('Failed to get geolocation:', error);
                   const location = await fetchLocationByIP();
                   if (location) {
-                    const filtered = { latitude: location.latitude, longitude: location.longitude };
-                    setUserSettings({ ...location });
-                    updateUserSettingsAPI(filtered);
+                    const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.latitude}&longitude=${location.longitude}&localityLanguage=en`);
+                    const data = await response.json();
+                    const city = data?.city || data?.locality || data?.principalSubdivision || '';
+                    const country = data?.countryName || '';
+                    const updatedSettings = { latitude: location.latitude, longitude: location.longitude, city, country };
+                    setUserSettings(updatedSettings);
+                    updateUserSettingsAPI(updatedSettings);
                   }
                 }
               );
             } else {
               const location = await fetchLocationByIP();
               if (location) {
-                const filtered = { latitude: location.latitude, longitude: location.longitude };
-                setUserSettings({ ...location });
-                updateUserSettingsAPI(filtered);
+                const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.latitude}&longitude=${location.longitude}&localityLanguage=en`);
+                const data = await response.json();
+                const city = data?.city || data?.locality || data?.principalSubdivision || '';
+                const country = data?.countryName || '';
+                const updatedSettings = { latitude: location.latitude, longitude: location.longitude, city, country };
+                setUserSettings(updatedSettings);
+                updateUserSettingsAPI(updatedSettings);
               }
             }
           }
