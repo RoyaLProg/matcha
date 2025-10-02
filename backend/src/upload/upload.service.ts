@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,7 +21,7 @@ export class UploadService {
 			if (isValid) {
 				cb(null, true);
 			} else {
-				const error = new Error(`Unsupported file type: ${file.mimetype}. Allowed types: ${allowedTypes.source}`);
+				const error = new BadRequestException(`Unsupported file type: ${file.mimetype}. Allowed types: ${allowedTypes.source}`);
 				error.name = 'MulterError';
 				cb(error, false);
 			}

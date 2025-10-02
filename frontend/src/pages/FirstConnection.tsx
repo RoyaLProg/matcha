@@ -24,7 +24,7 @@ const FirstConnection = () => {
   const navigate = useNavigate();
   const { updateUser, user } = useAuth();
   const { toast } = useToast();
-  
+
   const [formData, setFormData] = useState({
     gender: '',
     sexualPreference: '',
@@ -35,7 +35,7 @@ const FirstConnection = () => {
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
   });
-  
+
   const [photos, setPhotos] = useState<string[]>([]);
   const [profilePicIndex, setProfilePicIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -136,6 +136,7 @@ const FirstConnection = () => {
   }
 
   setIsLoading(true);
+  let response;
 
   try {
     let latitude = formData.latitude;
@@ -183,13 +184,13 @@ const FirstConnection = () => {
 
     form.append("data", JSON.stringify(payload));
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/create`, {
+    response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/settings/create`, {
       method: "POST",
       credentials: "include",
       body: form,
     });
 
-    if (!response.ok) throw new Error("Request failed");
+    if (!response.ok) throw new Error('error');
 
     updateUser({
       profilePicture: photos[profilePicIndex],
@@ -206,7 +207,7 @@ const FirstConnection = () => {
   } catch (error) {
     toast({
       title: "Something went wrong",
-      description: "Please try again.",
+      description: `${(response ? (await response.json())['message'] : "Please try again later")}`,
       variant: "destructive",
     });
   } finally {
@@ -327,7 +328,7 @@ const FirstConnection = () => {
               Photos <span className="text-blue-500">*</span>
               <span className="text-xs text-gray-500 ml-2">(1-5 photos, first will be your profile picture)</span>
             </label>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               {photos.map((photo, index) => (
                 <div key={index} className="relative">
@@ -361,7 +362,7 @@ const FirstConnection = () => {
                   )}
                 </div>
               ))}
-              
+
               {photos.length < 5 && (
                 <label className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
                   <Upload className="w-6 h-6 text-gray-400 mb-2" />
