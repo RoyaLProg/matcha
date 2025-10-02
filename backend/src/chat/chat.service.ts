@@ -20,29 +20,51 @@ class ChatService {
 	async createChat({ userId, targetUserId } : { userId: number, targetUserId: number }) : Promise<Chat> {
 		const existingChat1 = await this.database.getFirstRow('chat', [], { userId: userId, targetUserId: targetUserId });
 		const existingChat2 = await this.database.getFirstRow('chat', [], { userId: targetUserId, targetUserId: userId });
-		if (existingChat1) return existingChat1 as Chat;
-		if (existingChat2) return existingChat2 as Chat;
+
+		// If chat already exists, return it with full data
+		if (existingChat1 || existingChat2) {
+			const existingChat = (existingChat1 || existingChat2) as Chat;
+			existingChat.messages = await this.getMessagesByChatId(existingChat.id) || [];
+			existingChat.user = await this.userService.findOne(existingChat.userId as number);
+			existingChat.targetUser = await this.userService.findOne(existingChat.targetUserId as number);
+			delete existingChat.user.settings.latitude;
+			delete existingChat.user.settings.longitude;
+			delete existingChat.user.password;
+			delete existingChat.user.email;
+			delete existingChat.targetUser.settings.latitude;
+			delete existingChat.targetUser.settings.longitude;
+			delete existingChat.targetUser.password;
+			delete existingChat.targetUser.email;
+			return existingChat;
+		}
+
 		const user = await this.database.getFirstRow('users', [], { id: userId });
 		const targetUser = await this.database.getFirstRow('users', [], { id: targetUserId });
 		if (!user || !targetUser) {
 			throw new Error('User not found');
 		}
+
 		const newChat = await this.database.addOne('chat', { userId, targetUserId }) as Chat;
 		newChat.messages = [];
 		newChat.user = await this.userService.findOne(newChat.userId as number);
 		newChat.targetUser = await this.userService.findOne(newChat.targetUserId as number);
-		['settings', 'password', 'email'].forEach(field => {
-			delete newChat.user[field];
-			delete newChat.targetUser[field];
-		});
-		const socketUserId = this.socketService.getSocketByUserId(newChat.userId.toString());
-		const socketTargetUserId = this.socketService.getSocketByUserId(newChat.targetUserId.toString());
-		delete newChat.userId;
-		delete newChat.targetUserId;
+		delete newChat.user.settings.latitude;
+		delete newChat.user.settings.longitude;
+		delete newChat.user.password;
+		delete newChat.user.email;
+		delete newChat.targetUser.settings.latitude;
+		delete newChat.targetUser.settings.longitude;
+		delete newChat.targetUser.password;
+		delete newChat.targetUser.email;
+
+		// Emit to both users via WebSocket
+		const socketUserId = this.socketService.getSocketByUserId(userId.toString());
+		const socketTargetUserId = this.socketService.getSocketByUserId(targetUserId.toString());
 		if (socketUserId)
-			socketUserId.emit('newChat', newChat );
+			socketUserId.emit('newChat', newChat);
 		if (socketTargetUserId)
-			socketTargetUserId.emit('newChat', newChat );
+			socketTargetUserId.emit('newChat', newChat);
+
 		return newChat;
 	}
 
