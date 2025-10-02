@@ -48,7 +48,7 @@ const NotificationBell = () => {
         type: typeFromMessage(h.message),
         message: replacedMessage(h, usernames[h.fromId] || 'user'),
         timestamp: new Date(h.createdAt ?? ''),
-        user: { name: usernames[h.fromId] || 'user' },
+        user: { name: usernames[h.userId] || 'user' },
         read: !!h.isReaded,
       }));
   }, [history, usernames]);
@@ -61,6 +61,7 @@ const NotificationBell = () => {
       setHistory(Array.isArray(data) ? data : []);
 
       const unique = Array.from(new Set((data || []).map(h => h.fromId)));
+	  unique.push(...data.map(h => h.userId));
       const entries = await Promise.all(
         unique.map(async (id) => {
           try {
@@ -74,7 +75,7 @@ const NotificationBell = () => {
         })
       );
       const map: Record<number, string> = {};
-      for (const [id, name] of entries) map[id] = name;
+      for (const [id, name] of entries) {map[id] = name};
       setUsernames(map);
     } catch (e) {
       console.error('Failed to fetch history:', e);
