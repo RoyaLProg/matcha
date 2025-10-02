@@ -163,7 +163,7 @@ const EventSystem: React.FC<Props> = ({ events = [], loading, error, onCreate, o
             </div>
 
             <div className="flex space-x-3 mt-6">
-              <button onClick={() => onCreate && onCreate(newEvent)} className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-sky-500 text-white rounded-xl hover:from-blue-600 hover:to-sky-600 font-medium">Créer l'événement</button>
+              <button onClick={() => { onCreate(newEvent); setShowCreateForm(false) }} className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-sky-500 text-white rounded-xl hover:from-blue-600 hover:to-sky-600 font-medium">Créer l'événement</button>
               <button onClick={() => setShowCreateForm(false)} className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium">Annuler</button>
             </div>
           </div>
