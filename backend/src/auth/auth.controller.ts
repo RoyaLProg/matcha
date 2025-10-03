@@ -211,7 +211,7 @@ export class AuthController {
 			const twoFactorEnabled = await this.twoFactorService.isTwoFactorEnabled(user.id!);
 			if (twoFactorEnabled) {
 				// Don't log in yet, require 2FA verification
-				return res.status(200).send({ 
+				return res.status(200).send({
 					message: 'Two-factor authentication required',
 					requiresTwoFactor: true,
 					username: body.username
@@ -229,7 +229,7 @@ export class AuthController {
   @Post('2fa/verify-login')
   async verifyLogin(@Body() body, @Res({passthrough: true}) res: Response) {
     const { username, password, token, isBackupCode } = body;
-    
+
     if (!username || !password || !token) {
       throw new BadRequestException('Missing required fields');
     }
@@ -237,11 +237,11 @@ export class AuthController {
     // First verify the user credentials again
     if (this.checkUsername(username))
       throw new UnauthorizedException('Invalid credentials');
-    
+
     const user: Users | null = await this.authService.getLogin(username, password);
     if (!user)
       throw new UnauthorizedException('Invalid credentials');
-    
+
     if (!user.isValidated)
       throw new UnauthorizedException('You need to verify your email first');
 
@@ -265,7 +265,7 @@ export class AuthController {
       if (!secret) {
         throw new UnauthorizedException('Two-factor authentication is not properly configured');
       }
-      
+
       isValidToken = this.twoFactorService.verifyToken(secret, token);
       if (!isValidToken) {
         throw new UnauthorizedException('Invalid authenticator code');
@@ -341,32 +341,32 @@ export class AuthController {
 	@UseGuards(AuthGuard)
 	async changePasswordAuth(@Body() body, @Request() req, @Res() res: Response) {
 		const { currentPassword, newPassword } = body;
-		
+
 		if (!currentPassword || !newPassword) {
 			throw new BadRequestException('Current password and new password are required');
 		}
-		
+
 		const user = await this.userService.findOne(req.user.id);
 		if (!user) {
 			throw new NotFoundException('User not found');
 		}
-		
+
 		// Verify current password
 		const passwordVerification = await this.authService.verifyPassword(currentPassword, user.password);
 		if (!passwordVerification.valid) {
 			throw new UnauthorizedException('Current password is incorrect');
 		}
-		
+
 		// Validate new password
 		const passErr = this.checkPassword(newPassword);
 		if (passErr) {
 			throw new BadRequestException(passErr);
 		}
-		
+
 		// Update password
 		user.password = await this.authService.hashPassword(newPassword);
 		await this.authService.updateUser(user);
-		
+
 		return res.status(200).send({ message: 'Password has been updated successfully' });
 	}
 
@@ -424,9 +424,9 @@ export class AuthController {
 			// Enable 2FA and generate backup codes
 			const backupCodes = await this.twoFactorService.enableTwoFactor(req.user.id, secret);
 
-			return res.status(200).json({ 
+			return res.status(200).json({
 				message: 'Two-factor authentication enabled successfully',
-				backupCodes 
+				backupCodes
 			});
 		} catch (error) {
 			throw new BadRequestException(error.message || 'Failed to verify 2FA setup');
@@ -482,12 +482,12 @@ export class AuthController {
 
 			// Try to verify as TOTP token first
 			let isValid = this.twoFactorService.verifyToken(secret, token);
-			
+
 			// If TOTP fails, try as backup code
 			if (!isValid) {
 				isValid = await this.twoFactorService.verifyBackupCode(user.id!, token);
 			}
-			
+
 			if (!isValid) {
 				throw new UnauthorizedException('Invalid token or backup code');
 			}
@@ -497,7 +497,7 @@ export class AuthController {
 			const jwt: string = this.jwtService.sign(payload, {secret: process.env.JWT_SECRET, expiresIn: '7d'});
 			const maxAge = 7 * 24 * 60 * 60 * 1000;
 			res.cookie("Auth", jwt, {sameSite: 'lax', httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge, path: '/'});
-			
+
 			return res.status(200).json({ message: '2FA verification successful' });
 		} catch (error) {
 			throw new BadRequestException(error.message || 'Failed to verify 2FA token');
@@ -560,9 +560,9 @@ export class AuthController {
 			}
 
 			const newBackupCodes = await this.twoFactorService.regenerateBackupCodes(req.user.id);
-			return res.status(200).json({ 
+			return res.status(200).json({
 				message: 'Backup codes regenerated successfully',
-				backupCodes: newBackupCodes 
+				backupCodes: newBackupCodes
 			});
 		} catch (error) {
 			throw new BadRequestException(error.message || 'Failed to regenerate backup codes');

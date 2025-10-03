@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Database } from 'src/database/Database';
 import Picture from 'src/interface/picture.interface';
 import Settings from 'src/interface/settings.interface';
@@ -43,7 +43,7 @@ export default class UserService {
 		if (data.email && data.email !== user.email) {
 			const existingUser = await this.database.getFirstRow('users', [], { email: data.email });
 			if (existingUser)
-				throw new Error('Email already in use');
+				throw new BadRequestException('Email already in use');
 		}
 
 		// Validate username uniqueness if username is being updated

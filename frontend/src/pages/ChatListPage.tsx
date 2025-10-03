@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { MessageCircle, Clock } from 'lucide-react';
 import { ChatContext } from '../contexts/ChatContext';
-import { UserContext } from '../contexts/UserContext';
+import { AuthContext } from '../contexts/AuthContext';
 
 const ChatListPage = () => {
-  const userCtx = useContext(UserContext);
+  const authCtx = useContext(AuthContext);
   const chatsCtx = useContext(ChatContext);
 
   const handleRefresh = () => {
@@ -24,7 +24,7 @@ const ChatListPage = () => {
 
   const items = useMemo(() => {
     const list = chatsCtx?.chats ?? [];
-    const meId = userCtx?.user?.id;
+    const meId = authCtx?.user?.id;
     return list.map(chat => {
       const other = meId && chat.user?.id === meId ? chat.targetUser : chat.user;
       const last = (chat.messages ?? []).slice().sort((a, b) => new Date(b.createdAt ?? '').getTime() - new Date(a.createdAt ?? '').getTime())[0];
@@ -39,7 +39,7 @@ const ChatListPage = () => {
         unreadCount: 0,
       };
     });
-  }, [chatsCtx?.chats, userCtx?.user?.id]);
+  }, [chatsCtx?.chats, authCtx?.user?.id]);
 
   const formatTime = (date: Date) => {
     const now = new Date();

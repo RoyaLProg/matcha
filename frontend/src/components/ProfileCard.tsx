@@ -60,7 +60,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, on
                 </>
               )}
             </Carousel>
-            
+
             {/* Overlay pour voir le profil */}
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
               <button
@@ -73,25 +73,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, on
             </div>
           </div>
         ) : (
-          <div 
+          <div
             className="absolute inset-0 bg-gray-300 rounded-t-2xl flex items-center justify-center cursor-pointer"
             onClick={handleViewProfile}
           >
             <span className="text-gray-500 text-lg">No photo</span>
           </div>
         )}
-        
+
         {profile.isOnline && (
           <div className="absolute top-4 left-4 w-3 h-3 bg-green-400 rounded-full border-2 border-white z-10"></div>
         )}
-        
+
         <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
           <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
             <Star className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-medium">{profile.fameRating}</span>
           </div>
         </div>
-        
+
         {profile.photos.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
             {profile.photos.map((_, index) => (
@@ -106,7 +106,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, on
 
       <div className="p-6">
         <div className="flex items-center justify-between mb-2">
-          <h3 
+          <h3
             className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
             onClick={handleViewProfile}
           >
@@ -152,7 +152,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onLike, onUnlike, on
           </button>
           {profile.likedByMe ? (
             <button
-              onClick={() => onUnlike?.(profile.id)}
+              onClick={() => onUnlike(profile.id)}
               className="flex-1 flex items-center justify-center space-x-2 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all"
             >
               <Heart className="w-5 h-5 fill-current" />

@@ -48,7 +48,7 @@ const NotificationBell = () => {
         type: typeFromMessage(h.message),
         message: replacedMessage(h, usernames[h.fromId] || 'user'),
         timestamp: new Date(h.createdAt ?? ''),
-        user: { name: usernames[h.userId] || 'user' },
+        user: { name: usernames[h.fromId] || 'user' },
         read: !!h.isReaded,
       }));
   }, [history, usernames]);
@@ -62,16 +62,10 @@ const NotificationBell = () => {
 
       const unique = Array.from(new Set((data || []).map(h => h.fromId)));
 	  unique.push(...data.map(h => h.userId));
+	  const name = await (await fetch(`${import.meta.env.VITE_API_URL}/api/users/${data[0].fromId}/username`, {credentials: 'include'})).text()
       const entries = await Promise.all(
         unique.map(async (id) => {
-          try {
-            const r = await fetch(`${import.meta.env.VITE_API_URL}/api/Users/${id}/username`, { credentials: 'include' });
-            if (!r.ok) return [id, 'user'] as const;
-            const name = await r.text();
-            return [id, name] as const;
-          } catch {
-            return [id, 'user'] as const;
-          }
+            return [id, name ?? 'user'] as const;
         })
       );
       const map: Record<number, string> = {};
@@ -91,7 +85,7 @@ const NotificationBell = () => {
     };
     socket.on('notificationCount', onCount);
     return () => { socket.off('notificationCount', onCount); };
-  }, [socket]);
+  }, []);
 
   const getNotificationIcon = (type: UIType) => {
     switch (type) {
@@ -198,7 +192,6 @@ const NotificationBell = () => {
                         <div className="flex items-center space-x-2">
                           {getNotificationIcon(n.type)}
                           <p className="text-sm text-gray-900">
-                            <span className="font-medium">{n.user.name}</span>{' '}
                             {n.message.replace(`@${n.user.name}`, `@${n.user.name}`)}
                           </p>
                           {!n.read && (

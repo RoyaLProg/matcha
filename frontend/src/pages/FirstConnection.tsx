@@ -391,6 +391,7 @@ const FirstConnection = () => {
               >
                 📍 Use my current location
               </Button>
+			</div>
 			  { /*
               <div className="text-center text-sm text-gray-500">or</div>
               <input
@@ -400,8 +401,8 @@ const FirstConnection = () => {
                 placeholder="Enter your city or location manually"
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
-          </div>*/}
+            </div> */}
+          </div>
 
           <Button
             type="submit"

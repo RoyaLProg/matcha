@@ -178,28 +178,28 @@ class UserController {
 			// Treat undefined as bisexual by default
 			const normalizedUserOrientation = userOrientation === UserSexualOrientation.Undefined ? UserSexualOrientation.Bisexual : userOrientation;
 			const normalizedOtherOrientation = otherOrientation === UserSexualOrientation.Undefined ? UserSexualOrientation.Bisexual : otherOrientation;
-			
+
 			// Bisexual users are compatible with everyone
 			if (normalizedUserOrientation === UserSexualOrientation.Bisexual || normalizedOtherOrientation === UserSexualOrientation.Bisexual) {
 				return true;
 			}
-			
+
 			// Heterosexual compatibility
 			if (normalizedUserOrientation === UserSexualOrientation.Heterosexual && normalizedOtherOrientation === UserSexualOrientation.Heterosexual) {
 				return userGender !== otherGender; // Different genders
 			}
-			
+
 			// Homosexual compatibility
 			if (normalizedUserOrientation === UserSexualOrientation.Homosexual && normalizedOtherOrientation === UserSexualOrientation.Homosexual) {
 				return userGender === otherGender; // Same genders
 			}
-			
+
 			// Mixed orientations (hetero + homo)
 			if ((normalizedUserOrientation === UserSexualOrientation.Heterosexual && normalizedOtherOrientation === UserSexualOrientation.Homosexual) ||
 				(normalizedUserOrientation === UserSexualOrientation.Homosexual && normalizedOtherOrientation === UserSexualOrientation.Heterosexual)) {
 				return false; // Not compatible
 			}
-			
+
 			return false;
 		};
 
@@ -208,7 +208,7 @@ class UserController {
 
 		for (const otherSettings of allSettings) {
 			if (Number(otherSettings.userId) === req.user.id) continue;
-			
+
 			const otherUser = (await this.database.getFirstRow('users', [], { id: otherSettings.userId })) as Users;
 			if (!otherUser) continue;
 
@@ -239,7 +239,7 @@ class UserController {
 
 			// Distance filtering
 			let distance: number | undefined = undefined;
-			if (currentSettings.latitude !== undefined && currentSettings.longitude !== undefined && 
+			if (currentSettings.latitude !== undefined && currentSettings.longitude !== undefined &&
 				otherSettings.latitude !== undefined && otherSettings.longitude !== undefined) {
 				const R = 6378;
 				const lat1 = currentSettings.latitude * (Math.PI / 180);
@@ -251,7 +251,7 @@ class UserController {
 				const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 				const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 				distance = R * c;
-				
+
 				if (typeof maxDistance === 'number' && isFinite(maxDistance) && distance > maxDistance) continue;
 			}
 
@@ -468,13 +468,13 @@ async createSettings(
 		try {
 			const user = await this.userService.findOne(req.user.id);
 			user['fameRating'] = await this.userService.getFameRating(req.user.id);
-			
+
 			// Force status to online when user accesses /me endpoint
 			if (user.id) {
 				await this.database.updateRows('users', { status: UserStatus.Online }, { id: user.id });
 				user.status = UserStatus.Online;
 			}
-			
+
 			return user;
 		} catch (error) {
 			if (error.message === 'User not found')
@@ -485,7 +485,7 @@ async createSettings(
 			);
 		}
 	}
-	
+
 	@Get(':id/username')
 	@UseGuards(AuthGuard)
 	async getUsername(@Param('id') id: number){
@@ -529,7 +529,7 @@ async createSettings(
 			user['fameRating'] = await this.userService.getFameRating(id);
       user['likedYou'] = (await this.database.getRows('action', [], { userId: id, targetUserId: req.user.id, status: 'like'})).length > 0;
 			user['blocked'] = (await this.userService.findOne(req.user.id)).blockedIds.find((v) => v == id) !== undefined;
-			
+
 			return user;
 		} catch (error) {
 			console.error(error.message);
@@ -606,11 +606,10 @@ async createSettings(
 			return this.userService.update(id, data);
 		} catch (error) {
 			if (error.message === 'User not found') {
- 				throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+ 				throw new BadRequestException(error.message);
 			}
-			throw new HttpException(
-				'Failed to update user',
-				HttpStatus.BAD_REQUEST,
+			throw new BadRequestException(
+				'Failed to update user'
 			);
 		}
 	}

@@ -130,6 +130,26 @@ useEffect(() => {
     sendAction(id, "like");
   };
 
+  const handleUnlike = async (id: string) => {
+	try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/action/unlike`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({
+          targetUserId: Number(id),
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Erreur lors de l'envoi du ${status}`);
+      const data = await response.json();
+      console.log(`Action ${status} envoyée avec succès`, data);
+      setProfiles(prev => prev.filter(profile => profile.id !== id));
+    } catch (error) {
+      console.error(`Erreur lors de l'envoi du ${status} :`, error);
+    }
+  };
+
   const handlePass = (id: string) => {
     sendAction(id, "dislike");
   };
@@ -216,20 +236,20 @@ const sortProfiles = (profiles: any[]) => {
               className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition-all bg-white/80 backdrop-blur-sm"
             />
           </div>
-          
+
           <div className="flex gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-200 ${
-                showFilters 
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                showFilters
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
                   : 'bg-white/80 border border-blue-200 hover:bg-blue-50 text-gray-700'
               }`}
             >
               <SlidersHorizontal className="w-5 h-5" />
               <span className="font-medium">Filters</span>
             </button>
-            
+
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -277,7 +297,7 @@ const sortProfiles = (profiles: any[]) => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Fame Rating</label>
                 <div className="flex items-center space-x-2">
@@ -295,7 +315,7 @@ const sortProfiles = (profiles: any[]) => {
                   <span className="text-sm text-gray-600 font-medium">{filters.fameRange[0]}+</span>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Distance (miles)</label>
                 <div className="flex items-center space-x-2">
@@ -310,7 +330,7 @@ const sortProfiles = (profiles: any[]) => {
                   <span className="text-sm text-gray-600 font-medium">{filters.distance} mi</span>
                 </div>
               </div>
-              
+
               <div className="md:col-span-2 lg:col-span-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Interests</label>
                 <div className="flex flex-wrap gap-2">
@@ -358,7 +378,7 @@ const sortProfiles = (profiles: any[]) => {
                   </div>
                 </div>
               </div>
-              
+
             </div>
           </div>
         )}
@@ -376,6 +396,7 @@ const sortProfiles = (profiles: any[]) => {
                 profile={profile}
                 onLike={handleLike}
                 onPass={handlePass}
+				onUnlike={handleUnlike}
               />
             ))}
           </div>
