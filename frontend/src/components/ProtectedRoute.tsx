@@ -16,6 +16,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (isLoadingUser) return null;
 
+  console.log(isLoggedIn);
   if (!isLoggedIn || !user) {
     return <Navigate to="/" replace />;
   }
